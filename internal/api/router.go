@@ -188,6 +188,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, oauthHandler *oauth.Handler) {
 	// Hashtag timeline (no auth required - public tag timeline)
 	r.With(h.OptionalOAuthMiddleware).Get("/api/v1/timelines/tag/{tag}", h.TimelineTag)
 	r.With(h.OptionalOAuthMiddleware).Get("/api/v1/polls/{id}", h.PollGet)
+	r.With(h.OptionalOAuthMiddleware).Get("/api/v1/accounts/lookup", h.AccountLookup)
 	r.With(h.OptionalOAuthMiddleware).Get("/api/v1/statuses", h.StatusesGet)
 	r.With(h.OptionalOAuthMiddleware).Get("/api/v1/announcements", h.Announcements)
 	// Trends answer with an empty array on purpose. There is no instance-wide
@@ -217,6 +218,8 @@ func (h *Handler) RegisterRoutes(r chi.Router, oauthHandler *oauth.Handler) {
 		r.Post("/api/v1/accounts/{id}/mute", h.AccountMute)
 		r.Post("/api/v1/accounts/{id}/unmute", h.AccountUnmute)
 		r.Get("/api/v1/accounts/relationships", h.AccountRelationships)
+		r.Get("/api/v1/accounts", h.AccountsList)
+		r.Get("/api/v1/accounts/familiar_followers", h.AccountFamiliarFollowers)
 		r.Get("/api/v1/accounts/{id}/lists", h.AccountLists)
 
 		// Statuses

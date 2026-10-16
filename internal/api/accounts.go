@@ -287,6 +287,106 @@ func (h *Handler) AccountGet(w http.ResponseWriter, r *http.Request) {
 	writeAPIJSON(w, http.StatusOK, result)
 }
 
+// accountIDsFromQuery reads Mastodon's id[] parameter (or plain id).
+func accountIDsFromQuery(r *http.Request, limit int) []string {
+	ids := r.URL.Query()["id[]"]
+	if len(ids) == 0 {
+		ids = r.URL.Query()["id"]
+	}
+	if len(ids) > limit {
+		ids = ids[:limit]
+	}
+	return ids
+}
+
+// AccountsList returns several accounts at once, in the order requested;
+// unknown IDs are left out. Mastodon 4.3 added it, and Mastodon for iOS
+// calls it whenever it loads a timeline or notifications.
+// GET /api/v1/accounts?id[]=...
+func (h *Handler) AccountsList(w http.ResponseWriter, r *http.Request) {
+	ids := accountIDsFromQuery(r, 40)
+	byID, err := h.store.GetAccountsByIDs(r.Context(), ids)
+	if err != nil {
+		slog.Error("api: list accounts error", "error", err)
+		writeAPIError(w, http.StatusInternalServerError, "error fetching accounts")
+		return
+	}
+	viewer := getAuthAccount(r.Context())
+	results := make([]*MastodonAccount, 0, len(ids))
+	for _, id := range ids {
+		if account := byID[id]; account != nil {
+			results = append(results, h.accountToMastodon(account, viewer, false))
+		}
+	}
+	writeAPIJSON(w, http.StatusOK, results)
+}
+
+// AccountLookup finds an account by its handle without remote resolution,
+// as Mastodon's lookup does: user or user@domain, with or without a leading @.
+// GET /api/v1/accounts/lookup?acct=...
+func (h *Handler) AccountLookup(w http.ResponseWriter, r *http.Request) {
+	acct := strings.TrimPrefix(strings.TrimSpace(r.URL.Query().Get("acct")), "@")
+	username, domain, _ := strings.Cut(acct, "@")
+	if username == "" {
+		writeAPIError(w, http.StatusBadRequest, "missing acct")
+		return
+	}
+	var domainPtr *string
+	if domain = strings.ToLower(domain); domain != "" && domain != h.localDomain && domain != h.domain {
+		domainPtr = &domain
+	}
+	account, err := h.store.GetAccountByUsernameDomain(r.Context(), username, domainPtr)
+	if err != nil || account == nil {
+		writeAPIError(w, http.StatusNotFound, "Record not found")
+		return
+	}
+	writeAPIJSON(w, http.StatusOK, h.accountToMastodon(account, getAuthAccount(r.Context()), false))
+}
+
+// familiarFollowersScan bounds the work per account: only the first page of
+// its followers is checked against the viewer's follows.
+const (
+	familiarFollowersScan = 200
+	familiarFollowersMax  = 5
+)
+
+// AccountFamiliarFollowers returns, for each account, followers of that
+// account whom the viewer also follows.
+// GET /api/v1/accounts/familiar_followers?id[]=...
+func (h *Handler) AccountFamiliarFollowers(w http.ResponseWriter, r *http.Request) {
+	viewer := getAuthAccount(r.Context())
+	if viewer == nil {
+		writeAPIError(w, http.StatusUnauthorized, "not authenticated")
+		return
+	}
+	type familiar struct {
+		ID       string             `json:"id"`
+		Accounts []*MastodonAccount `json:"accounts"`
+	}
+	ids := accountIDsFromQuery(r, 40)
+	results := make([]familiar, 0, len(ids))
+	for _, id := range ids {
+		entry := familiar{ID: id, Accounts: []*MastodonAccount{}}
+		followers, err := h.store.ListFollowers(r.Context(), id, nil, familiarFollowersScan)
+		if err != nil {
+			slog.Warn("api: familiar followers", "account_id", id, "error", err)
+		}
+		for _, follower := range followers {
+			if len(entry.Accounts) == familiarFollowersMax {
+				break
+			}
+			if follower.ID == viewer.ID {
+				continue
+			}
+			if ok, _ := h.store.IsFollowing(r.Context(), viewer.ID, follower.ID); ok {
+				entry.Accounts = append(entry.Accounts, h.accountToMastodon(follower, viewer, false))
+			}
+		}
+		results = append(results, entry)
+	}
+	writeAPIJSON(w, http.StatusOK, results)
+}
+
 func (h *Handler) refreshRemoteAccountCountsIfMissing(ctx context.Context, account *models.Account) *models.Account {
 	if h.federator == nil || account == nil || account.Domain == nil {
 		return account
