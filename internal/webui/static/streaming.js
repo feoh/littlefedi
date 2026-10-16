@@ -187,8 +187,71 @@
     }, 5000);
   }
 
-  function refreshStatus(id, replace) {
+  // A post streamed in while the reader is writing moves the editor. The
+  // timeline composer comes after #timeline in the DOM and is lifted above it
+  // by flex order, and scroll anchoring keeps the first visible card still, so
+  // a card inserted at the top scrolls the composer up out of view. An inline
+  // reply composer sits inside the feed and is pushed down instead. New posts
+  // wait while the reader is in a composer: focus is in one, or the last click
+  // or tap landed in one (Safari does not focus a clicked button). They are
+  // added, oldest first, once the reader is somewhere else.
+  var held = [];
+  var heldTimeline = null;
+  var engagedComposer = null;
+
+  function composerFor(node) {
+    return node && node.closest ? node.closest('.composer form') : null;
+  }
+
+  function composing() {
+    return !!(composerFor(document.activeElement) || (engagedComposer && engagedComposer.isConnected));
+  }
+
+  function hold(id, timeline) {
     if (!id) return;
+    if (heldTimeline !== timeline) {
+      held = [];
+      heldTimeline = timeline;
+    }
+    if (held.indexOf(id) === -1) held.push(id);
+  }
+
+  // One at a time, so the newest still ends up on top, and only while the
+  // reader stays out of the composer.
+  function releaseHeld() {
+    if (!held.length || composing()) return;
+    var ids = held;
+    var timeline = heldTimeline;
+    held = [];
+    heldTimeline = null;
+    // A boosted navigation rendered a fresh timeline that already has them.
+    if (timeline !== document.querySelector('#timeline[data-stream]')) return;
+    (function next() {
+      if (!ids.length) return;
+      if (composing()) {
+        held = ids.concat(held);
+        heldTimeline = timeline;
+        return;
+      }
+      refreshStatus(ids.shift(), false).then(next);
+    }());
+  }
+
+  function noteAttention(event) {
+    engagedComposer = composerFor(event.target);
+    if (!engagedComposer) window.setTimeout(releaseHeld, 0);
+  }
+  // Not every press reaches pointerdown (Firefox with touch emulation sends
+  // only mousedown), and a press that is missed would hold posts until the
+  // next page load, since moving focus to the body fires no focusin.
+  ['pointerdown', 'mousedown', 'touchstart'].forEach(function (type) {
+    document.addEventListener(type, noteAttention, {capture: true, passive: true});
+  });
+  document.addEventListener('focusin', noteAttention, true);
+  document.addEventListener('focusout', function () { window.setTimeout(releaseHeld, 0); }, true);
+
+  function refreshStatus(id, replace) {
+    if (!id) return Promise.resolve();
     var url = '/partial/status/' + encodeURIComponent(id);
     var stream = document.querySelector('#timeline[data-stream]');
     var scope = stream && /^(public|hashtag)/.test(stream.dataset.stream) ? 'public' : 'home';
@@ -196,7 +259,7 @@
     // can be incomplete for remote replies and boosts, while this endpoint has
     // the stored status and the viewer's current preferences.
     url += '?scope=' + scope + (replace ? '' : '&timeline=1');
-    fetch(url, {credentials: 'same-origin'})
+    return fetch(url, {credentials: 'same-origin'})
       .then(function (r) { if (!r.ok) throw new Error(); return r.text(); })
       .then(function (html) {
         if (!html.trim()) return;
@@ -253,6 +316,7 @@
     if (message.event === 'delete') {
       var deleted = document.getElementById('status-' + message.payload);
       if (deleted) deleted.remove();
+      held = held.filter(function (id) { return id !== message.payload; });
       return;
     }
     if (message.event === 'notification') {
@@ -272,6 +336,10 @@
       // For new insertions, honour the viewer's hide-replies/hide-boosts prefs
       // so streaming matches what a page reload would render.
       if (!replace && streamFiltered(message.payload)) return;
+      if (!replace && composing()) {
+        hold(statusID(message.payload), timeline);
+        return;
+      }
       refreshStatus(statusID(message.payload), replace);
     }
   }

@@ -19,6 +19,9 @@ replace the tree on `upstream` with its contents, commit and tag it, and merge
 
 - The composer sends the post with Ctrl+Enter (Cmd+Enter on macOS) from any of
   its fields, and the Post button's tooltip says so.
+- Streamed posts wait while you are writing in a composer (focus is in it, or
+  your last click or tap was), so the editor no longer jumps away when one
+  arrives. They are added once you click, tap or tab elsewhere.
 - A unit test suite (upstream omits its own from the public release). Every
   package has happy-path tests; shared fixtures live in `internal/testutil`.
 - Push notifications work with Mastodon's mobile apps, Ivory and Tuba. The
