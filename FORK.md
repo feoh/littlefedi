@@ -21,6 +21,19 @@ replace the tree on `upstream` with its contents, commit and tag it, and merge
   its fields, and the Post button's tooltip says so.
 - A unit test suite (upstream omits its own from the public release). Every
   package has happy-path tests; shared fixtures live in `internal/testutil`.
+- Push notifications work with Mastodon's mobile apps, Ivory and Tuba. The
+  push API follows Mastodon's behaviour: it accepts form-encoded requests,
+  returns `server_key` and `standard`, sends the legacy `aesgcm` encoding
+  unless a client asks for RFC 8291, and sends Mastodon's payload fields,
+  including the app's access token (sealed at rest when
+  `LITTLEFEDI_FEDERATION_KEY_ENCRYPTION_KEY` is set) and the numeric
+  notification ID. It also accepts the `follower` policy, keeps alerts a
+  client turned off, and lets a new login on the same device take over its
+  push endpoint. Grouped notification IDs are strings, as in Mastodon.
+
+Fork database migrations are numbered from 9001 up. bun names a migration by
+its number alone, so sharing a number with a later upstream migration would
+skip that migration.
 
 ## Tests
 
