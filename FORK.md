@@ -39,6 +39,8 @@ replace the tree on `upstream` with its contents, commit and tag it, and merge
   (a poll you created or voted in ended) and `admin.sign_up` notifications.
 - The client API adds `GET /api/v1/accounts?id[]=`, `/api/v1/accounts/lookup`
   and `/api/v1/accounts/familiar_followers`, which Mastodon for iOS uses.
+- The OAuth consent page also answers at `/oauth/authorize/`, with a
+  trailing slash, which is the URL toot opens. Mastodon accepts both.
 - The instance documents carry every media limit Mastodon's apps require
   (without them Mastodon for iOS cannot load notifications), and
   `image_matrix_limit` is a pixel count, as in Mastodon.
