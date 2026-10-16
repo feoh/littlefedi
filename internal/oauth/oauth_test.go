@@ -176,6 +176,18 @@ func TestAuthorizationCodeFlowWithPKCE(t *testing.T) {
 	}
 }
 
+func TestAuthorizeAcceptsTrailingSlash(t *testing.T) {
+	f := newFixture(t)
+	clientID, _ := f.createApp(t)
+	query := url.Values{"client_id": {clientID}, "redirect_uri": {callback}, "response_type": {"code"}, "scope": {"read"}}
+	for _, path := range []string{"/oauth/authorize", "/oauth/authorize/"} {
+		rec := f.do(t, httptest.NewRequest(http.MethodGet, path+"?"+query.Encode(), nil))
+		if rec.Code != http.StatusFound || !strings.HasPrefix(rec.Header().Get("Location"), "/auth/sign_in?") {
+			t.Errorf("GET %s = %d %q, want a redirect to sign in", path, rec.Code, rec.Header().Get("Location"))
+		}
+	}
+}
+
 func TestAuthorizeDecisionRequiresCSRF(t *testing.T) {
 	f := newFixture(t)
 	clientID, _ := f.createApp(t)

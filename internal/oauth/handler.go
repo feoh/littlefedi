@@ -70,6 +70,10 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/api/v1/apps/verify_credentials", h.AppVerifyCredentials)
 	r.Get("/.well-known/oauth-authorization-server", h.Metadata)
 	r.Get("/oauth/authorize", h.Authorize)
+	// toot opens /oauth/authorize/ and Mastodon's router accepts it. Only the
+	// consent page gets the alias: the decision form posts to the bare path,
+	// and the path-matched POST gates in main.go must keep seeing one spelling.
+	r.Get("/oauth/authorize/", h.Authorize)
 	r.Post("/oauth/authorize", h.AuthorizeDecision)
 	r.Post("/oauth/token", h.Token)
 	r.Post("/oauth/revoke", h.Revoke)
