@@ -296,6 +296,7 @@
   "composer.save_changes": "Salva modifiche",
   "composer.characters_left": "caratteri rimanenti",
   "composer.post": "Pubblica",
+  "composer.submit_shortcut": "Ctrl+Invio (⌘+Invio su Mac)",
   "redraft.partial_error": "Il nuovo post è stato pubblicato, ma non è stato possibile eliminare l'originale.",
   "redraft.original_post": "Post originale",
   "redraft.new_post": "Nuovo post",

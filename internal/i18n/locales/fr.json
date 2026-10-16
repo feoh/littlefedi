@@ -296,6 +296,7 @@
   "composer.save_changes": "Enregistrer les modifications",
   "composer.characters_left": "caractères restants",
   "composer.post": "Publier",
+  "composer.submit_shortcut": "Ctrl+Entrée (⌘+Entrée sur Mac)",
   "redraft.partial_error": "La nouvelle publication a été publiée, mais l'originale n'a pas pu être supprimée.",
   "redraft.original_post": "Publication originale",
   "redraft.new_post": "Nouvelle publication",

@@ -296,6 +296,7 @@
   "composer.save_changes": "Save changes",
   "composer.characters_left": "characters left",
   "composer.post": "Post",
+  "composer.submit_shortcut": "Ctrl+Enter (⌘+Enter on a Mac)",
   "redraft.partial_error": "The new post was published, but the original could not be deleted.",
   "redraft.original_post": "Original post",
   "redraft.new_post": "New post",

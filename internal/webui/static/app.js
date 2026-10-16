@@ -287,6 +287,21 @@
 					Promise.allSettled(jobs).then(() => this.$root.requestSubmit(submitter));
 				},
 
+				// Ctrl+Enter (Cmd+Enter on macOS) sends the post from anywhere in
+				// the form. It goes through the submit button, like a click, so
+				// prepareComposerSubmit and the boosted request both still run.
+				// A field that already took the key, such as the link prompt, wins,
+				// and a held key does not send the same post twice.
+				submitShortcut(event) {
+					if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey) || event.altKey) return;
+					if (event.isComposing || event.defaultPrevented) return;
+					event.preventDefault();
+					if (event.repeat) return;
+					this.closeSuggestions();
+					const submitter = this.$root.querySelector('.composer-footer [type="submit"]');
+					this.$root.requestSubmit(submitter || undefined);
+				},
+
 				editableMode() {
 					return this.mode === 'preview' ? this.previousMode : this.mode;
 				},
@@ -946,7 +961,7 @@
                     } else if (event.key === 'ArrowUp') {
                         event.preventDefault();
                         this.selectedIndex = Math.max(this.selectedIndex - 1, -1);
-                    } else if (event.key === 'Enter' || event.key === 'Tab') {
+                    } else if ((event.key === 'Enter' && !event.ctrlKey && !event.metaKey) || event.key === 'Tab') {
                         if (this.selectedIndex >= 0) {
                             event.preventDefault();
                             this.selectSuggestion(this.selectedIndex);

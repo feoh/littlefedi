@@ -40,7 +40,7 @@
 {{$action := "/statuses"}}
 {{if $editing}}{{$action = printf "/statuses/%s/edit" $editing}}{{end}}
 <div class="composer" id="{{$composerID}}">
-    <form method="post" action="{{$action}}" enctype="multipart/form-data" x-data="composerState" :class="{'composer-fullscreen': fullscreen, 'composer-collapsed': !expanded, 'composer-dropping': dropping}" @keydown.escape.window="setFullscreen(false)" @submit="prepareComposerSubmit($event)"
+    <form method="post" action="{{$action}}" enctype="multipart/form-data" x-data="composerState" :class="{'composer-fullscreen': fullscreen, 'composer-collapsed': !expanded, 'composer-dropping': dropping}" @keydown.escape.window="setFullscreen(false)" @keydown="submitShortcut($event)" @submit="prepareComposerSubmit($event)"
 		  @paste="pasteFiles($event)" @dragenter="dragEnter($event)" @dragover="dragOver($event)" @dragleave="dragLeave($event)" @drop="dropFiles($event)"
 		  data-reply-mention="{{$replyMentions}}" data-default-visibility="{{$vis}}"
 		  data-initial-text="{{$prefill}}" data-max-media="{{maxMedia}}"
@@ -391,12 +391,12 @@
                 <div class="composer-count" :class="{ danger: !isBlogPost && editorLength() > {{maxStatusChars}} * 0.96 }"><span x-text="isBlogPost ? '∞' : ({{maxStatusChars}} - editorLength())">{{if $draftIsBlogPost}}&infin;{{else}}{{maxStatusChars}}{{end}}</span> <span class="sr-only">{{T "composer.characters_left"}}</span></div>
                 {{if $editing}}
                 <a href="/@{{.Account.Username}}/{{$editing}}" class="btn btn-ghost">{{T "composer.cancel"}}</a>
-                <input type="submit" class="btn btn-primary" value="{{T "composer.save_changes"}}">
+                <input type="submit" class="btn btn-primary" value="{{T "composer.save_changes"}}" title="{{T "composer.submit_shortcut"}}" aria-keyshortcuts="Control+Enter Meta+Enter">
                 {{else if $redrafting}}
                 <a href="/@{{.Account.Username}}/{{$redrafting}}" class="btn btn-ghost">{{T "composer.cancel"}}</a>
-                <input type="submit" class="btn btn-primary" value="{{T "composer.post"}}">
+                <input type="submit" class="btn btn-primary" value="{{T "composer.post"}}" title="{{T "composer.submit_shortcut"}}" aria-keyshortcuts="Control+Enter Meta+Enter">
                 {{else}}
-                <input type="submit" class="btn btn-primary btn-icon-post" value="{{T "composer.post"}}">
+                <input type="submit" class="btn btn-primary btn-icon-post" value="{{T "composer.post"}}" title="{{T "composer.submit_shortcut"}}" aria-keyshortcuts="Control+Enter Meta+Enter">
                 {{end}}
             </div>
         </div>
