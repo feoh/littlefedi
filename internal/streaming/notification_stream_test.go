@@ -11,7 +11,9 @@ import (
 
 type fakeRouterStore struct{ account *models.Account }
 
-func (f fakeRouterStore) IsFollowing(context.Context, string, string) (bool, error) { return false, nil }
+func (f fakeRouterStore) IsFollowing(context.Context, string, string) (bool, error) {
+	return false, nil
+}
 func (f fakeRouterStore) GetAccount(context.Context, string) (*models.Account, error) {
 	return f.account, nil
 }
