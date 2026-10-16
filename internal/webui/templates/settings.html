@@ -1,0 +1,826 @@
+<div style="margin-top:0;">
+    <h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-settings"/></svg>{{T "nav.settings"}}</h1>
+
+    <nav class="settings-section settings-contents" aria-label="{{T "settings.contents"}}">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-list"/></svg>{{T "settings.contents"}}</h2>
+        <div class="settings-contents-links">
+        <a href="#profile">{{T "settings.profile.heading"}}</a>
+        {{if blogEnabled .Account}}<a href="#blog">{{T "settings.blog.heading"}}</a><a href="#blog-appearance">{{T "settings.blogappearance.heading"}}</a>{{end}}
+        <a href="#timeline">{{T "timeline.default"}}</a><a href="#filters">{{T "settings.filters.heading"}}</a><a href="#notifications">{{T "nav.notifications"}}</a>
+        <a href="#wellness">{{T "settings.wellness.heading"}}</a>
+        {{if .SMTPConfigured}}<a href="#email">{{T "settings.email.heading"}}</a>{{end}}{{if .VAPIDPublicKey}}<a href="#push">{{T "settings.push.heading"}}</a>{{end}}
+        <a href="#hashtags">{{T "settings.hashtags.heading"}}</a><a href="#security">{{T "settings.security.heading"}}</a><a href="#locale">{{T "settings.language.heading"}}</a><a href="#appearance">{{T "settings.appearance.heading"}}</a><a href="#custom-css">{{T "settings.customcss.heading"}}</a><a href="#posting">{{T "settings.posting.heading"}}</a><a href="#privacy">{{T "settings.privacy.heading"}}</a><a href="#pruning">{{T "pruning.heading"}}</a><a href="#data">{{T "settings.data.heading"}}</a><a href="#account">{{T "settings.account.heading"}}</a><a href="#instance">{{T "settings.instance.heading"}}</a><a href="#migration">{{T "settings.migration.heading"}}</a>
+        </div>
+    </nav>
+
+    <div class="settings-section" id="profile">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-users"/></svg>{{T "settings.profile.heading"}}</h2>
+        <form action="/settings/profile" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group">
+                <label for="display_name">{{T "settings.profile.display_name"}}</label>
+                <input type="text" id="display_name" name="display_name" value="{{.Account.DisplayName}}" maxlength="30">
+            </div>
+            <div class="form-group">
+                <label for="note">{{T "settings.profile.bio"}}</label>
+                <textarea id="note" name="note" rows="4" maxlength="5000">{{.Account.NoteSource}}</textarea>
+                <small style="color:var(--muted);">{{T "settings.profile.bio_help"}}</small>
+            </div>
+			<div class="form-group">
+				<label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
+					<input type="checkbox" name="rss_feed_enabled"{{if .Account.RSSFeedEnabled}} checked{{end}}>
+					<span>{{T "settings.profile.rss_feed"}}</span>
+				</label>
+				<small style="color:var(--muted);">{{T "settings.profile.rss_feed_help"}}</small>
+			</div>
+            <div class="form-group">
+                <label for="avatar">{{T "settings.profile.avatar"}}</label>
+                {{if .Account.Avatar}}
+                <div style="margin-bottom:0.5rem;"><img src="{{urlSafe .Account.Avatar}}" alt="{{T "settings.profile.current_avatar_alt"}}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--line);"></div>
+                {{end}}
+                <input type="file" id="avatar" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp" style="width:100%;padding:0.5rem 0;font-family:inherit;font-size:0.875rem;color:var(--text);">
+                <small style="color:var(--muted);">{{T "settings.profile.image_help"}}</small>
+                {{if .Account.Avatar}}
+                <label style="display:flex;align-items:center;gap:0.4rem;margin-top:0.4rem;cursor:pointer;font-size:0.85rem;color:var(--muted);">
+                    <input type="checkbox" name="remove_avatar" value="1" style="width:1rem;height:1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.profile.remove_avatar"}}</span>
+                </label>
+                {{end}}
+            </div>
+            <div class="form-group">
+                <label for="header">{{T "settings.profile.header"}}</label>
+                {{if .Account.Header}}
+                <div style="margin-bottom:0.5rem;"><img src="{{urlSafe .Account.Header}}" alt="{{T "settings.profile.current_header_alt"}}" style="width:100%;max-height:120px;object-fit:cover;border-radius:0.45rem;border:2px solid var(--line);"></div>
+                {{end}}
+                <input type="file" id="header" name="header" accept="image/png,image/jpeg,image/gif,image/webp" style="width:100%;padding:0.5rem 0;font-family:inherit;font-size:0.875rem;color:var(--text);">
+                <small style="color:var(--muted);">{{T "settings.profile.header_image_help"}}</small>
+                {{if .Account.Header}}
+                <label style="display:flex;align-items:center;gap:0.4rem;margin-top:0.4rem;cursor:pointer;font-size:0.85rem;color:var(--muted);">
+                    <input type="checkbox" name="remove_header" value="1" style="width:1rem;height:1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.profile.remove_header"}}</span>
+                </label>
+                {{end}}
+            </div>
+            <input type="submit" class="btn btn-primary" value="{{T "settings.profile.save"}}">
+        </form>
+    </div>
+
+    {{if blogEnabled .Account}}
+    <div class="settings-section" id="blog">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bookmark"/></svg>{{T "settings.blog.heading"}}</h2>
+        <form action="/settings/blog" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+			{{if blogDirectoryEnabled}}<div class="form-group">
+				<label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
+					<input type="checkbox" name="blog_directory_listed"{{if .Account.Discovery}} checked{{end}}>
+					<span>{{T "settings.blog.directory"}}</span>
+				</label>
+				<small style="color:var(--muted);">{{T "settings.blog.directory_help"}}</small>
+			</div>{{end}}
+            <div class="form-group">
+				<label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
+					<input type="checkbox" name="blog_replies_enabled"{{if .Account.BlogRepliesEnabled}} checked{{end}}>
+					<span>{{T "settings.blog.replies"}}</span>
+				</label>
+				<small style="color:var(--muted);">{{T "settings.blog.replies_help"}}</small>
+			</div>
+			{{if blogSlugFormatEditable}}<div class="form-group">
+                <label for="blog_slug_format">{{T "settings.blog.slug_format"}}</label>
+                <input type="text" id="blog_slug_format" name="blog_slug_format" value="{{.Account.BlogSlugFormat}}" maxlength="200" placeholder="{{blogSlugFormatDefault}}">
+                <small style="color:var(--muted);">{{T "settings.blog.slug_format_help"}}<br>{{T "settings.blog.slug_format_default"}} <code>{{blogSlugFormatDefault}}</code></small>
+            </div>{{end}}
+            <input type="submit" class="btn btn-primary" value="{{T "settings.blog.save"}}">
+        </form>
+    </div>
+
+    <div class="settings-section" id="blog-appearance">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-palette"/></svg>{{T "settings.blogappearance.heading"}}</h2>
+        <p style="color:var(--muted);font-size:0.8125rem;">{{T "settings.blogappearance.intro"}} <a href="/@{{.Account.Username}}/blog/">{{T "settings.blogappearance.view"}}</a></p>
+        {{if .BlogCSSError}}<p role="alert" style="color:var(--danger, #e74c3c);font-size:0.8125rem;margin-top:0.4rem;">{{.BlogCSSError}}</p>{{end}}
+        {{if .BlogRebuildSent}}<p role="status" style="color:var(--accent);font-size:0.8125rem;margin-top:0.4rem;">{{T "settings.blogappearance.rebuild_queued"}}</p>{{end}}
+        <form action="/settings/blog-appearance" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="settings-row">
+                <label for="blog_theme">{{T "settings.blogappearance.theme_label"}}</label>
+                <select id="blog_theme" name="blog_theme">
+                    {{range availableBlogThemes}}
+                    <option value="{{.ID}}"{{if eq $.BlogTheme .ID}} selected{{end}}>{{T .NameKey}} - {{T .DescriptionKey}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="blog_custom_css">{{T "settings.blogappearance.css_label"}}</label>
+                <textarea id="blog_custom_css" name="blog_custom_css" rows="12" spellcheck="false" autocapitalize="off" autocorrect="off" style="font-family:var(--font-mono);font-size:0.8125rem;">{{.BlogCustomCSS}}</textarea>
+                <small style="color:var(--muted);">{{T "settings.blogappearance.css_help"}}</small>
+            </div>
+            <div class="form-group">
+                <label for="blog_custom_css_file">{{T "settings.customcss.upload"}}</label>
+                <input type="file" id="blog_custom_css_file" name="blog_custom_css_file" accept=".css,text/css">
+                <small style="color:var(--muted);">{{T "settings.customcss.upload_hint"}}</small>
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" name="remove_blog_custom_css" value="1"> {{T "settings.blogappearance.remove"}}</label>
+            </div>
+            <input type="submit" class="btn btn-primary" value="{{T "settings.blogappearance.save"}}">
+        </form>
+        <form action="/settings/blog-rebuild" method="post" style="margin-top:1rem;">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <input type="submit" class="btn" value="{{T "settings.blogappearance.rebuild"}}">
+            <small style="display:block;color:var(--muted);margin-top:0.35rem;">{{T "settings.blogappearance.rebuild_help"}}</small>
+        </form>
+    </div>
+    {{end}}
+
+    <div class="settings-section" id="timeline">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg>{{T "timeline.default"}}</h2>
+        <form id="timeline-settings" action="/settings/timeline" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div style="display:flex;flex-direction:column;gap:0.8rem;margin-bottom:1rem;">
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="show_replies"{{if not .Account.HideReplies}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.timeline.show_replies"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="show_boosts"{{if not .Account.HideBoosts}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.timeline.show_boosts"}}</span>
+                </label>
+                <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="data_saver"{{if .Account.DataSaver}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.timeline.data_saver"}}<small style="display:block;color:var(--muted);font-weight:400;margin-top:0.2rem;">{{T "settings.timeline.data_saver_help"}}</small></span>
+                </label>
+                <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="hide_posts_without_alt"{{if .Account.HidePostsWithoutAlt}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.timeline.hide_posts_without_alt"}}<small style="display:block;color:var(--muted);font-weight:400;margin-top:0.2rem;">{{T "settings.timeline.hide_posts_without_alt_help"}}</small></span>
+                </label>
+            </div>
+        </form>
+        <div class="settings-row" style="margin-top:0.8rem;">
+            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                <input type="checkbox" id="auto-refresh-home" style="width:1.1rem;height:1.1rem;accent-color:var(--accent);">
+                <span>{{T "settings.timeline.auto_refresh"}}</span>
+            </label>
+            <small style="color:var(--muted);">{{T "settings.auto_refresh.browser_help"}}</small>
+        </div>
+        {{if catchupEnabled}}<div class="settings-row" style="margin-top:0.8rem;">
+            <label for="landing-page">{{T "settings.timeline.landing_page"}}</label>
+            <select id="landing-page">
+                <option value="/">{{T "nav.home"}}</option>
+                <option value="/catchup">{{T "nav.catchup"}}</option>
+            </select>
+            <small style="color:var(--muted);">{{T "settings.auto_refresh.browser_help"}}</small>
+        </div>{{end}}
+        <input type="submit" form="timeline-settings" class="btn btn-primary" style="font-size:0.8125rem;margin-top:0.8rem;" value="{{T "settings.timeline.save"}}">
+    </div>
+
+    <div class="settings-section" id="wellness">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-heart"/></svg>{{T "settings.wellness.heading"}}</h2>
+        <p style="color:var(--muted);font-size:0.8125rem;">{{T "settings.wellness.help"}}</p>
+        <form action="/settings/wellness" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group">
+                <label><input type="checkbox" name="hide_favourite_counts"{{if .Account.HideFavouriteCounts}} checked{{end}}> {{T "settings.wellness.hide_favourite_counts"}}</label>
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" name="hide_boost_counts"{{if .Account.HideBoostCounts}} checked{{end}}> {{T "settings.wellness.hide_boost_counts"}}</label>
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" name="hide_follower_counts"{{if .Account.HideFollowerCounts}} checked{{end}}> {{T "settings.wellness.hide_follower_counts"}}</label>
+            </div>
+            <input type="submit" class="btn btn-primary" value="{{T "settings.wellness.save"}}">
+        </form>
+    </div>
+
+    <div class="settings-section" id="filters">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>{{T "settings.filters.heading"}}</h2>
+        <p style="color:var(--muted);font-size:.8125rem;margin-bottom:.4rem;">{{T "settings.filters.help"}}</p>
+        {{if .FilterNotice}}<p class="filter-notice" role="status">{{.FilterNotice}}</p>{{end}}
+        {{range .Filters}}{{$filter := .}}
+        <form class="filter-card{{if eq .ID $.FilterFlash}} is-flash{{end}}" action="/settings/filters/{{.ID}}" method="post">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <div class="form-group"><label>{{T "settings.filters.title"}}<input name="title" value="{{.Title}}" required></label></div>
+            <div class="form-group"><label>{{T "settings.filters.words"}}<textarea name="keywords" rows="3">{{range .Keywords}}{{.Keyword}}{{"\n"}}{{end}}</textarea></label></div>
+            <fieldset class="filter-contexts"><legend>{{T "settings.filters.languages"}}</legend>
+                <div class="filter-context-list">
+                    <label><input type="checkbox" name="invert_languages"{{if .InvertLanguages}} checked{{end}}> {{T "settings.filters.invert_languages"}}</label>
+                    <label><input type="checkbox" name="show_unknown_languages"{{if .ShowUnknownLanguages}} checked{{end}}> {{T "settings.filters.show_unknown_languages"}}</label>
+                    {{range filterLanguages}}<label><input type="checkbox" name="languages" value="{{.Code}}"{{if containsString $filter.Languages .Code}} checked{{end}}> {{.Name}} ({{.Code}})</label>{{end}}
+                </div>
+            </fieldset>
+            <fieldset class="filter-contexts"><legend>{{T "settings.filters.contexts"}}</legend>
+                <div class="filter-context-list">
+                    <label><input type="checkbox" name="all_posts"{{if eq (len .Context) 5}} checked{{end}}> {{T "settings.filters.all"}}</label>
+                    {{range $context := list "home" "notifications" "public" "thread" "account"}}<label><input type="checkbox" name="context_{{$context}}"{{if containsString $filter.Context $context}} checked{{end}}> {{T (printf "settings.filters.context_%s" $context)}}</label>{{end}}
+                </div>
+            </fieldset>
+            <div class="filter-fields">
+                <div class="form-group"><label>{{T "settings.filters.action"}}<select name="filter_action"><option value="warn"{{if eq .FilterAction "warn"}} selected{{end}}>{{T "settings.filters.action_warn"}}</option><option value="hide"{{if eq .FilterAction "hide"}} selected{{end}}>{{T "settings.filters.action_hide"}}</option></select></label></div>
+                <div class="form-group"><label>{{T "settings.filters.expires"}}<input type="datetime-local" name="expires_at" value="{{filterExpiryDate .ExpiresAt}}"></label></div>
+            </div>
+            <div class="filter-card-actions">
+                <input type="submit" class="btn btn-primary" value="{{T "settings.filters.save"}}">
+                <button class="btn btn-danger" type="submit" formaction="/settings/filters/{{.ID}}/delete" formnovalidate>{{T "settings.filters.delete"}}</button>
+            </div>
+        </form>
+        {{end}}
+        <form class="filter-new" action="/settings/filters" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <h3>{{T "settings.filters.create"}}</h3>
+            <div class="form-group"><label>{{T "settings.filters.title"}}<input name="title" required></label></div>
+            <div class="form-group"><label>{{T "settings.filters.words"}}<textarea name="keywords" rows="3"></textarea></label></div>
+            <fieldset class="filter-contexts"><legend>{{T "settings.filters.languages"}}</legend>
+                <div class="filter-context-list">
+                    <label><input type="checkbox" name="invert_languages"> {{T "settings.filters.invert_languages"}}</label>
+                    <label><input type="checkbox" name="show_unknown_languages"> {{T "settings.filters.show_unknown_languages"}}</label>
+                    {{range filterLanguages}}<label><input type="checkbox" name="languages" value="{{.Code}}"> {{.Name}} ({{.Code}})</label>{{end}}
+                </div>
+            </fieldset>
+            <fieldset class="filter-contexts"><legend>{{T "settings.filters.contexts"}}</legend>
+                <div class="filter-context-list">
+                    <label><input type="checkbox" name="all_posts" checked> {{T "settings.filters.all"}}</label>
+                    {{range $context := list "home" "notifications" "public" "thread" "account"}}<label><input type="checkbox" name="context_{{$context}}"> {{T (printf "settings.filters.context_%s" $context)}}</label>{{end}}
+                </div>
+            </fieldset>
+            <div class="filter-fields">
+                <div class="form-group"><label>{{T "settings.filters.action"}}<select name="filter_action"><option value="warn">{{T "settings.filters.action_warn"}}</option><option value="hide">{{T "settings.filters.action_hide"}}</option></select></label></div>
+                <div class="form-group"><label>{{T "settings.filters.expires"}}<input type="datetime-local" name="expires_at"></label></div>
+            </div>
+            <input type="submit" class="btn btn-primary" value="{{T "settings.filters.create"}}">
+        </form>
+    </div>
+
+    <div class="settings-section" id="notifications">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg>{{T "nav.notifications"}}</h2>
+        <form action="/settings/notifications" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div style="display:flex;flex-direction:column;gap:0.8rem;margin-bottom:1rem;">
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="group_notifications"{{if .Account.GroupNotifications}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notifications.group"}}</span>
+                </label>
+                <div style="color:var(--muted);font-size:0.8125rem;">{{T "settings.notifications.show_for"}}</div>
+                {{range .NotificationOptions}}
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="show_{{.Name}}"{{if .Checked}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{.Label}}</span>
+                </label>
+                {{end}}
+            </div>
+            {{if not .SensitiveRelationshipNotificationsBlocked}}
+            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                <input type="checkbox" name="notify_sensitive_relationships" aria-describedby="sensitive-notifications-help"{{if .Account.NotifySensitiveRelationships}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                <span>{{T "settings.notifications.sensitive"}}</span>
+            </label>
+            <p id="sensitive-notifications-help" style="color:var(--muted);font-size:0.8125rem;">{{T "settings.notifications.sensitive_help"}}</p>
+            {{end}}
+            <div class="settings-row" style="margin-top:0.8rem;margin-bottom:1rem;">
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" id="auto-refresh-notifications" style="width:1.1rem;height:1.1rem;accent-color:var(--accent);">
+                    <span>{{T "settings.notifications.auto_refresh"}}</span>
+                </label>
+                <small style="color:var(--muted);">{{T "settings.auto_refresh.browser_help"}}</small>
+            </div>
+            <input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.notifications.save"}}">
+        </form>
+    </div>
+
+    {{if .SMTPConfigured}}
+    <div class="settings-section" id="email">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-at"/></svg>{{T "settings.email.heading"}}</h2>
+        {{if .Account.Email}}
+        <form action="/settings/email_notifications" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">
+                {{T "settings.email.label"}}: <strong style="color:var(--text);">{{.Account.Email}}</strong>
+            </p>
+            <div style="color:var(--muted);font-size:0.8125rem;margin-bottom:0.5rem;">{{T "settings.email.send_when"}}</div>
+            <div style="display:flex;flex-direction:column;gap:0.8rem;margin-bottom:1rem;">
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_mention"{{if .Account.EmailNotifyMention}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.mentioned"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_follow"{{if .Account.EmailNotifyFollow}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.followed"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_follow_request"{{if .Account.EmailNotifyFollowRequest}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.follow_request"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_reblog"{{if .Account.EmailNotifyReblog}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.boosted"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_favourite"{{if .Account.EmailNotifyFavourite}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.liked"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_quote"{{if .Account.EmailNotifyQuote}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.quoted"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_poll"{{if .Account.EmailNotifyPoll}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.poll_ended"}}</span>
+                </label>
+                {{if blogEnabled .Account}}
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_blog_rebuild"{{if .Account.EmailNotifyBlogRebuild}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.blog_rebuild"}}</span>
+                </label>
+                {{end}}
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_account_activity"{{if .Account.EmailNotifyAccountActivity}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.account_activity"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;margin-top:0.4rem;padding-top:0.8rem;border-top:1px solid var(--line);">
+                    <input type="checkbox" name="email_notify_digest"{{if .Account.EmailNotifyDigest}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.digest"}}</span>
+                </label>
+                {{if .Account.IsAdmin}}
+                <div style="margin-top:0.4rem;padding-top:0.8rem;border-top:1px solid var(--line);color:var(--muted);font-size:0.8125rem;">{{T "settings.notify.admin_alerts"}}</div>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_report"{{if .Account.EmailNotifyReport}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.new_report"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_approval"{{if .Account.EmailNotifyApproval}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.new_registration"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_new_account"{{if .Account.EmailNotifyNewAccount}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.new_account"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_account_departure"{{if .Account.EmailNotifyAccountDeparture}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.account_departure"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_invite_signup"{{if .Account.EmailNotifyInviteSignup}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.invite_signup"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_backup_success"{{if .Account.EmailNotifyBackupSuccess}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.backup_success"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_backup_failure"{{if .Account.EmailNotifyBackupFailure}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.backup_failure"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="email_notify_instance"{{if .Account.EmailNotifyInstance}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.instance_unreachable"}}</span>
+                </label>
+                {{end}}
+            </div>
+            <input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.email.save"}}">
+        </form>
+        <form action="/settings/email" method="post" style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <label for="settings-email-change" style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.4rem;display:block;">{{T "settings.email.change"}}</label>
+            <div style="display:flex;gap:0.5rem;align-items:flex-end;">
+                <input type="email" id="settings-email-change" name="email" value="{{.Account.Email}}" required style="flex:1;min-width:0;font-size:0.875rem;">
+                <label class="sr-only" for="settings-current-password">{{T "password.current"}}</label>
+                <input id="settings-current-password" type="password" name="current_password" placeholder="{{T "password.current"}}" required autocomplete="current-password" style="flex:1;min-width:0;font-size:0.875rem;">
+                <input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.email.save_address"}}">
+            </div>
+        </form>
+        {{else}}
+        <p style="font-size:0.875rem;color:var(--muted);margin-bottom:0.75rem;">
+            {{T "settings.email.none_set"}}
+        </p>
+        <form action="/settings/email" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div style="display:flex;gap:0.5rem;align-items:flex-end;">
+                <label class="sr-only" for="settings-email-set">{{T "settings.email.label"}}</label>
+                <input type="email" id="settings-email-set" name="email" placeholder="your@email.example" required style="flex:1;min-width:0;font-size:0.875rem;">
+                <label class="sr-only" for="settings-current-password-2">{{T "password.current"}}</label>
+                <input id="settings-current-password-2" type="password" name="current_password" placeholder="{{T "password.current"}}" required autocomplete="current-password" style="flex:1;min-width:0;font-size:0.875rem;">
+                <input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.email.set"}}">
+            </div>
+        </form>
+        {{end}}
+    </div>
+    {{end}}
+
+    {{if .VAPIDPublicKey}}
+    <div class="settings-section" id="push" x-data="pushSettings"
+		 data-vapid-public-key="{{.VAPIDPublicKey}}" data-web-push-endpoint="{{.WebPushEndpoint}}"
+		 data-csrf-token="{{.CSRFToken}}" data-error-inspect="{{T "settings.push.error_inspect"}}"
+		 data-error-blocked="{{T "settings.push.error_blocked"}}" data-error-enable="{{T "settings.push.error_enable"}}"
+		 data-error-disable="{{T "settings.push.error_disable"}}">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg>{{T "settings.push.heading"}}</h2>
+        <noscript>
+            <p style="font-size:0.875rem;color:var(--muted);">{{T "settings.push.requires_js"}}</p>
+        </noscript>
+        <div x-cloak>
+            <p style="font-size:0.875rem;color:var(--muted);margin-bottom:0.75rem;">
+                {{T "settings.push.intro"}}
+            </p>
+            <template x-if="!supported">
+                <p style="font-size:0.8125rem;color:var(--muted);">{{T "settings.push.unsupported"}}</p>
+            </template>
+            <template x-if="supported">
+                <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
+                    <button type="button" class="btn btn-primary" style="font-size:0.8125rem;" x-show="!subscribed" @click="subscribe()" :disabled="busy">
+                        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg>
+                        <span x-text="busy ? '{{T "settings.push.enabling"}}' : '{{T "settings.push.enable"}}'"></span>
+                    </button>
+                    <button type="button" class="btn btn-ghost" style="font-size:0.8125rem;" x-show="subscribed" @click="unsubscribe()" :disabled="busy">
+                        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg>
+                        <span x-text="busy ? '{{T "settings.push.disabling"}}' : '{{T "settings.push.disable"}}'"></span>
+                    </button>
+                    <span x-show="error" x-text="error" style="color:var(--danger);font-size:0.8125rem;"></span>
+                </div>
+            </template>
+        </div>
+
+        {{if .WebPushSubscription}}
+        <form action="/settings/push/preferences" method="post" style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--line);">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div style="color:var(--muted);font-size:0.8125rem;margin-bottom:0.5rem;">{{T "settings.push.notify_when"}}</div>
+            <div style="display:flex;flex-direction:column;gap:0.8rem;margin-bottom:1rem;">
+                <label for="push_policy" style="display:flex;align-items:center;gap:0.6rem;font-size:0.9rem;font-weight:500;">
+                    <span>{{T "settings.push.triggered_by"}}</span>
+                    <select id="push_policy" name="push_policy" style="padding:0.35rem;font:inherit;">
+                        <option value="all"{{if eq .WebPushSubscription.Policy "all"}} selected{{end}}>{{T "settings.push.anyone"}}</option>
+                        <option value="followed"{{if eq .WebPushSubscription.Policy "followed"}} selected{{end}}>{{T "settings.push.followed_accounts"}}</option>
+                        <option value="none"{{if eq .WebPushSubscription.Policy "none"}} selected{{end}}>{{T "settings.push.nobody"}}</option>
+                    </select>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="push_notify_mention"{{if .WebPushSubscription.NotifyMention}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.mentioned"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="push_notify_follow"{{if .WebPushSubscription.NotifyFollow}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.followed"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="push_notify_follow_request"{{if .WebPushSubscription.NotifyFollowRequest}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.follow_request"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="push_notify_reblog"{{if .WebPushSubscription.NotifyReblog}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.boosted"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="push_notify_favourite"{{if .WebPushSubscription.NotifyFavourite}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.liked"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="push_notify_quote"{{if .WebPushSubscription.NotifyQuote}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.quoted"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="push_notify_poll"{{if .WebPushSubscription.NotifyPoll}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.poll_ended"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="push_notify_status"{{if .WebPushSubscription.NotifyStatus}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.followed_posts"}}</span>
+                </label>
+                {{if blogEnabled .Account}}
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="push_notify_blog_rebuild"{{if .WebPushSubscription.NotifyBlogRebuild}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.notify.blog_rebuild"}}</span>
+                </label>
+                {{end}}
+            </div>
+            <input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.push.save"}}">
+        </form>
+        {{end}}
+
+        {{if .PushSubscriptions}}
+        <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--line);">
+            <div style="color:var(--muted);font-size:0.8125rem;margin-bottom:0.5rem;">{{T "settings.push.devices"}}</div>
+            <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                {{range .PushSubscriptions}}
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.6rem;font-size:0.875rem;">
+                    <span>{{if .Label}}{{.Label}}{{else}}{{T "settings.push.unnamed_app"}}{{end}}{{if eq .ID $.CurrentPushID}} <span style="color:var(--muted);font-size:0.75rem;">({{T "settings.push.this_device"}})</span>{{end}}</span>
+                    {{if ne .ID $.CurrentPushID}}
+                    <form action="/settings/push/revoke/{{.ID}}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                        <input type="submit" class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.7rem;" value="{{T "settings.push.revoke"}}">
+                    </form>
+                    {{end}}
+                </div>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+
+    <div class="settings-section" id="hashtags">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-search"/></svg>{{T "settings.hashtags.heading"}}</h2>
+        <div style="font-size:0.875rem;color:var(--muted);">
+            <p style="margin-bottom:0.75rem;">
+                {{T "settings.hashtags.intro"}}
+            </p>
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+                <a href="/tags" class="btn btn-primary" style="font-size:0.8125rem;"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-hashtag"/></svg>{{T "settings.hashtags.followed"}}</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section" id="security">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-lock"/></svg>{{T "settings.security.heading"}}</h2>
+        <div style="font-size:0.875rem;color:var(--muted);">
+            <p style="margin-bottom:0.75rem;">
+                {{T "settings.security.intro"}}
+            </p>
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+                <a href="/settings/password" class="btn btn-primary" style="font-size:0.8125rem;"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-lock"/></svg>{{T "auth.change_password_button"}}</a>
+                <a href="/settings/sessions" class="btn btn-ghost" style="font-size:0.8125rem;"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe-sm"/></svg>{{T "settings.security.manage_sessions"}}</a>
+				<a href="/settings/mfa" class="btn btn-ghost" style="font-size:0.8125rem;">{{T "settings.security.mfa"}}</a>
+                <a href="/settings/moderation" class="btn btn-ghost" style="font-size:0.8125rem;"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>{{T "moderation.heading"}}</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section" id="locale">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe-sm"/></svg>{{T "settings.language.heading"}}</h2>
+        <form action="/settings/locale" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
+                <label class="sr-only" for="settings-locale">{{T "settings.language.heading"}}</label>
+                <select id="settings-locale" name="locale" style="padding:0.4rem;font-size:0.875rem;">
+                    {{range supportedLocales}}
+                        <option value="{{.Code}}"{{if eq $.Account.Locale .Code}} selected{{end}}>{{.Name}}</option>
+                    {{end}}
+                </select>
+                <input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.language.save"}}">
+            </div>
+        </form>
+    </div>
+
+    <div class="settings-section" id="appearance">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-palette"/></svg>{{T "settings.appearance.heading"}}</h2>
+        <form action="/settings/appearance" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="settings-row">
+                <label for="theme">{{T "settings.appearance.theme_label"}}</label>
+                <select id="theme" name="theme">
+                    {{range availableThemes}}
+                    <option value="{{.ID}}"{{if eq $.Theme .ID}} selected{{end}}>{{T .NameKey}} - {{T .DescriptionKey}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div class="settings-row">
+                <label for="appearance-mode">{{T "settings.appearance.mode_label"}}</label>
+                <select id="appearance-mode" name="appearance">
+                    {{range availableAppearances}}
+                    <option value="{{.}}"{{if eq $.Appearance .}} selected{{end}}>{{T (printf "appearance.%s" .)}}</option>
+                    {{end}}
+                </select>
+                <input type="submit" class="btn btn-primary" value="{{T "settings.appearance.save"}}">
+            </div>
+        </form>
+        {{/* This one is not part of the form above: it is a per-browser
+             preference the timestamps in the timeline read straight out of
+             local storage, so there is nothing to post and nothing to store
+             on the account. Without JS the checkbox does nothing, which is
+             also when the server's own absolute timestamps are what you get. */}}
+        <div class="settings-row" style="margin-top:0.8rem;">
+            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                <input type="checkbox" id="absolute-times" style="width:1.1rem;height:1.1rem;accent-color:var(--accent);">
+                <span>{{T "settings.appearance.absolute_times"}}</span>
+            </label>
+            <small style="color:var(--muted);">{{T "settings.appearance.absolute_times_help"}}</small>
+        </div>
+    </div>
+
+    <div class="settings-section" id="custom-css">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-upload"/></svg>{{T "settings.customcss.heading"}}</h2>
+        {{if .CustomCSSError}}<p role="alert" style="color:var(--danger, #e74c3c);font-size:0.8125rem;margin-top:0.4rem;">{{.CustomCSSError}}</p>{{end}}
+        <form action="/settings/custom-css" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group">
+                <label for="custom_css">{{T "settings.customcss.label"}}</label>
+                <textarea id="custom_css" name="custom_css" rows="12" spellcheck="false" autocapitalize="off" autocorrect="off" style="font-family:var(--font-mono);font-size:0.8125rem;">{{.CustomCSS}}</textarea>
+                <small style="color:var(--muted);">{{T "settings.customcss.help"}}</small>
+            </div>
+            <div class="form-group">
+                <label for="custom_css_file">{{T "settings.customcss.upload"}}</label>
+                <input type="file" id="custom_css_file" name="custom_css_file" accept=".css,text/css">
+                <small style="color:var(--muted);">{{T "settings.customcss.upload_hint"}}</small>
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" name="remove_custom_css" value="1"> {{T "settings.customcss.remove"}}</label>
+            </div>
+            <input type="submit" class="btn btn-primary" value="{{T "settings.customcss.save"}}">
+        </form>
+    </div>
+
+    <div class="settings-section" id="posting">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg>{{T "settings.posting.heading"}}</h2>
+        <form action="/settings/post_language" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div style="display:flex;flex-direction:column;gap:0.8rem;">
+                <label for="post_language" style="font-size:0.9rem;font-weight:500;">{{T "settings.posting.label"}}</label>
+                <select id="post_language" name="post_language" style="padding:0.4rem;font-size:0.875rem;max-width:16rem;">
+                    {{range contentLanguages}}
+                        <option value="{{.Code}}"{{if eq $.Account.DefaultPostLanguage .Code}} selected{{end}}>{{.Name}}</option>
+                    {{end}}
+                </select>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="post_markdown"{{if .Account.DefaultPostMarkdown}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);">
+                    <span>{{T "settings.posting.markdown"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="show_timeline_composer"{{if not .Account.HideTimelineComposer}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);">
+                    <span>{{T "settings.posting.show_timeline_composer"}}</span>
+                </label>
+                <label for="post_visibility" style="font-size:0.9rem;font-weight:500;">{{T "settings.posting.audience"}}</label>
+                <select id="post_visibility" name="post_visibility" style="padding:0.4rem;font-size:0.875rem;max-width:16rem;">
+                    <option value="public"{{if eq .Account.DefaultPostVisibility "public"}} selected{{end}}>{{T "composer.visibility.public"}}</option>
+                    <option value="unlisted"{{if eq .Account.DefaultPostVisibility "unlisted"}} selected{{end}}>{{T "composer.visibility.unlisted"}}</option>
+                    <option value="private"{{if eq .Account.DefaultPostVisibility "private"}} selected{{end}}>{{T "composer.visibility.followers"}}</option>
+                    <option value="direct"{{if eq .Account.DefaultPostVisibility "direct"}} selected{{end}}>{{T "composer.visibility.direct"}}</option>
+                    <option value="local"{{if eq .Account.DefaultPostVisibility "local"}} selected{{end}}>{{T "composer.visibility.local"}}</option>
+                    <option value="local_unlisted"{{if eq .Account.DefaultPostVisibility "local_unlisted"}} selected{{end}}>{{T "composer.visibility.local_unlisted"}}</option>
+                </select>
+                <small style="color:var(--muted);">{{T "settings.posting.help"}}</small>
+                <div><input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.posting.save"}}"></div>
+            </div>
+        </form>
+    </div>
+
+    <div class="settings-section" id="privacy">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>{{T "settings.privacy.heading"}}</h2>
+        <form action="/settings/privacy" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div style="display:flex;flex-direction:column;gap:0.8rem;margin-bottom:1rem;">
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="locked"{{if .Account.ManuallyApprovesFollowers}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.privacy.locked"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="hide_followers"{{if .Account.HideFollowers}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.privacy.hide_followers"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="hide_following"{{if .Account.HideFollowing}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.privacy.hide_following"}}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;">
+                    <input type="checkbox" name="bot"{{if .Account.IsBot}} checked{{end}} style="width:1.1rem;height:1.1rem;accent-color:var(--accent);flex-shrink:0;">
+                    <span>{{T "settings.privacy.bot"}}</span>
+                </label>
+                <label style="display:flex;flex-direction:column;gap:0.4rem;font-size:0.9rem;font-weight:500;">
+                    <span>{{T "settings.privacy.quote_policy_label"}}</span>
+                    <select name="quote_policy" style="padding:0.4rem;font-size:0.875rem;">
+                        <option value="everyone"{{if eq .Account.QuotePolicy "everyone"}} selected{{end}}>{{T "settings.privacy.quote_everyone"}}</option>
+                        <option value="followers"{{if eq .Account.QuotePolicy "followers"}} selected{{end}}>{{T "settings.privacy.quote_followers"}}</option>
+                        <option value="nobody"{{if eq .Account.QuotePolicy "nobody"}} selected{{end}}>{{T "settings.privacy.quote_nobody"}}</option>
+                    </select>
+                </label>
+            </div>
+            <input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.privacy.save"}}">
+        </form>
+    </div>
+
+    <div class="settings-section" id="pruning">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-trash"/></svg>{{T "pruning.heading"}}</h2>
+        <div style="font-size:0.875rem;color:var(--muted);">
+            <p style="margin-bottom:0.75rem;">
+                {{T "settings.pruning_card.intro"}}
+            </p>
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+                <a href="/settings/pruning" class="btn btn-primary" style="font-size:0.8125rem;"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-trash"/></svg>{{T "settings.pruning_card.link"}}</a>
+            </div>
+        </div>
+    </div>
+
+	<div class="settings-section" id="data">
+		<h2>{{T "settings.data.heading"}}</h2>
+		<p style="font-size:0.875rem;color:var(--muted);">{{T "settings.data.intro"}}</p>
+		<div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+			<a class="btn btn-primary" href="/settings/export">{{T "settings.data.export_link"}}</a>
+			<a class="btn btn-primary" href="/settings/import">{{T "settings.data.import_link"}}</a>
+			<a class="btn btn-ghost" href="/settings/delete">{{T "settings.data.delete_link"}}</a>
+		</div>
+	</div>
+
+    <div class="settings-section" id="account">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-at"/></svg>{{T "settings.account.heading"}}</h2>
+        <div style="font-size:0.875rem;color:var(--muted);">
+            <p style="margin-bottom:0.5rem;">
+                <strong style="color:var(--text);">{{T "settings.account.username"}}:</strong> @{{.Account.Username}}
+            </p>
+            <p style="margin-bottom:0.5rem;">
+                <strong style="color:var(--text);">{{T "settings.account.actor_uri"}}:</strong>
+                <a href="{{localURL .Account.ActorURI}}" target="_blank" rel="noopener">{{.Account.ActorURI}}</a>
+            </p>
+            <p>
+                <strong style="color:var(--text);">{{T "settings.account.posts"}}:</strong> {{.Account.StatusesCount}}
+            </p>
+        </div>
+    </div>
+
+    <div class="settings-section" id="instance">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg>{{T "settings.instance.heading"}}</h2>
+        <div style="font-size:0.875rem;color:var(--muted);">
+            <p style="margin-bottom:0.25rem;">
+                <strong style="color:var(--text);">{{T "settings.instance.domain"}}:</strong> {{.Domain}}
+            </p>
+            <p style="margin-bottom:0.25rem;">
+                <strong style="color:var(--text);">{{T "settings.instance.software"}}:</strong> {{userAgent}}
+            </p>
+            <p>
+                <strong style="color:var(--text);">{{T "settings.instance.your_url"}}:</strong> <a href="/@{{.Account.Username}}">/@{{.Account.Username}}</a>
+            </p>
+        </div>
+    </div>
+
+	    <div class="settings-section" id="migration">
+	        <h2 style="color:var(--danger, #e74c3c);"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-at"/></svg>{{T "settings.migration.heading"}}</h2>
+
+	        <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">
+	            <strong>{{T "settings.migration.moving_in_heading"}}</strong> {{T "settings.migration.moving_in_body"}}
+	        </p>
+
+	        <form action="/settings/migration_alias" method="post" style="margin-bottom:1rem;">
+	            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+	            <div class="form-group" style="margin-bottom:0.5rem;">
+	                <label for="migration_alias" style="font-size:0.8125rem;">{{T "settings.migration.previous_handle"}}</label>
+	                <input type="text" id="migration_alias" name="migration_alias"
+	                       placeholder="user@oldserver.example.com or https://oldserver.example.com/users/user"
+	                       style="width:100%;max-width:420px;font-size:0.8125rem;">
+	            </div>
+	            <input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.migration.set_alias"}}">
+	        </form>
+
+	        {{if .Account.AlsoKnownAs}}
+        <div style="background:var(--info-bg, #d1ecf1);border:1px solid var(--info-border, #17a2b8);border-radius:0.5rem;padding:0.75rem 1rem;margin-bottom:1rem;">
+            <strong style="color:var(--info-text, #0c5460);">🔗 {{T "settings.migration.linked_heading"}}</strong>
+            <p style="font-size:0.8125rem;color:var(--muted);margin:0.5rem 0;">
+                {{sanitizeHTML (T "settings.migration.aliased_from" .Account.AlsoKnownAs)}}
+            </p>
+            <form action="/settings/import_follows" method="post" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.migration.import_from_old"}}">
+            </form>
+            <small style="display:block;color:var(--muted);margin-top:0.4rem;">{{T "settings.migration.import_help"}}</small>
+        </div>
+        {{end}}
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:1rem 0;">
+
+        <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">
+            <strong>{{T "settings.migration.csv_heading"}}</strong> {{T "settings.migration.csv_subtitle"}}
+        </p>
+
+        {{template "follow_import_progress.html" .}}
+
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:0.75rem;">
+            <a href="/settings/export_follows" class="btn btn-ghost" style="font-size:0.8125rem;" download>
+                <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-download"/></svg>{{T "settings.migration.export_csv"}}
+            </a>
+
+            <form action="/settings/import_follows_csv" method="post" enctype="multipart/form-data" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <label class="sr-only" for="settings-csv-file">{{T "settings.migration.import_csv"}}</label>
+                <input type="file" id="settings-csv-file" name="csv_file" accept=".csv,text/csv" style="font-size:0.8125rem;max-width:200px;">
+                <input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.migration.import_csv"}}">
+            </form>
+        </div>
+
+        <p style="font-size:0.75rem;color:var(--muted);">
+            {{T "settings.migration.csv_format"}} <code>user@domain,true,false,</code>.<br>
+            {{T "settings.migration.csv_help"}}
+        </p>
+        {{if .ImportError}}<p style="color:var(--danger, #e74c3c);font-size:0.8125rem;margin-top:0.4rem;">{{.ImportError}}</p>{{end}}
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:1rem 0;">
+
+        <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">
+            {{T "settings.migration.alt_import_intro"}}
+        </p>
+
+        <form action="/settings/import_follows" method="post" style="margin-bottom:1rem;">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group" style="margin-bottom:0.5rem;">
+                <label for="import_alias" style="font-size:0.8125rem;">{{T "settings.migration.old_handle"}}</label>
+                <input type="text" id="import_alias" name="import_alias"
+                       placeholder="user@oldserver.example.com or https://oldserver.example.com/users/user"
+                       style="width:100%;max-width:420px;font-size:0.8125rem;"
+                       value="{{.ImportAlias}}">
+            </div>
+            <input type="submit" class="btn btn-primary" style="font-size:0.8125rem;" value="{{T "settings.migration.import_from_this"}}">
+        </form>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:1rem 0;">
+
+        {{if .Account.MovedToURI}}
+        <div style="background:var(--info-bg, #d1ecf1);border:1px solid var(--info-border, #17a2b8);border-radius:0.5rem;padding:0.75rem 1rem;margin-bottom:0.75rem;">
+            <strong style="color:var(--info-text, #0c5460);">📤 {{T "settings.migration.moved_to" .Account.MovedToURI}}</strong>
+        </div>
+        {{else}}
+        <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.5rem;">
+            {{T "settings.migration.move_intro"}}
+        </p>
+        <a href="/settings/move" class="btn btn-danger" style="font-size:0.8125rem;"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-at"/></svg>{{T "settings.migration.move_link"}}</a>
+        {{end}}
+    </div>
+</div>

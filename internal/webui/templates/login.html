@@ -1,0 +1,34 @@
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-mark"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg></div>
+        <h1>little<span>fedi</span></h1>
+        <p class="sub">{{T "auth.sign_in_subtitle"}}</p>
+        {{if .Error}}
+        <div class="error-message" role="alert"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-alert"/></svg><span>{{.Error}}</span></div>
+        {{end}}
+        {{if .Info}}
+        <div class="info-message" role="status">{{.Info}}</div>
+        {{end}}
+        <form action="/auth/sign_in" method="post">
+            {{if .Redirect}}<input type="hidden" name="redirect" value="{{.Redirect}}">{{end}}
+            <label class="sr-only" for="login-username">{{T "auth.username_placeholder"}}</label>
+            <input id="login-username" type="text" name="username" class="field" placeholder="{{T "auth.username_placeholder"}}" value="{{.DefaultUsername}}" required autocomplete="username">
+            <label class="sr-only" for="login-password">{{T "auth.password_placeholder"}}</label>
+            <input id="login-password" type="password" name="password" class="field" placeholder="{{T "auth.password_placeholder"}}" required autofocus autocomplete="current-password">
+			<label class="sr-only" for="login-mfa-code">{{T "auth.mfa_optional_placeholder"}}</label>
+			<input id="login-mfa-code" type="text" name="mfa_code" class="field" placeholder="{{T "auth.mfa_optional_placeholder"}}" inputmode="numeric" autocomplete="one-time-code">
+            <input type="submit" class="btn btn-primary" value="{{T "auth.sign_in_button"}}">
+        </form>
+        {{if .RegistrationsOpen}}
+        <p class="sub" style="margin-top:1.2rem;margin-bottom:0;">
+            {{T "auth.no_account"}} <a href="/auth/sign_up">{{T "auth.create_one"}}</a>
+        </p>
+        {{end}}
+        <p class="sub" style="margin-top:0.5rem;margin-bottom:0;">
+            <a href="/auth/password/new">{{T "auth.forgot_password"}}</a>
+        </p>
+        <p class="sub" style="margin-top:0.5rem;margin-bottom:0;">
+            <a href="/auth/verify_email/resend">{{T "auth.resend_verification.link"}}</a>
+        </p>
+    </div>
+</div>

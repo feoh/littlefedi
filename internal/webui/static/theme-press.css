@@ -1,0 +1,477 @@
+/* Press - two flat inks on stock paper, printed slightly out of register.
+   littleFedi is a server one person runs in order to publish, so this theme
+   dresses it as the thing that does the publishing: a small two-colour press.
+   Loaded after app.css, only when the account selects it.
+
+   A layout theme by the measure that matters: it restates the shell (header,
+   feed, composer, profile, the auth card and the admin console) so every
+   template is in scope when it changes. It leaves app.css's boxes where they
+   are and changes what they are made of.
+
+   What it is built on is misregistration. A two-plate print never lands the
+   second plate exactly on the first, and a sliver of the second colour escapes
+   along one edge. Every card, button and panel here sits over a flat offset
+   plate, a box-shadow with no blur, and snaps into register when it is pointed
+   at or tabbed to. Nothing else on the page moves, and none of it moves under
+   prefers-reduced-motion.
+
+   Plate one is a saturated blue, plate two a fluorescent pink. Both are inks a
+   duplicator actually carries, and the pairing is deliberately nothing like
+   the soft teal of the default theme.
+
+   Token layering repeats app.css's four states, one specificity step higher so
+   a theme's dark tokens beat the base theme's dark tokens regardless of file
+   order. */
+
+/* ---------- Tokens: light, ink on paper ---------- */
+:root[data-theme="press"]{
+    color-scheme:light;
+    /* Set copy only. The face is served by the instance (CSP forbids a font
+       from anywhere else) and every rule that uses it names a fallback, so a
+       blocked or missing file costs personality and not layout. */
+    --font-display:'Press Display',var(--font-body);
+    --font-features:normal;
+    --bg:#e8eaee;
+    /* The halftone lattice needs a background-size, which a token cannot
+       carry, so it is painted by the body rule further down instead. */
+    --bg-grad:none;
+    --surface:#f7f8fa;
+    --surface-2:#dde0e6;
+    --surface-3:#d1d5dd;
+    --text:#14182b;
+    --text-soft:#2c3247;
+    --muted:#545b70;
+    --line:#c8ccd6;
+    --line-strong:#9aa1b3;
+    --accent:#2438c8;
+    --accent-strong:#1b2aa0;
+    --accent-soft:rgba(36,56,200,.10);
+    /* Flat wherever it sits under text: white on this blue is 8.6:1, and white
+       over the second ink would be 2.8:1. The two-plate split is reserved for
+       the marks, which carry no text. */
+    --accent-grad:#2438c8;
+    --accent-shadow:transparent;
+    --like:#e11d63;
+    --like-soft:rgba(225,29,99,.10);
+    --boost:#00875a;
+    --boost-soft:rgba(0,135,90,.10);
+    --mention:#6d3fd1;
+    --mention-soft:rgba(109,63,209,.10);
+    --danger:#c81e3c;
+    /* Depth is registration error, not light: hard offsets, never a blur. */
+    --shadow:none;
+    --shadow-md:3px 3px 0 var(--plate);
+    --shadow-lg:6px 6px 0 var(--plate-strong);
+    --radius:4px;
+    --radius-sm:3px;
+    --radius-lg:5px;
+    --status-clamp:26rem;
+    /* Theme-private tokens. --reg is the registration error every plate is
+       off by; change it once and the whole press retunes. */
+    --reg:4px;
+    --plate:#f0b3c9;
+    --plate-strong:#c9cdf0;
+    --plate-ink:#2438c8;
+    --plate-second:#e11d63;
+    --halftone:rgba(20,24,43,.09);
+}
+
+/* ---------- Tokens: dark, the night press ---------- */
+@media(prefers-color-scheme:dark){
+    :root[data-theme="press"][data-appearance="auto"],:root[data-theme="press"]:not([data-appearance]){
+        color-scheme:dark;
+        --bg:#0e0f14;
+        --surface:#171923;
+        --surface-2:#1f2230;
+        --surface-3:#272b3b;
+        --text:#eceef5;
+        --text-soft:#c9cedd;
+        --muted:#98a0b5;
+        --line:#2a2f3e;
+        --line-strong:#3b4256;
+        --accent:#7c8cff;
+        --accent-strong:#a3aeff;
+        --accent-soft:rgba(124,140,255,.16);
+        --accent-grad:#4d5fe8;
+        --like:#ff6e9c;
+        --like-soft:rgba(255,110,156,.16);
+        --boost:#2fd98a;
+        --boost-soft:rgba(47,217,138,.16);
+        --mention:#b79bff;
+        --mention-soft:rgba(183,155,255,.16);
+        --danger:#ff6e8a;
+        --shadow:none;
+        --shadow-md:3px 3px 0 var(--plate);
+        --shadow-lg:6px 6px 0 var(--plate-strong);
+        --plate:rgba(255,110,156,.45);
+        --plate-strong:rgba(124,140,255,.40);
+        --plate-ink:#7c8cff;
+        --plate-second:#ff6e9c;
+        --halftone:rgba(236,238,245,.05);
+    }
+}
+/* Explicit dark: the same tokens with no media query. Vanilla CSS cannot reuse
+   an @media block from a plain selector and this project has no build step;
+   keep the two copies in sync rather than adding one. */
+:root[data-theme="press"][data-appearance="dark"],:root[data-theme="press"][data-appearance="black"]{
+    color-scheme:dark;
+    --bg:#0e0f14;
+    --surface:#171923;
+    --surface-2:#1f2230;
+    --surface-3:#272b3b;
+    --text:#eceef5;
+    --text-soft:#c9cedd;
+    --muted:#98a0b5;
+    --line:#2a2f3e;
+    --line-strong:#3b4256;
+    --accent:#7c8cff;
+    --accent-strong:#a3aeff;
+    --accent-soft:rgba(124,140,255,.16);
+    --accent-grad:#4d5fe8;
+    --like:#ff6e9c;
+    --like-soft:rgba(255,110,156,.16);
+    --boost:#2fd98a;
+    --boost-soft:rgba(47,217,138,.16);
+    --mention:#b79bff;
+    --mention-soft:rgba(183,155,255,.16);
+    --danger:#ff6e8a;
+    --shadow:none;
+    --shadow-md:3px 3px 0 var(--plate);
+    --shadow-lg:6px 6px 0 var(--plate-strong);
+    --plate:rgba(255,110,156,.45);
+    --plate-strong:rgba(124,140,255,.40);
+    --plate-ink:#7c8cff;
+    --plate-second:#ff6e9c;
+    --halftone:rgba(236,238,245,.05);
+}
+
+/* ---------- Tokens: true black, paper out of the machine ---------- */
+:root[data-theme="press"][data-appearance="black"]{
+    --bg:#000000;
+    --surface:#0a0b10;
+    --surface-2:#15171f;
+    --surface-3:#1e212b;
+    --line:#20242f;
+    --line-strong:#333a4a;
+    --halftone:rgba(236,238,245,.04);
+}
+
+/* The display face. Served by the instance: the Content-Security-Policy has no
+   font-src, so it falls back to default-src 'self' and a font from anywhere
+   else is refused. Bricolage Grotesque, pinned to one weight axis and subset to
+   latin; its licence is in THIRD_PARTY_LICENSES.md with the other bundled
+   assets. Every rule below names a fallback, so a reader who never receives the
+   file loses the voice and keeps the layout. */
+@font-face{
+    font-family:'Press Display';
+    src:url("/static/press-display.woff2") format("woff2");
+    font-weight:400 800;
+    font-style:normal;
+    font-display:swap;
+}
+
+/* ---------- The sheet ---------- */
+/* The halftone lattice. Small enough to read as tone rather than as dots, and
+   painted here instead of through --bg-grad because a tiled gradient needs a
+   background-size that a single token cannot carry. */
+[data-theme="press"] body{
+    background-image:radial-gradient(circle at 1px 1px,var(--halftone) 1px,transparent 0);
+    background-size:6px 6px;
+}
+[data-theme="press"] :focus-visible{outline:3px solid var(--accent-strong);outline-offset:2px}
+/* Selected text takes the pale plate rather than the full second ink, which
+   holds its contrast in both colour schemes without a mode of its own. */
+[data-theme="press"] ::selection{background:var(--plate);color:var(--text)}
+
+/* ---------- The press ---------- */
+/* Misregistration. A plate is laid down under the panel, offset by --reg, and
+   pointing at the panel or tabbing to it prints the second pass: the plate
+   goes to zero and the panel moves the same distance to meet it. Nothing here
+   uses a blur, because a press does not cast light. */
+[data-theme="press"] .status,
+[data-theme="press"] .composer,
+[data-theme="press"] .notification,
+[data-theme="press"] .settings-section,
+[data-theme="press"] .admin-card,
+[data-theme="press"] .stat-card,
+[data-theme="press"] .admin-sidebar,
+[data-theme="press"] .profile-header,
+[data-theme="press"] .auth-card{
+    border:1px solid var(--line-strong);
+    box-shadow:var(--reg) var(--reg) 0 var(--plate);
+    transition:box-shadow .16s ease-out,transform .16s ease-out,border-color .16s;
+}
+[data-theme="press"] .status:hover,
+[data-theme="press"] .notification:hover,
+[data-theme="press"] .composer:focus-within,
+[data-theme="press"] .stat-card:hover{
+    transform:translate(var(--reg),var(--reg));
+    box-shadow:0 0 0 var(--plate);
+    border-color:var(--accent);
+}
+
+/* ---------- Masthead ---------- */
+/* Flat, not glass: the header is the top of the printed page. The rule under
+   it is the first place the second plate shows, so the misregistration reads
+   before a single card has scrolled past. */
+[data-theme="press"] .header{
+    background:var(--surface);
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+    border-bottom:2px solid var(--text);
+    box-shadow:0 var(--reg) 0 var(--plate-second);
+}
+[data-theme="press"] .logo{
+    font-family:var(--font-display);
+    font-size:1.28rem;
+    font-weight:800;
+    letter-spacing:-.035em;
+}
+[data-theme="press"] .logo-mark{
+    border-radius:2px;
+    background:linear-gradient(105deg,var(--plate-ink) 0 52%,var(--plate-second) 52% 100%);
+    box-shadow:none;
+}
+[data-theme="press"] .nav-link,
+[data-theme="press"] .mobile-bottom-nav>a,
+[data-theme="press"] .mobile-timeline-trigger{
+    border-radius:2px;
+    font-weight:650;
+}
+[data-theme="press"] .nav-link.active{
+    background:transparent;
+    color:var(--accent-strong);
+    box-shadow:inset 0 -3px 0 var(--accent);
+}
+[data-theme="press"] .notif-badge{border-radius:2px;font-variant-numeric:tabular-nums}
+[data-theme="press"] .mobile-bottom-nav{
+    border-top:2px solid var(--text);
+    box-shadow:none;
+}
+[data-theme="press"] .mobile-menu-panel,
+[data-theme="press"] .mobile-timeline-panel,
+[data-theme="press"] .composer-autocomplete,
+[data-theme="press"] .reaction-menu{
+    border:1px solid var(--line-strong);
+    box-shadow:var(--reg) var(--reg) 0 var(--plate);
+}
+
+/* ---------- Set copy ---------- */
+/* The display face is for the things a printer would have set in metal: the
+   masthead, names, headings and the labels on the controls. Running text stays
+   in the body face, where it is easier to read at length. */
+[data-theme="press"] .page-title,
+[data-theme="press"] .auth-card h1,
+[data-theme="press"] .profile-name,
+[data-theme="press"] .status-author,
+[data-theme="press"] .notif-actor,
+[data-theme="press"] .catchup-title,
+[data-theme="press"] .settings-section h2,
+[data-theme="press"] .admin-card h2,
+[data-theme="press"] .empty-state h2,
+[data-theme="press"] .status-body h1,
+[data-theme="press"] .status-body h2,
+[data-theme="press"] .status-body h3{
+    font-family:var(--font-display);
+    letter-spacing:-.025em;
+}
+[data-theme="press"] .page-title,[data-theme="press"] .profile-name{font-weight:800}
+[data-theme="press"] .status-author{font-size:1rem;font-weight:750}
+[data-theme="press"] .auth-card h1{font-size:1.75rem;font-weight:800;letter-spacing:-.04em}
+[data-theme="press"] .stat-card .stat-num,
+[data-theme="press"] .admin-metric-value,
+[data-theme="press"] .catchup-weight,
+[data-theme="press"] .profile-stats strong{
+    font-family:var(--font-display);
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-.03em;
+}
+/* Labels are set the way a label is printed: small, spaced, upper case. */
+[data-theme="press"] .btn,
+[data-theme="press"] .follow-btn,
+[data-theme="press"] .nav-link,
+[data-theme="press"] .timeline-nav a,
+[data-theme="press"] .profile-tab,
+[data-theme="press"] .notif-tab,
+[data-theme="press"] .filter-btn,
+[data-theme="press"] .load-more,
+[data-theme="press"] .back-link{
+    font-family:var(--font-display);
+    font-size:.8rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.055em;
+}
+
+/* ---------- Squared off ---------- */
+/* A pill is a shape a press cannot make cheaply. Everything rounded in the
+   default sheet is cut square here, and the rounding that survives is the
+   4px of --radius. */
+[data-theme="press"] .btn,
+[data-theme="press"] .follow-btn,
+[data-theme="press"] .load-more,
+[data-theme="press"] .back-link,
+[data-theme="press"] .filter-btn,
+[data-theme="press"] .action-btn,
+[data-theme="press"] .reaction,
+[data-theme="press"] .relationship-badge,
+[data-theme="press"] .catchup-reason,
+[data-theme="press"] .admin-badge,
+[data-theme="press"] .admin-nav-count,
+[data-theme="press"] .timeline-nav,
+[data-theme="press"] .timeline-nav a,
+[data-theme="press"] .status-clamp-toggle,
+[data-theme="press"] .lang-pill,
+[data-theme="press"] .visibility-pill{
+    border-radius:2px;
+}
+/* Photographs are rectangles in print, and cropping every one of them to a
+   circle is the single most interface-looking thing the default sheet does. */
+[data-theme="press"] .status-avatar,
+[data-theme="press"] .profile-avatar,
+[data-theme="press"] .notif-avatar img,
+[data-theme="press"] .notif-avatar-fallback,
+[data-theme="press"] .notif-type-badge,
+[data-theme="press"] .status-quote-avatar,
+[data-theme="press"] .interaction-account img,
+[data-theme="press"] .composer-autocomplete-avatar{
+    border-radius:2px;
+}
+[data-theme="press"] .status-avatar{box-shadow:2px 2px 0 var(--plate)}
+[data-theme="press"] .status-avatar:hover{box-shadow:0 0 0 var(--plate)}
+[data-theme="press"] .empty-state .empty-icon,
+[data-theme="press"] .timeline-floating-action{border-radius:3px}
+
+/* ---------- Buttons ---------- */
+[data-theme="press"] .btn{border:1px solid var(--line-strong);box-shadow:2px 2px 0 var(--plate);transition:transform .14s ease-out,box-shadow .14s ease-out,background .14s}
+[data-theme="press"] .btn:hover{transform:translate(2px,2px);box-shadow:0 0 0 var(--plate)}
+/* The solid buttons take --accent-grad rather than --accent: the accent is a
+   text colour in dark mode and white on it is 3:1. The gradient token is the
+   theme's button ink, flat in both modes, and it clears 5:1 in both. Going
+   into register is the whole hover state, so the fill does not change. */
+[data-theme="press"] .btn-primary{background:var(--accent-grad);color:#fff;border-color:transparent;box-shadow:2px 2px 0 var(--plate-second)}
+[data-theme="press"] .btn-primary:hover{filter:none;transform:translate(2px,2px);box-shadow:0 0 0 var(--plate-second)}
+[data-theme="press"] .btn-icon-post{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 20 4.5-1.2L19 8.3a3 3 0 0 0-4.2-4.2L4.3 14.6z'/%3E%3Cpath d='m13.5 5.5 4.2 4.2'/%3E%3Cpath d='m4 20 3.2-1.1L5.1 16.8z'/%3E%3C/svg%3E") no-repeat .85rem center/1.05rem,var(--accent-grad)}
+[data-theme="press"] .follow-btn.follow{background:var(--accent-grad);border-color:transparent;box-shadow:2px 2px 0 var(--plate-second)}
+[data-theme="press"] .follow-btn.follow:hover{background:var(--accent-grad);transform:translate(2px,2px);box-shadow:0 0 0 var(--plate-second)}
+[data-theme="press"] .timeline-floating-compose,
+[data-theme="press"] .timeline-floating-return{background:var(--accent-grad);box-shadow:2px 2px 0 var(--plate-second)}
+[data-theme="press"] .timeline-floating-compose:hover,
+[data-theme="press"] .timeline-floating-return:hover{background:var(--accent-grad)}
+
+/* ---------- The feed ---------- */
+[data-theme="press"] .timeline-nav{
+    background:var(--surface);
+    border:1px solid var(--line-strong);
+    padding:.25rem;
+    box-shadow:var(--reg) var(--reg) 0 var(--plate);
+}
+[data-theme="press"] .timeline-nav a.active{
+    background:var(--accent-grad);
+    color:#fff;
+    box-shadow:none;
+}
+[data-theme="press"] .status-handle{font-variant-numeric:tabular-nums}
+[data-theme="press"] .status-meta>a:not(.lang-pill){font-variant-numeric:tabular-nums;letter-spacing:.02em}
+/* The rule above the actions reads as the fold in the sheet, so it is drawn in
+   the stronger of the two line tokens rather than the hairline one. */
+[data-theme="press"] .status-actions{border-top:1px solid var(--line-strong);padding-top:.7rem}
+[data-theme="press"] .action-btn:hover{background:var(--accent-soft);color:var(--accent-strong)}
+[data-theme="press"] .status-boost{text-transform:uppercase;font-size:.72rem;letter-spacing:.06em}
+[data-theme="press"] .status-cw summary::before{border-radius:0}
+[data-theme="press"] .status-preview{border:1px solid var(--line-strong);box-shadow:2px 2px 0 var(--plate)}
+[data-theme="press"] .status-preview:hover{transform:translate(2px,2px);box-shadow:0 0 0 var(--plate)}
+[data-theme="press"] .status-preview-site{text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:var(--accent)}
+[data-theme="press"] .status-preview-title{font-family:var(--font-display);letter-spacing:-.02em}
+[data-theme="press"] .status-body blockquote{border-left:3px solid var(--accent);color:var(--text-soft)}
+[data-theme="press"] .pinned-label,
+[data-theme="press"] .composer-setting-label,
+[data-theme="press"] .catchup-seen-heading,
+[data-theme="press"] .admin-nav-title,
+[data-theme="press"] .admin-nav-label{font-family:var(--font-display);letter-spacing:.09em}
+
+/* ---------- Composer ---------- */
+/* The one panel on the page that is about to put ink somewhere gets the ink
+   edge along its top. */
+[data-theme="press"] .composer{border-top:3px solid var(--accent)}
+[data-theme="press"] .composer:focus-within{border-color:var(--line-strong);border-top-color:var(--accent)}
+[data-theme="press"] .composer-footer{border-top:2px solid var(--line)}
+[data-theme="press"] .composer-mode-tabs button.active{box-shadow:inset 0 -3px 0 var(--accent);border-radius:2px}
+[data-theme="press"] .lang-select,
+[data-theme="press"] .visibility-group label,
+[data-theme="press"] .composer-rich-toolbar button,
+[data-theme="press"] .composer-rich-toolbar select,
+[data-theme="press"] .composer-rich-toolbar input,
+[data-theme="press"] .tool-btn{border-radius:2px}
+
+/* ---------- Profile ---------- */
+/* An account with no header image gets a printed cover instead of a plain
+   wash: one band of the first ink, the second ink struck five pixels along, so
+   the same misregistration the cards carry runs across the top of the page. */
+[data-theme="press"] .profile-banner{
+    background:var(--surface-2);
+    background-image:repeating-linear-gradient(115deg,var(--accent-grad) 0 9px,transparent 9px 32px),repeating-linear-gradient(115deg,transparent 0 5px,var(--plate) 5px 14px,transparent 14px 32px);
+    border-radius:var(--radius) var(--radius) 0 0;
+}
+[data-theme="press"] .profile-banner::after{background:none}
+[data-theme="press"] .profile-avatar{border:4px solid var(--surface);box-shadow:var(--reg) var(--reg) 0 var(--plate)}
+[data-theme="press"] .profile-tabs{border-top:2px solid var(--line)}
+[data-theme="press"] .profile-tab.active{border-bottom-width:3px}
+[data-theme="press"] .profile-handle{font-variant-numeric:tabular-nums}
+
+/* ---------- Auth ---------- */
+/* The split plate is the one gradient in the theme. It appears on the two
+   marks and on the rule across the top of the auth card, and nowhere else:
+   all three are picture, with no text laid over them. */
+[data-theme="press"] .auth-card::before{
+    height:6px;
+    background:linear-gradient(90deg,var(--plate-ink) 0 50%,var(--plate-second) 50% 100%);
+}
+[data-theme="press"] .auth-mark{
+    border-radius:3px;
+    background:linear-gradient(105deg,var(--plate-ink) 0 52%,var(--plate-second) 52% 100%);
+    box-shadow:var(--reg) var(--reg) 0 var(--plate);
+}
+[data-theme="press"] .auth-card{box-shadow:6px 6px 0 var(--plate)}
+
+/* ---------- Notifications, admin, the rest of the chrome ---------- */
+[data-theme="press"] .notification.unread{border-left:4px solid var(--accent);background:var(--surface)}
+[data-theme="press"] .notification:has(.nt-mention){border-left:4px solid var(--mention)}
+[data-theme="press"] .notif-tabs{border-bottom:2px solid var(--line)}
+[data-theme="press"] .notif-tab.active{border-bottom-width:3px}
+[data-theme="press"] .notif-excerpt{border-left:3px solid var(--line)}
+[data-theme="press"] .admin-table-wrap,
+[data-theme="press"] .admin-queue-group,
+[data-theme="press"] .admin-mobile-nav,
+[data-theme="press"] .admin-attention-item,
+[data-theme="press"] .admin-notice{border-color:var(--line-strong);border-radius:2px}
+[data-theme="press"] .admin-table th,[data-theme="press"] thead th{font-family:var(--font-display);letter-spacing:.07em}
+[data-theme="press"] .admin-badge.warn{background:#f6e6b8;color:#5a4204}
+[data-theme="press"] .skip-link:focus{border:2px solid var(--accent-strong);border-radius:2px;box-shadow:var(--reg) var(--reg) 0 var(--plate)}
+[data-theme="press"] .site-footer{border-top:2px solid var(--line);max-width:800px;padding-top:1.4rem;margin-top:2rem}
+
+/* ---------- Reduced motion ---------- */
+/* app.css already collapses every duration here, which would leave the plate
+   jumping into register with no travel. Take the movement out instead and let
+   the border carry the state. Each group restores the plate it started with,
+   or hovering would repaint it in the wrong ink or the wrong size. */
+@media(prefers-reduced-motion:reduce){
+    [data-theme="press"] .status:hover,
+    [data-theme="press"] .notification:hover,
+    [data-theme="press"] .composer:focus-within,
+    [data-theme="press"] .stat-card:hover{
+        transform:none;
+        box-shadow:var(--reg) var(--reg) 0 var(--plate);
+    }
+    [data-theme="press"] .btn:hover,
+    [data-theme="press"] .status-preview:hover,
+    [data-theme="press"] .status-avatar:hover{
+        transform:none;
+        box-shadow:2px 2px 0 var(--plate);
+    }
+    [data-theme="press"] .btn-primary:hover,
+    [data-theme="press"] .follow-btn.follow:hover{
+        transform:none;
+        box-shadow:2px 2px 0 var(--plate-second);
+    }
+}

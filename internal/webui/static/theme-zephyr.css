@@ -1,0 +1,404 @@
+/* Zephyr - littleFedi as a Plasma application.
+
+   A sidebar of feeds on a slightly recessed ground, a view pane beside it, a
+   panel of shortcuts on the right. Crisp 4px corners, hairline frames, no
+   gradients anywhere, and the blue that runs through the whole desktop: it
+   outlines what the pointer is over, fills what is selected, and underlines the
+   tab you are on.
+
+   A layout theme: it reflows the shell above 1050px and repaints every control,
+   so every template is in scope. Below that width the shell goes back to
+   app.css's top bar and bottom nav.
+
+   The bright desktop blue is a frame and fill colour, not a text colour: 4.5:1
+   against a white view is out of its reach. Body links and anything filled with
+   white text use --accent-strong, one step deeper.
+
+   Token layering repeats app.css's four states, one specificity step higher so
+   a theme's dark tokens beat the base theme's dark tokens regardless of file
+   order. */
+
+/* ---------- Tokens: light ---------- */
+:root[data-theme="zephyr"]{
+    color-scheme:light;
+    --font-body:'Noto Sans','Oxygen','Oxygen-Sans','DejaVu Sans','Segoe UI',sans-serif;
+    --font-features:normal;
+    --font-mono:'Hack','Noto Sans Mono','DejaVu Sans Mono',ui-monospace,monospace;
+    --bg:#eff0f1;
+    --bg-grad:none;
+    --surface:#fcfcfc;
+    --surface-2:#e3e5e7;
+    --surface-3:#d6d9db;
+    --text:#232629;
+    --text-soft:#31363b;
+    --muted:#5b6469;
+    --line:#bfc4c9;
+    --line-strong:#9aa2a8;
+    --accent:#3daee9;
+    --accent-strong:#1c6fa5;
+    --accent-soft:rgba(61,174,233,.13);
+    --accent-grad:#1c6fa5;
+    --accent-shadow:transparent;
+    --like:#a4262c;
+    --like-soft:rgba(164,38,44,.11);
+    --boost:#2e7d32;
+    --boost-soft:rgba(46,125,50,.11);
+    --mention:#5a4bc4;
+    --mention-soft:rgba(90,75,196,.11);
+    --danger:#a4262c;
+    --shadow:none;
+    --shadow-md:0 2px 6px rgba(0,0,0,.10);
+    --shadow-lg:0 8px 24px rgba(0,0,0,.18);
+    --radius:4px;
+    --radius-sm:3px;
+    --radius-lg:5px;
+    --header-height:48px;
+    /* Theme-private. The button face and the frame the pointer draws. */
+    --frame-face:#fcfcfc;
+    --frame-line:#bcc0c4;
+    --rail-width:230px;
+    --aside-width:290px;
+    --pane-width:660px;
+}
+
+/* ---------- Tokens: dark ---------- */
+@media(prefers-color-scheme:dark){
+    :root[data-theme="zephyr"][data-appearance="auto"],:root[data-theme="zephyr"]:not([data-appearance]){
+        color-scheme:dark;
+        --bg:#232629;
+        --surface:#2a2e32;
+        --surface-2:#31363b;
+        --surface-3:#3b4045;
+        --text:#fcfcfc;
+        --text-soft:#eff0f1;
+        --muted:#a3adb5;
+        --line:#3f454b;
+        --line-strong:#586068;
+        --accent:#3daee9;
+        --accent-strong:#6cc4f1;
+        --accent-soft:rgba(61,174,233,.18);
+        --accent-grad:#1f6f9f;
+        --like:#e06c75;
+        --like-soft:rgba(224,108,117,.16);
+        --boost:#5ac26a;
+        --boost-soft:rgba(90,194,106,.16);
+        --mention:#a8a2f0;
+        --mention-soft:rgba(168,162,240,.16);
+        --danger:#e06c75;
+        --shadow:none;
+        --shadow-md:0 2px 8px rgba(0,0,0,.45);
+        --shadow-lg:0 10px 28px rgba(0,0,0,.60);
+        --frame-face:#31363b;
+        --frame-line:#4b5257;
+    }
+}
+/* Explicit dark: the same tokens with no media query. Vanilla CSS cannot reuse
+   an @media block from a plain selector and this project has no build step;
+   keep the two copies in sync rather than adding one. */
+:root[data-theme="zephyr"][data-appearance="dark"],:root[data-theme="zephyr"][data-appearance="black"]{
+    color-scheme:dark;
+    --bg:#232629;
+    --surface:#2a2e32;
+    --surface-2:#31363b;
+    --surface-3:#3b4045;
+    --text:#fcfcfc;
+    --text-soft:#eff0f1;
+    --muted:#a3adb5;
+    --line:#3f454b;
+    --line-strong:#586068;
+    --accent:#3daee9;
+    --accent-strong:#6cc4f1;
+    --accent-soft:rgba(61,174,233,.18);
+    --accent-grad:#1f6f9f;
+    --like:#e06c75;
+    --like-soft:rgba(224,108,117,.16);
+    --boost:#5ac26a;
+    --boost-soft:rgba(90,194,106,.16);
+    --mention:#a8a2f0;
+    --mention-soft:rgba(168,162,240,.16);
+    --danger:#e06c75;
+    --shadow:none;
+    --shadow-md:0 2px 8px rgba(0,0,0,.45);
+    --shadow-lg:0 10px 28px rgba(0,0,0,.60);
+    --frame-face:#31363b;
+    --frame-line:#4b5257;
+}
+
+/* ---------- Tokens: true black ---------- */
+:root[data-theme="zephyr"][data-appearance="black"]{
+    --bg:#000000;
+    --surface:#0b0b0c;
+    --surface-2:#161618;
+    --surface-3:#1f1f22;
+    --text:#ededf0;
+    --muted:#96969c;
+    --line:#232326;
+    --line-strong:#37373b;
+    --frame-face:#161618;
+    --frame-line:#2f2f33;
+}
+
+/* ---------- Type and density ----------
+   Plasma fits more on screen than a web page does. Everything tightens by a
+   step; nothing shrinks below the 14px the desktop itself uses. */
+[data-theme="zephyr"] body{font-size:.875rem;line-height:1.45}
+[data-theme="zephyr"] .status{padding:.8rem .85rem;margin-bottom:.45rem}
+[data-theme="zephyr"] .notification{padding:.7rem .85rem;margin-bottom:.35rem}
+[data-theme="zephyr"] .settings-section{padding:1rem}
+[data-theme="zephyr"] .status-body{font-size:.875rem;line-height:1.5}
+[data-theme="zephyr"] .status-body a,[data-theme="zephyr"] .profile-bio a,[data-theme="zephyr"] .status-quote-body a{color:var(--accent-strong);text-decoration:underline}
+[data-theme="zephyr"] .page-title{font-size:1.15rem;font-weight:700;letter-spacing:0}
+[data-theme="zephyr"] .profile-name{font-size:1.15rem;font-weight:700;letter-spacing:0}
+
+/* ---------- The blue frame ----------
+   The signature. Whatever the pointer is over gains a one-pixel accent frame
+   and a wash of the same blue; whatever is selected is filled with it. */
+[data-theme="zephyr"] .status:hover,[data-theme="zephyr"] .notification:hover,[data-theme="zephyr"] .interaction-account:hover,[data-theme="zephyr"] .admin-attention-item:hover{
+    background:color-mix(in srgb,var(--accent) 8%,var(--surface));
+    border-color:var(--accent);
+    box-shadow:none;
+    transform:none;
+}
+[data-theme="zephyr"] .btn-ghost:hover,[data-theme="zephyr"] .tool-btn:hover,[data-theme="zephyr"] .filter-btn:hover,[data-theme="zephyr"] .load-more:hover,[data-theme="zephyr"] .back-link:hover,[data-theme="zephyr"] .timeline-floating-action:hover{
+    border-color:var(--accent);
+    background:color-mix(in srgb,var(--accent) 8%,var(--frame-face));
+    color:var(--text);
+    transform:none;
+}
+/* The bright desktop blue reads as 2.4:1 on a white view, so the solid ring is
+   the deeper accent and the bright one stays as the halo around it. */
+[data-theme="zephyr"] :focus-visible{
+    outline:2px solid var(--accent-strong);
+    outline-offset:0;
+    border-radius:var(--radius-sm);
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent);
+}
+[data-theme="zephyr"] ::selection{background:var(--accent-strong);color:#fff}
+
+/* ---------- Flat frames ---------- */
+[data-theme="zephyr"] .status,[data-theme="zephyr"] .composer,[data-theme="zephyr"] .notification,[data-theme="zephyr"] .settings-section,[data-theme="zephyr"] .admin-card,[data-theme="zephyr"] .stat-card,[data-theme="zephyr"] .profile-header,[data-theme="zephyr"] .auth-card{
+    box-shadow:none;
+    border-color:var(--line);
+}
+[data-theme="zephyr"] .stat-card:hover{transform:none;box-shadow:none;border-color:var(--accent)}
+[data-theme="zephyr"] .status-avatar,[data-theme="zephyr"] .status-avatar img{border-radius:var(--radius-sm)}
+[data-theme="zephyr"] .status-avatar{box-shadow:0 0 0 1px var(--line)}
+[data-theme="zephyr"] .status-avatar:hover{box-shadow:0 0 0 1px var(--accent)}
+[data-theme="zephyr"] .profile-avatar{border-radius:var(--radius);border-width:2px;box-shadow:none}
+[data-theme="zephyr"] .logo-mark{border-radius:var(--radius-sm);box-shadow:none}
+[data-theme="zephyr"] .auth-mark{border-radius:var(--radius);box-shadow:none}
+[data-theme="zephyr"] .profile-banner{background:var(--surface-2)}
+[data-theme="zephyr"] .profile-banner::after{display:none}
+[data-theme="zephyr"] .empty-state .empty-icon{border-radius:var(--radius);background:var(--surface-2)}
+
+/* ---------- Buttons ----------
+   One face, one hairline, square-ish corners. The default action is the only
+   filled control on the page. */
+[data-theme="zephyr"] .btn{border-radius:var(--radius-sm);padding:.42rem 1rem;font-size:.8125rem;font-weight:600;letter-spacing:0}
+[data-theme="zephyr"] .btn-primary{background:var(--accent-grad);color:#fff;box-shadow:none}
+[data-theme="zephyr"] .btn-primary:hover{background:var(--accent-strong);filter:none;box-shadow:none;transform:none}
+[data-theme="zephyr"] .btn-ghost,[data-theme="zephyr"] .tool-btn,[data-theme="zephyr"] .filter-btn,[data-theme="zephyr"] .load-more,[data-theme="zephyr"] .back-link,[data-theme="zephyr"] .relationship-badge,[data-theme="zephyr"] .catchup-reason{
+    background:var(--frame-face);
+    border:1px solid var(--frame-line);
+    border-radius:var(--radius-sm);
+    box-shadow:none;
+    color:var(--text);
+}
+[data-theme="zephyr"] .load-more{max-width:14rem;font-weight:600}
+[data-theme="zephyr"] .follow-btn{border-radius:var(--radius-sm);box-shadow:none}
+[data-theme="zephyr"] .follow-btn.follow{background:var(--accent-grad);border-color:var(--accent-grad);color:#fff;box-shadow:none}
+[data-theme="zephyr"] .follow-btn.follow:hover{background:var(--accent-strong);border-color:var(--accent-strong)}
+[data-theme="zephyr"] .follow-btn.following{background:var(--frame-face);border-color:var(--frame-line);color:var(--text)}
+[data-theme="zephyr"] .btn-icon-post{background:var(--accent-grad);padding-left:1rem}
+[data-theme="zephyr"] .action-btn{border-radius:var(--radius-sm);font-weight:600}
+[data-theme="zephyr"] .action-btn:hover .icon{transform:none}
+[data-theme="zephyr"] .timeline-floating-action{border-radius:var(--radius)}
+
+/* ---------- Tabs ----------
+   A Plasma tab bar: no pills, no fill, one accent rule under the tab you are
+   on and the same accent in its label. */
+[data-theme="zephyr"] .timeline-nav{
+    justify-content:flex-start;
+    flex-wrap:nowrap;overflow-x:auto;
+    gap:0;padding:0;margin-bottom:.75rem;
+    background:none;
+    border:0;border-bottom:1px solid var(--line);
+    border-radius:0;
+    box-shadow:none;
+    scrollbar-width:none;
+}
+[data-theme="zephyr"] .timeline-nav::-webkit-scrollbar{display:none}
+[data-theme="zephyr"] .timeline-nav a{
+    flex:0 0 auto;
+    padding:.5rem .85rem;
+    border-radius:0;
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+    font-size:.8125rem;font-weight:600;
+    color:var(--muted);
+    white-space:nowrap;
+}
+[data-theme="zephyr"] .timeline-nav a .icon{width:.95rem;height:.95rem}
+[data-theme="zephyr"] .timeline-nav a:hover{background:var(--accent-soft);color:var(--text)}
+[data-theme="zephyr"] .timeline-nav a.active{
+    background:none;
+    color:var(--accent-strong);
+    border-bottom-color:var(--accent);
+    box-shadow:none;
+}
+[data-theme="zephyr"] .profile-tab.active,[data-theme="zephyr"] .notif-tab.active{color:var(--accent-strong);border-bottom-color:var(--accent)}
+[data-theme="zephyr"] .profile-tab:hover{background:var(--accent-soft)}
+
+/* ---------- Sunken fields ---------- */
+[data-theme="zephyr"] .field,[data-theme="zephyr"] .form-group input,[data-theme="zephyr"] .form-group textarea,[data-theme="zephyr"] .form-group select,[data-theme="zephyr"] .lang-select,[data-theme="zephyr"] .composer-cw,[data-theme="zephyr"] .composer-media input[type="text"]{
+    background:var(--surface);
+    border:1px solid var(--frame-line);
+    border-radius:var(--radius-sm);
+}
+[data-theme="zephyr"] .field:hover,[data-theme="zephyr"] .form-group input:hover,[data-theme="zephyr"] .form-group textarea:hover{border-color:var(--accent)}
+[data-theme="zephyr"] .field:focus,[data-theme="zephyr"] .form-group input:focus,[data-theme="zephyr"] .form-group textarea:focus,[data-theme="zephyr"] .form-group select:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent);
+}
+[data-theme="zephyr"] .composer:focus-within{border-color:var(--accent);box-shadow:none}
+
+/* ---------- Scrollbars ----------
+   Grey until you reach for them, accent once you do. */
+[data-theme="zephyr"] *{scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+[data-theme="zephyr"] ::-webkit-scrollbar{width:12px;height:12px}
+[data-theme="zephyr"] ::-webkit-scrollbar-track{background:transparent}
+[data-theme="zephyr"] ::-webkit-scrollbar-thumb{
+    background:var(--line-strong);
+    border:3px solid transparent;
+    background-clip:content-box;
+    border-radius:999px;
+}
+[data-theme="zephyr"] ::-webkit-scrollbar-thumb:hover{background:var(--accent);background-clip:content-box}
+
+/* ---------- The application window ----------
+   Above 1050px: sidebar, view, panel. */
+@media(min-width:1051px){
+    [data-theme="zephyr"] .header{
+        position:fixed;top:0;bottom:0;left:0;
+        width:var(--rail-width);height:100dvh;
+        display:flex;flex-direction:column;
+        background:var(--surface-2);
+        backdrop-filter:none;-webkit-backdrop-filter:none;
+        border-bottom:0;
+        border-right:1px solid var(--line);
+    }
+    [data-theme="zephyr"] .header-inner{
+        flex:1;min-height:0;overflow-y:auto;
+        flex-direction:column;align-items:stretch;justify-content:flex-start;
+        max-width:none;height:auto;
+        padding:.5rem .45rem 1.25rem;gap:.05rem;
+    }
+    /* The drawer header: instance name over a rule, the way a Plasma sidebar
+       titles itself. */
+    [data-theme="zephyr"] .logo{
+        margin-right:0;
+        padding:.5rem .55rem .7rem;
+        margin-bottom:.35rem;
+        border-bottom:1px solid var(--line);
+        font-size:.9375rem;font-weight:700;letter-spacing:0;
+    }
+    [data-theme="zephyr"] .desktop-nav{flex-direction:column;align-items:stretch;gap:.05rem}
+    [data-theme="zephyr"] .nav-link{
+        align-self:stretch;justify-content:flex-start;
+        gap:.6rem;padding:.4rem .55rem;
+        border:1px solid transparent;
+        border-radius:var(--radius-sm);
+        font-size:.8125rem;font-weight:600;
+        color:var(--text);
+    }
+    [data-theme="zephyr"] .nav-link .icon{width:1.05rem;height:1.05rem;color:var(--muted)}
+    [data-theme="zephyr"] .nav-link .icon-label{display:inline}
+    [data-theme="zephyr"] .nav-link:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--text)}
+    [data-theme="zephyr"] .nav-link:hover .icon{color:var(--accent-strong)}
+    [data-theme="zephyr"] .nav-link.active{background:var(--accent-grad);border-color:var(--accent-grad);color:#fff}
+    [data-theme="zephyr"] .nav-link.active .icon{color:#fff}
+    /* Search lives in the right panel here, so the header copy stands down. */
+    [data-theme="zephyr"] .nav-search-form,[data-theme="zephyr"] .nav-search-link{display:none!important}
+    [data-theme="zephyr"] .desktop-nav>form:not(.nav-search-form){display:flex!important}
+    [data-theme="zephyr"] .desktop-nav>form>.nav-link{width:100%}
+    [data-theme="zephyr"] .desktop-nav>form .icon-label{display:inline}
+    [data-theme="zephyr"] .nav-post{
+        display:block;order:99;margin:.85rem .2rem 0;
+        padding:.45rem 1rem;
+        background:var(--accent-grad);color:#fff;
+        border-radius:var(--radius-sm);
+        font-size:.8125rem;font-weight:600;text-align:center;
+    }
+    [data-theme="zephyr"] .nav-post:hover{background:var(--accent-strong);color:#fff;text-decoration:none}
+
+    [data-theme="zephyr"] .container{
+        max-width:none;
+        margin-left:var(--rail-width);
+        margin-right:var(--aside-width);
+        padding:1.1rem clamp(.9rem,calc((100% - var(--pane-width)) / 2),4rem) 3.5rem;
+        min-height:100dvh;
+    }
+    [data-theme="zephyr"] .admin-container{margin-left:var(--rail-width);margin-right:0;max-width:none;padding:1.4rem 1.4rem 3.5rem}
+
+    [data-theme="zephyr"] .rail-right{
+        display:block;position:fixed;top:0;right:0;
+        width:var(--aside-width);height:100dvh;overflow-y:auto;
+        padding:.6rem .7rem 2rem;
+        background:var(--surface-2);
+        border-left:1px solid var(--line);
+    }
+    [data-theme="zephyr"] .rail-search{
+        display:flex;align-items:center;gap:.45rem;
+        padding:.35rem .55rem;margin-bottom:.9rem;
+        background:var(--surface);
+        border:1px solid var(--frame-line);
+        border-radius:var(--radius-sm);
+    }
+    [data-theme="zephyr"] .rail-search:hover{border-color:var(--accent)}
+    [data-theme="zephyr"] .rail-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent)}
+    [data-theme="zephyr"] .rail-search .icon{color:var(--muted);width:1rem;height:1rem}
+    [data-theme="zephyr"] .rail-search input{flex:1;min-width:0;border:0;background:none;outline:none;font:inherit;font-size:.8125rem;color:var(--text)}
+    [data-theme="zephyr"] .rail-search input:focus-visible{outline:none;box-shadow:none}
+    [data-theme="zephyr"] .rail-card{
+        display:grid;gap:.05rem;
+        margin-bottom:.9rem;padding:.3rem;
+        background:var(--surface);
+        border:1px solid var(--line);
+        border-radius:var(--radius);
+    }
+    [data-theme="zephyr"] .rail-card-title{
+        padding:.35rem .5rem .45rem;
+        font-size:.72rem;font-weight:700;
+        letter-spacing:.05em;text-transform:uppercase;
+        color:var(--muted);
+    }
+    [data-theme="zephyr"] .rail-card a{
+        display:flex;align-items:center;gap:.55rem;
+        padding:.4rem .5rem;
+        border:1px solid transparent;
+        border-radius:var(--radius-sm);
+        font-size:.8125rem;font-weight:600;color:var(--text);
+    }
+    [data-theme="zephyr"] .rail-card a:hover{background:var(--accent-soft);border-color:var(--accent);text-decoration:none}
+    [data-theme="zephyr"] .rail-card .icon{color:var(--muted);width:1rem;height:1rem}
+}
+
+/* Between 1051px and the full three-column width the panel would crowd the
+   view, so it stands down and the view keeps the space. */
+@media(min-width:1051px) and (max-width:1280px){
+    /* The rail carries the search field, and the rail is not here, so the
+       compact search link comes back to the top bar for this band. */
+    [data-theme="zephyr"] .nav-search-link{display:inline-flex!important}
+    /* Its label is markup for screen readers only, because in the top bar it
+       sits among icons. Here it sits among words, so let it be one. */
+    [data-theme="zephyr"] .nav-search-link .sr-only{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:nowrap}
+
+    [data-theme="zephyr"]{--aside-width:0px}
+    [data-theme="zephyr"] .rail-right{display:none}
+}
+
+@media(max-width:640px){
+    /* app.css hides the tab strip here because the bottom nav picks up feed
+       switching; this theme's unconditional flex would otherwise show both. */
+    [data-theme="zephyr"] .timeline-nav{display:none}
+}

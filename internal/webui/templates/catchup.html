@@ -1,0 +1,57 @@
+<div class="timeline">
+    <h1 class="catchup-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-vhs"/></svg>{{T "catchup.title"}}</h1>
+
+    <p class="catchup-window">
+        {{if .Since.IsZero}}{{T "catchup.window_first"}}{{else}}{{T "catchup.window_since" (formatTime .Since)}}{{end}}
+        {{if .Widened}} {{T "catchup.window_widened"}}{{end}}
+    </p>
+
+    {{template "components/timeline-nav.html" dict "Timeline" "catchup" "Account" true}}
+
+    <div id="timeline">
+        {{range .Items}}
+            {{template "components/catchup-entry.html" dict "Item" . "Account" $.Account "CSRFToken" $.CSRFToken}}
+        {{else}}
+            {{if .SeenItems}}
+            <p class="catchup-none-new">{{T "catchup.none_new"}}</p>
+            {{else}}
+            <div class="empty-state">
+                <div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-vhs"/></svg></div>
+                <h2>{{T "catchup.empty_title"}}</h2>
+                <p>{{T "catchup.empty_body"}}</p>
+            </div>
+            {{end}}
+        {{end}}
+    </div>
+
+    {{if .Items}}
+    <form class="catchup-done" action="/catchup/seen" method="post">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        <input type="hidden" name="newest_id" value="{{.NewestID}}">
+        <button type="submit" class="btn-primary catchup-done-btn">{{T "catchup.mark_done"}}</button>
+        <p class="catchup-hint">{{T "catchup.mark_hint"}}</p>
+    </form>
+    {{end}}
+
+    {{if .SeenItems}}
+    <div class="catchup-seen">
+        <h2 class="catchup-seen-heading"><span>{{T "catchup.already_seen"}}</span></h2>
+        {{range .SeenItems}}
+            {{template "components/catchup-entry.html" dict "Item" . "Account" $.Account "CSRFToken" $.CSRFToken}}
+        {{end}}
+    </div>
+    {{end}}
+
+    <details class="catchup-why">
+        <summary>{{T "catchup.why_summary"}}</summary>
+        <p>{{T "catchup.why_intro"}}</p>
+        <ul>
+            {{range .Weights}}
+            <li><span class="catchup-weight">{{if eq .Kind "half_life"}}{{printf "%.0fh" .Value}}{{else}}{{printf "%+.1f" .Value}}{{end}}</span> {{T (printf "catchup.weight.%s" .Kind)}}</li>
+            {{end}}
+        </ul>
+        <p>{{T "catchup.why_rules"}}</p>
+        {{if .Account.HideBoosts}}<p>{{T "catchup.why_boosts_hidden"}}</p>{{end}}
+        <p>{{T "catchup.why_privacy"}}</p>
+    </details>
+</div>

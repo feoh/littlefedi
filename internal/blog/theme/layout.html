@@ -1,0 +1,39 @@
+{{define "header"}}<!doctype html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.PageTitle}}</title>
+{{if .MetaDescription}}<meta name="description" content="{{.MetaDescription}}">{{end}}
+<meta property="og:title" content="{{.PageTitle}}">
+{{if .MetaDescription}}<meta property="og:description" content="{{.MetaDescription}}">{{end}}
+{{if .OGImage}}<meta property="og:image" content="{{.OGImage}}">{{end}}
+<meta name="twitter:card" content="{{if .OGImage}}summary_large_image{{else}}summary{{end}}">
+<meta name="twitter:title" content="{{.PageTitle}}">
+{{if .MetaDescription}}<meta name="twitter:description" content="{{.MetaDescription}}">{{end}}
+{{if .OGImage}}<meta name="twitter:image" content="{{.OGImage}}">{{end}}
+<link rel="stylesheet" href="{{$.BlogRoot}}/style.css">
+<link rel="alternate" type="application/atom+xml" title="{{.SiteTitle}}" href="{{$.BlogRoot}}/feed.xml">
+<link rel="sitemap" type="application/xml" href="{{$.BlogRoot}}/sitemap.xml">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<p class="site-brand"><a href="{{$.BlogRoot}}/">{{.SiteTitle}}</a></p>
+<nav class="site-nav" aria-label="Site">
+<a href="{{$.BlogRoot}}/archive/">Archive</a>
+<a href="{{$.BlogRoot}}/tags/">Tags</a>
+<a href="/@{{.Username}}">Profile</a>
+<a href="{{$.BlogRoot}}/feed.xml">Feed (Atom)</a>
+</nav>
+</header>
+<main id="main" tabindex="-1">
+{{end}}
+{{define "footer"}}
+</main>
+<footer class="site-footer">
+<p>Published with <a href="https://littlefedi.org">littleFedi</a>.</p>
+</footer>
+</body>
+</html>
+{{end}}

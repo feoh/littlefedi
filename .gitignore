@@ -1,0 +1,26 @@
+# Local configuration and data
+/littlefedi.toml
+/.env
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+/media/
+/backups/
+/blogs/
+
+# Build output
+/littlefedi
+/littlefedi-postgres
+/littlefedi-s3
+/littlefedi-postgres-s3
+/littlefedi-blog
+*.exe
+/dist/
+
+# Editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo

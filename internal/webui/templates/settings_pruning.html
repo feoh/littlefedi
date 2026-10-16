@@ -1,0 +1,100 @@
+<div style="margin-top:0;">
+    <h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-trash"/></svg>{{T "pruning.heading"}}</h1>
+
+    {{if .Error}}
+    <div class="error-message" style="margin-bottom:1rem;">
+        {{if eq .Error "invalid-days"}}{{T "pruning.error.invalid_days"}}{{end}}
+        {{if eq .Error "exceeds-server"}}{{T "pruning.error.exceeds_server" .ServerPruneDays}}{{end}}
+        {{if eq .Error "invalid-likes"}}{{T "pruning.error.invalid_likes"}}{{end}}
+        {{if eq .Error "invalid-boosts"}}{{T "pruning.error.invalid_boosts"}}{{end}}
+        {{if eq .Error "save"}}{{T "pruning.error.save"}}{{end}}
+    </div>
+    {{end}}
+
+    <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1.5rem;">
+        {{T "pruning.intro"}}
+        {{if .ServerPruneDays}}({{T "pruning.intro_default_days" .ServerPruneDays}}){{else}}({{T "pruning.intro_disabled_default"}}){{end}}.
+        {{T "pruning.intro_zero_disables"}}
+        {{if gt .ServerPruneDays 0}}{{T "pruning.intro_server_max" .ServerPruneDays}}{{end}}
+    </p>
+
+    <div class="settings-section">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe-sm"/></svg>{{T "pruning.age_threshold"}}</h2>
+        <form action="/settings/pruning" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group">
+                <label for="prune_days">{{T "pruning.delete_older_than"}}</label>
+                <input type="number" id="prune_days" name="prune_days"
+                    value="{{if .Account.PruneOwnStatusesAfterDays}}{{.Account.PruneOwnStatusesAfterDays}}{{end}}"
+                    min="0" placeholder="{{if .ServerPruneDays}}{{T "pruning.server_default_days" .ServerPruneDays}}{{else}}{{T "pruning.not_set"}}{{end}}" style="width:100%;">
+                <small style="color:var(--muted);">
+                    {{T "pruning.age_help"}}
+                </small>
+            </div>
+
+            <h2 style="margin-top:1.5rem;"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-star"/></svg>{{T "pruning.engagement_thresholds"}}</h2>
+            <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1rem;">
+                {{T "pruning.engagement_intro"}}
+                {{T "pruning.thresholds_combined"}}
+            </p>
+            <div class="form-group">
+                <label for="prune_min_likes">{{T "pruning.min_likes"}}</label>
+                <input type="number" id="prune_min_likes" name="prune_min_likes"
+                    value="{{if .Account.PruneOwnStatusesMinLikes}}{{.Account.PruneOwnStatusesMinLikes}}{{end}}"
+                    min="0" placeholder="{{T "pruning.server_default" .ServerPruneMinLikes}}" style="width:100%;">
+                <small style="color:var(--muted);">{{T "pruning.min_likes_help"}}</small>
+            </div>
+            <div class="form-group">
+                <label for="prune_min_boosts">{{T "pruning.min_boosts"}}</label>
+                <input type="number" id="prune_min_boosts" name="prune_min_boosts"
+                    value="{{if .Account.PruneOwnStatusesMinBoosts}}{{.Account.PruneOwnStatusesMinBoosts}}{{end}}"
+                    min="0" placeholder="{{T "pruning.server_default" .ServerPruneMinBoosts}}" style="width:100%;">
+                <small style="color:var(--muted);">{{T "pruning.min_boosts_help"}}</small>
+            </div>
+
+            <input type="submit" class="btn btn-primary" style="margin-top:1rem;" value="{{T "pruning.save"}}">
+        </form>
+    </div>
+
+    <div class="settings-section">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-trash"/></svg>{{T "pruning.preview_heading"}}</h2>
+        {{if .PruningActive}}
+        <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1rem;">{{T "pruning.preview_intro"}}</p>
+        {{if .PrunePreview}}
+        <ul style="font-size:0.875rem;line-height:1.6;padding-left:1.4rem;">
+            {{range .PrunePreview}}
+            <li style="margin-bottom:0.5rem;">
+                {{.Preview}}
+                <span style="display:block;color:var(--muted);font-size:0.8rem;">{{.CreatedAt}} &middot; {{T "pruning.preview_counts" .Likes .Boosts}}</span>
+            </li>
+            {{end}}
+        </ul>
+        {{else}}
+        <p style="font-size:0.875rem;color:var(--muted);">{{T "pruning.preview_none"}}</p>
+        {{end}}
+        {{else}}
+        <p style="font-size:0.875rem;color:var(--muted);">{{T "pruning.preview_disabled"}}</p>
+        {{end}}
+    </div>
+
+    <div class="settings-section">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg>{{T "pruning.how_it_works"}}</h2>
+        <div style="font-size:0.875rem;color:var(--muted);line-height:1.6;">
+            <p style="margin-bottom:0.5rem;">
+                {{T "pruning.how_it_works_body"}}
+            </p>
+            <p>
+                <strong>{{T "pruning.note_label"}}</strong> {{T "pruning.note_boosts"}}
+            </p>
+            {{if blogEnabled .Account}}
+            <p>
+                <strong>{{T "pruning.note_label"}}</strong> {{T "pruning.note_blog"}}
+            </p>
+            {{end}}
+        </div>
+    </div>
+
+    <p style="margin-top:1.5rem;">
+        <a href="/settings" class="btn btn-ghost"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-settings"/></svg>{{T "sessions.back_to_settings"}}</a>
+    </p>
+</div>

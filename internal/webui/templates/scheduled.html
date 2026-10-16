@@ -1,0 +1,45 @@
+<div class="timeline">
+    <div class="profile-header" style="padding:1.1rem;">
+        <h1 class="profile-name" style="font-size:1.2rem;">{{T "scheduled.heading"}}</h1>
+        <div class="profile-meta" style="color:var(--muted);font-size:0.85rem;">{{T "scheduled.subtitle"}}</div>
+    </div>
+
+    {{if .Error}}
+    <div class="empty-state" role="alert" style="color:var(--danger,#c0392b);padding:0.85rem 1.1rem;">{{.Error}}</div>
+    {{end}}
+
+    {{if .Posts}}
+    <div class="lists-list">
+        {{range .Posts}}
+        <div class="status" style="display:flex;flex-direction:column;gap:0.6rem;padding:0.85rem 1.1rem;">
+            <div style="font-size:0.95rem;">{{.Preview}}</div>
+            <div style="color:var(--muted);font-size:0.8rem;" data-localtime-utc="{{.ScheduledAtUTC}}" data-localtime-template="{{rawT "scheduled.scheduled_for"}}"><span class="localtime-text">{{T "scheduled.scheduled_for" (formatTime .ScheduledAt)}}</span></div>
+            <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+                <form method="post" action="/scheduled/{{.ID}}" style="display:inline-flex;align-items:center;gap:0.4rem;">
+                    <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                    <!-- Both halves of the round trip must agree on a timezone: the
+                         browser rewrites the value below into its own, and this field
+                         tells the server which one that is. Without JS neither happens
+                         and the value stays server-local, which the server also reads
+                         as server-local. -->
+                    <input type="hidden" name="scheduled_at_offset_minutes" class="js-tz-offset">
+                    <label class="sr-only" for="scheduled-at-{{.ID}}">{{T "scheduled.new_time"}}</label>
+                    <input type="datetime-local" id="scheduled-at-{{.ID}}" name="scheduled_at" value="{{.ScheduledAtLocal}}" data-localtime-utc="{{.ScheduledAtUTC}}" required>
+                    <button class="btn btn-ghost" type="submit">{{T "scheduled.reschedule"}}</button>
+                </form>
+                <form method="post" action="/scheduled/{{.ID}}/delete" data-confirm="{{T "scheduled.cancel_confirm"}}" style="display:inline-flex;">
+                    <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                    <button class="btn btn-ghost" type="submit">{{T "scheduled.cancel"}}</button>
+                </form>
+            </div>
+        </div>
+        {{end}}
+    </div>
+    {{else}}
+    <div class="empty-state">
+        <div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-clock"/></svg></div>
+        <h2>{{T "scheduled.empty_heading"}}</h2>
+        <p>{{T "scheduled.empty_body"}}</p>
+    </div>
+    {{end}}
+</div>

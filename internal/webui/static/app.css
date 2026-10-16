@@ -1,0 +1,1006 @@
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        /* Percentage, not px: a pinned root size throws away whatever default
+           text size the reader configured in the browser. */
+        html{font-size:100%;-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:calc(var(--header-height) + var(--header-inset) + .8rem)}
+        /* Design tokens.
+           Two independent axes, both attributes on <html>, both set by the
+           server from the account preference (see Page.Theme/Appearance):
+             data-theme      which skin  - "default" here, others add a file
+             data-appearance which mode  - auto | light | dark | black
+           "auto" is the only value that defers to prefers-color-scheme, so it
+           is the only one that carries a media query. The dark token list is
+           repeated for auto/dark/black because vanilla CSS cannot reuse an
+           @media block from a plain selector and this project has no build
+           step; keep the three copies in sync rather than adding one. */
+        :root{
+            /* Native widgets (date pickers, checkboxes, scrollbars) follow the OS theme. */
+            color-scheme:light dark;
+            --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Helvetica Neue',sans-serif;
+            --font-features:'cv02','cv03','cv04','cv11';
+            --font-mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace;
+            --bg:#f5f7fa;
+            --bg-grad:radial-gradient(1200px 600px at 100% -10%,rgba(13,148,136,.07),transparent 60%),radial-gradient(900px 500px at -10% 0%,rgba(99,102,241,.06),transparent 55%);
+            --surface:#ffffff;
+            --surface-2:#f1f4f9;
+            --surface-3:#e9edf4;
+            --text:#171a21;
+            --text-soft:#3c4250;
+            --muted:#687082;
+            --line:#e6e9ef;
+            --line-strong:#d6dbe6;
+            --accent:#0e9488;
+            --accent-strong:#0b7e73;
+            --accent-soft:rgba(13,148,136,.10);
+            --accent-grad:linear-gradient(135deg,#14b8a6 0%,#0e9488 55%,#0891b2 100%);
+            /* Glow cast by accent-coloured surfaces (primary button, auth mark).
+               A theme that drops shadows sets this to transparent. */
+            --accent-shadow:rgba(13,148,136,.38);
+            --like:#e11d48;
+            --like-soft:rgba(225,29,72,.10);
+            --boost:#059669;
+            --boost-soft:rgba(5,150,105,.10);
+            --mention:#6366f1;
+            --mention-soft:rgba(99,102,241,.10);
+            --danger:#e11d48;
+            --shadow:0 1px 2px rgba(15,23,42,.04),0 1px 3px rgba(15,23,42,.04);
+            --shadow-md:0 4px 16px rgba(15,23,42,.06),0 2px 6px rgba(15,23,42,.04);
+            --shadow-lg:0 18px 40px rgba(15,23,42,.10),0 6px 14px rgba(15,23,42,.06);
+            --radius:14px;
+            --radius-sm:10px;
+            --radius-lg:18px;
+			--header-height:62px;
+			/* Notch clearance, kept apart from --header-height because themes own
+			   that one at a higher specificity and would silently drop the inset. */
+			--header-inset:0px;
+			--mobile-nav-height:64px;
+            /* How tall a long post is allowed to be in a card before it is
+               clamped behind "show more". A theme with a different reading
+               density (ink reads long, herd is compact) can retune this. */
+            --status-clamp:22rem;
+        }
+        @media(prefers-color-scheme:dark){
+            :root[data-appearance="auto"],:root:not([data-appearance]){
+                --bg:#0c0f14;
+                --bg-grad:radial-gradient(1200px 600px at 100% -10%,rgba(45,212,191,.10),transparent 60%),radial-gradient(900px 500px at -10% 0%,rgba(129,140,248,.08),transparent 55%);
+                --surface:#151a22;
+                --surface-2:#1b212b;
+                --surface-3:#222a36;
+                --text:#e8edf5;
+                --text-soft:#c4ccda;
+                --muted:#94a0b3;
+                --line:#272f3c;
+                --line-strong:#333d4d;
+                --accent:#2dd4bf;
+                --accent-strong:#5eead4;
+                --accent-soft:rgba(45,212,191,.14);
+                --accent-grad:linear-gradient(135deg,#2dd4bf 0%,#14b8a6 55%,#06b6d4 100%);
+                --accent-shadow:rgba(45,212,191,.32);
+                --like:#fb7185;
+                --like-soft:rgba(251,113,133,.14);
+                --boost:#34d399;
+                --boost-soft:rgba(52,211,153,.14);
+                --mention:#a5b4fc;
+                --mention-soft:rgba(165,180,252,.14);
+                --danger:#fb7185;
+                --shadow:0 1px 2px rgba(0,0,0,.3);
+                --shadow-md:0 6px 20px rgba(0,0,0,.35);
+                --shadow-lg:0 22px 48px rgba(0,0,0,.5);
+            }
+        }
+        /* Explicit dark: same tokens as above, no media query. */
+        :root[data-appearance="dark"],:root[data-appearance="black"]{
+            color-scheme:dark;
+            --bg:#0c0f14;
+            --bg-grad:radial-gradient(1200px 600px at 100% -10%,rgba(45,212,191,.10),transparent 60%),radial-gradient(900px 500px at -10% 0%,rgba(129,140,248,.08),transparent 55%);
+            --surface:#151a22;
+            --surface-2:#1b212b;
+            --surface-3:#222a36;
+            --text:#e8edf5;
+            --text-soft:#c4ccda;
+            --muted:#94a0b3;
+            --line:#272f3c;
+            --line-strong:#333d4d;
+            --accent:#2dd4bf;
+            --accent-strong:#5eead4;
+            --accent-soft:rgba(45,212,191,.14);
+            --accent-grad:linear-gradient(135deg,#2dd4bf 0%,#14b8a6 55%,#06b6d4 100%);
+            --accent-shadow:rgba(45,212,191,.32);
+            --like:#fb7185;
+            --like-soft:rgba(251,113,133,.14);
+            --boost:#34d399;
+            --boost-soft:rgba(52,211,153,.14);
+            --mention:#a5b4fc;
+            --mention-soft:rgba(165,180,252,.14);
+            --danger:#fb7185;
+            --shadow:0 1px 2px rgba(0,0,0,.3);
+            --shadow-md:0 6px 20px rgba(0,0,0,.35);
+            --shadow-lg:0 22px 48px rgba(0,0,0,.5);
+        }
+        /* Lights out: dark tokens with a true-black ground, for OLED screens
+           where "almost black" still costs power and shows halos. */
+        :root[data-appearance="black"]{
+            --bg:#000000;
+            --bg-grad:none;
+            --surface:#0a0d12;
+            --surface-2:#12161d;
+            --surface-3:#1a1f28;
+            --line:#20262f;
+            --line-strong:#2d3540;
+        }
+        :root[data-appearance="light"]{color-scheme:light}
+        [x-cloak]{display:none!important}
+        body{
+            font-family:var(--font-body);
+            font-feature-settings:var(--font-features);
+            line-height:1.6;color:var(--text);background:var(--bg);background-image:var(--bg-grad);background-attachment:fixed;min-height:100vh;min-height:100dvh;
+            -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+        }
+        ::selection{background:var(--accent-soft);color:var(--accent-strong)}
+        a{color:var(--accent);text-decoration:none;transition:color .15s}
+        a:hover{color:var(--accent-strong);text-decoration:none}
+        img{max-width:100%;height:auto}
+        .icon{width:1.1em;height:1.1em;flex-shrink:0;display:inline-block;vertical-align:-0.18em;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+        .icon-lg{width:1.35rem;height:1.35rem}
+        .container{max-width:800px;margin:0 auto;padding:2.2rem 1rem 4rem}
+
+        /* Header */
+        .header{background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:saturate(180%) blur(16px);-webkit-backdrop-filter:saturate(180%) blur(16px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+        /* Wider than the admin console's 1180px on purpose: with the labels showing,
+           the row of links, the search field and the sign-out button need about
+           1260px, and at 1180 the field was squeezed to a stub to make room. */
+        .header-inner{max-width:1320px;margin:0 auto;padding:0 1rem;display:flex;align-items:center;height:62px;gap:0.3rem}
+        .logo{display:inline-flex;align-items:center;gap:0.55rem;font-weight:800;font-size:1.12rem;color:var(--text);margin-right:auto;text-decoration:none;letter-spacing:-0.02em}
+        .logo:hover{opacity:.92;text-decoration:none}
+        .logo-mark{width:30px;height:30px;border-radius:9px;background:var(--accent-grad);display:grid;place-items:center;box-shadow:0 4px 12px var(--accent-shadow);flex-shrink:0}
+        .logo-mark .icon{color:#fff;width:1.05rem;height:1.05rem;stroke-width:2.4}
+        .logo span b{color:var(--accent)}
+        .nav-link{display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 0.78rem;border-radius:999px;font-size:0.875rem;font-weight:550;color:var(--muted);transition:background .15s,color .15s,transform .12s;white-space:nowrap}
+        .nav-link .icon{font-size:1rem}
+        .nav-link:hover{background:var(--surface-2);color:var(--text)}
+        .nav-link.active{color:var(--accent-strong);font-weight:650;background:var(--accent-soft)}
+        button.nav-link{border:none;cursor:pointer;background:none;font-family:inherit}
+		/* min-width:0 so the row may shrink rather than push its last items
+		   (search and sign out) past the right edge of the header. */
+		.desktop-nav{display:flex;align-items:center;gap:.3rem;min-width:0}
+		/* Signed-out header nav. Separate from .desktop-nav because a visitor
+		   has no mobile bottom bar to fall back on, so it stays visible at
+		   every width. */
+		.guest-nav{display:flex;align-items:center;gap:.3rem}
+		.mobile-header-menu,.mobile-bottom-nav{display:none}
+		#thread-focus,.status[id]{scroll-margin-top:calc(var(--header-height) + var(--header-inset) + .8rem)}
+
+        /* Cards / status */
+        /* Two-column grid: avatar gutter, then everything else. The default
+           theme collapses .status-main with display:contents so its children
+           span both columns and sit under the avatar, which is the original
+           layout; Roost makes .status-main a real column-2 block instead. */
+        .status{display:grid;grid-template-columns:auto 1fr;column-gap:0.7rem;align-items:start;min-width:0;max-width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.05rem 1.1rem;margin-bottom:0.8rem;box-shadow:var(--shadow);transition:border-color .18s,box-shadow .18s,transform .18s}
+        .status>.status-boost,.status>.reply-context{grid-column:1/-1}
+		.status-filter-warning{margin:.55rem 0;border:1px solid var(--line);border-radius:.5rem;background:var(--surface-2)}
+		.status-filter-warning>summary{padding:.7rem .8rem;cursor:pointer;font-weight:650}
+		.status-filter-content{padding:0 .8rem .8rem}
+        .status>.status-avatar{grid-column:1}
+        .status-main{display:contents}
+        .status-main>*{grid-column:1/-1;min-width:0}
+        .status-main>.status-header{grid-column:2}
+        /* Theme-swappable glyph pair: the default theme uses i-boost. */
+        .glyph-retweet{display:none}
+        /* The side rail is opt-in per theme; the default theme keeps its
+           single-column layout and its header search. */
+        .rail-right,.nav-post{display:none}
+        /* Sign out stays icon-only in the top bar, where space is tight. The
+           label exists for themes that lay the nav out as a vertical rail. */
+        .desktop-nav>form .icon-label{display:none}
+        .status[data-status-url]{cursor:pointer}
+        .status:hover{border-color:color-mix(in srgb,var(--accent) 22%,var(--line));box-shadow:var(--shadow-md);transform:translateY(-1px)}
+        .status-boost{min-width:0;font-size:.8rem;color:var(--boost);font-weight:600;margin-bottom:.55rem;padding-left:.15rem;overflow-wrap:anywhere}
+        .status-boost .icon{color:var(--boost);margin-right:.4rem}
+        .status-boost a{color:var(--boost);font-weight:700}
+        .reply-context{min-width:0;font-size:.8rem;color:var(--muted);margin-bottom:.55rem;padding:.4rem .6rem;background:var(--surface-2);border-radius:var(--radius-sm);overflow-wrap:anywhere}
+        .reply-context .icon{color:var(--muted);margin-right:.4rem}
+        .reply-context a{color:var(--muted);font-weight:600}
+        .status-quote{display:block;margin:.6rem 0 .2rem;padding:.6rem .75rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);color:inherit;cursor:pointer}
+        .status-quote:hover{border-color:var(--accent)}
+        .status-quote-header{display:flex;min-width:0;align-items:center;gap:.4rem;margin-bottom:.35rem;font-size:.82rem;text-decoration:none;color:inherit;overflow:hidden}
+        .status-quote-avatar{width:1.25rem;height:1.25rem;border-radius:50%;object-fit:cover}
+        .status-quote-author{font-weight:700;color:var(--text)}
+        .status-quote-handle{min-width:0;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .status-quote-body{font-size:.88rem;color:var(--text);overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+        .status-quote-media{margin-top:.35rem;font-size:.78rem;color:var(--muted)}
+        .composer-quote-context{font-size:.84rem;color:var(--muted);margin-bottom:.75rem;padding:.55rem .75rem;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm)}
+        .composer-quote-context .icon{color:var(--muted);vertical-align:middle}
+        .composer-quote-context strong{color:var(--text);font-weight:700}
+        .composer-quote-preview{margin-top:.4rem;font-size:.84rem;color:var(--text);overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+        .status-header{display:flex;flex-wrap:wrap;align-items:flex-start;gap:0.7rem;margin-bottom:0.6rem}
+        .status-avatar{width:2.6rem;height:2.6rem;border-radius:50%;background:var(--surface-3);flex-shrink:0;overflow:hidden;box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--line);transition:box-shadow .18s}
+        .status-avatar:hover{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--accent)}
+        .status-avatar img{width:100%;height:100%;object-fit:cover}
+        .status-author-wrap{min-width:min(8rem,100%);flex:1}
+        .status-author{display:block;font-weight:700;font-size:0.95rem;color:var(--text);letter-spacing:-0.01em;overflow-wrap:anywhere}
+        .status-author:hover{color:var(--accent-strong)}
+        .status-handle{font-size:0.76rem;color:var(--muted);overflow-wrap:anywhere}
+        img.emoji{display:inline-block;width:1.35em;height:1.35em;margin:0 .05em;object-fit:contain;vertical-align:-0.25em}
+        /* A flex row rather than right-aligned inline boxes: baseline alignment
+           lands a chip that contains an icon and a chip that does not on
+           different lines, and the gap replaces per-chip margins. */
+        .status-meta{margin-left:auto;flex-shrink:0;padding-left:.5rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:.25rem .35rem}
+        /* The timestamp is the only plain link in the row. Scoped away from the
+           pills, which are links too when they point at a blog post: an
+           unscoped .status-meta a wins on specificity over .lang-pill and
+           blows one chip up to the timestamp's size. */
+        .status-meta>a:not(.lang-pill){color:var(--muted);font-size:0.78rem}
+        .status-meta>a:not(.lang-pill):hover{color:var(--text)}
+        /* Every marker in the row is the same chip: same type size, same box,
+           same vertical alignment, so a status with four of them reads as one
+           row rather than four. The visibility marker keeps a transparent box
+           instead of dropping the padding, which would misalign it. */
+        .visibility-pill,.lang-pill{display:inline-flex;align-items:center;gap:.25rem;padding:.1rem .4rem;border:1px solid transparent;border-radius:4px;font-size:.66rem;line-height:1.5;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+        .visibility-pill .icon,.lang-pill .icon{width:.8rem;height:.8rem;flex-shrink:0}
+        .lang-pill{background:var(--surface-2);border-color:var(--line)}
+        .blog-post-pill{text-decoration:none}
+        .blog-post-pill:hover{color:var(--text);border-color:var(--line-strong)}
+        .status-body{font-size:0.9375rem;line-height:1.68;color:var(--text-soft);word-wrap:break-word;overflow-wrap:break-word}
+        .status-body p,.profile-bio p{margin:.4rem 0}
+        /* Long posts need air between paragraphs, not just between lines, or the
+           text reads as one block. Compact themes override this with their own
+           tighter p margin. */
+        .status-body p+p{margin-top:.9em}
+        .status-body .link,.status-body .mention,.status-body .hashtag{color:var(--accent);font-weight:550}
+        /* Markdown-rendered content */
+        .status-body h1,.status-body h2,.status-body h3,.status-body h4,.status-body h5,.status-body h6{margin:.7rem 0 .35rem;line-height:1.3;color:var(--text);font-weight:700}
+        .status-body h1{font-size:1.3rem}
+        .status-body h2{font-size:1.18rem}
+        .status-body h3{font-size:1.06rem}
+        .status-body h4,.status-body h5,.status-body h6{font-size:.96rem}
+        .status-body ul,.status-body ol,.profile-bio ul,.profile-bio ol{margin:.4rem 0;padding-left:1.4rem}
+        .status-body li,.profile-bio li{margin:.15rem 0}
+        .status-body blockquote{margin:.5rem 0;padding:.2rem 0 .2rem .85rem;border-left:3px solid var(--line);color:var(--muted)}
+        .status-body code{background:var(--surface-2);border-radius:var(--radius-sm);padding:.08rem .32rem;font-size:.86em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+        .status-body pre{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:.7rem .85rem;margin:.5rem 0;overflow-x:auto}
+        .status-body pre code{background:none;border:0;padding:0;font-size:.86rem;line-height:1.5}
+        .status-body hr{border:0;border-top:1px solid var(--line);margin:.9rem 0}
+        .status-body table{border-collapse:collapse;margin:.5rem 0;display:block;overflow-x:auto;font-size:.9em}
+        .status-body th,.status-body td{border:1px solid var(--line);padding:.3rem .55rem;text-align:left}
+        .status-body th{background:var(--surface-2);font-weight:600}
+        /* Long-post clamp. Everything here hangs off @supports so a browser
+           without :has() gets the old behaviour - the whole post, no control -
+           instead of a body truncated with no way to open it. The checkbox is
+           the state; :has() reads it from the wrapper. The mask fades the cut
+           edge without knowing the card's background, so no theme has to
+           repeat it. The focused post of a thread is the one place a reader
+           asked for the whole text, so it never clamps. */
+        .status-clamp-toggle{display:none}
+        @supports selector(:has(*)){
+            .status-body-clamp>.status-body{max-height:var(--status-clamp);overflow:hidden;-webkit-mask-image:linear-gradient(to bottom,#000 62%,transparent);mask-image:linear-gradient(to bottom,#000 62%,transparent)}
+            /* Expanded, and also whenever focus reaches a link inside the cut
+               part: a keyboard user must never be tabbing through text nobody
+               can see. */
+            .status-body-clamp:has(.status-clamp-toggle input:checked)>.status-body,.status-body-clamp>.status-body:focus-within,.thread-item.focus .status-body-clamp>.status-body{max-height:none;-webkit-mask-image:none;mask-image:none}
+            .status-clamp-toggle{position:relative;display:inline-flex;align-items:center;gap:.35rem;margin-top:.45rem;padding:.28rem .7rem;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);color:var(--accent);font-size:.82rem;font-weight:650;line-height:1.45;cursor:pointer;user-select:none}
+            .status-clamp-toggle:hover{border-color:var(--line-strong);color:var(--accent-strong)}
+            .status-clamp-toggle:focus-within{outline:2px solid var(--accent-strong);outline-offset:2px}
+            .status-clamp-toggle input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+            .status-body-clamp:has(.status-clamp-toggle input:checked) .clamp-more,.status-body-clamp:not(:has(.status-clamp-toggle input:checked)) .clamp-less{display:none}
+            .thread-item.focus .status-clamp-toggle{display:none}
+        }
+        .status-cw{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:0.8rem 0.95rem;margin-bottom:0.8rem;font-size:0.875rem}
+        .status-cw summary{cursor:pointer;font-weight:600;color:var(--text);list-style:none;display:flex;align-items:center;gap:.45rem}
+        .status-cw summary::-webkit-details-marker{display:none}
+        .status-cw summary::before{content:"";width:.5rem;height:.5rem;border-radius:50%;background:var(--accent);flex-shrink:0}
+        .status-media{display:grid;gap:0.3rem;margin-top:0.65rem;border-radius:var(--radius-sm);overflow:hidden}
+        .status-media-wrap{position:relative}
+        .status-media-wrap.sensitive{overflow:hidden;border-radius:var(--radius-sm);background:var(--surface-3)}
+        .status-media-wrap.sensitive:not(.revealed) .status-media{pointer-events:none}
+        .status-media-wrap.sensitive:not(.revealed) .status-media img,.status-media-wrap.sensitive:not(.revealed) .status-media video{filter:blur(28px);transform:scale(1.08)}
+        .status-media-wrap.sensitive:not(.revealed) .status-media-alt{filter:blur(8px);user-select:none}
+        .sensitive-media-toggle{position:absolute;inset:50% auto auto 50%;z-index:2;display:flex;align-items:center;gap:.4rem;transform:translate(-50%,-50%);border:1px solid color-mix(in srgb,#fff 35%,transparent);border-radius:999px;padding:.55rem .85rem;background:rgba(12,15,20,.82);color:#fff;font:inherit;font-size:.82rem;font-weight:650;white-space:nowrap;cursor:pointer;box-shadow:var(--shadow-md);backdrop-filter:blur(8px)}
+        .sensitive-media-toggle:hover{background:rgba(12,15,20,.94)}
+        .status-media-wrap.revealed .sensitive-media-toggle{inset:.85rem .65rem auto auto;transform:none;padding:.38rem .6rem;opacity:.82}
+        .status-media-wrap.revealed .sensitive-media-toggle:hover{opacity:1}
+        .status-media figure{margin:0;min-width:0;display:flex;flex-direction:column}
+        .status-media img,.status-media video{width:100%;height:auto;display:block;object-fit:cover;border-radius:var(--radius-sm);transition:transform .25s;background:var(--media-tone,#000)}
+		.status-media audio{width:100%}
+        .status-media a:hover img{transform:scale(1.02)}
+		.status-media-load{display:flex;align-items:center;justify-content:center;min-height:8rem;padding:1rem;background:var(--surface-3);color:var(--accent);font-weight:650;text-align:center}
+        .status-media.single .status-media-item img,.status-media.single .status-media-item video{max-height:420px}
+        .status-media.multiple{grid-template-columns:1fr 1fr}
+        .status-media.multiple .status-media-item img,.status-media.multiple .status-media-item video{max-height:260px}
+        .status-media-alt{font-size:.78rem;color:var(--muted);padding:.45rem .55rem;background:var(--surface-2);border-radius:0 0 var(--radius-sm) var(--radius-sm);font-style:italic;line-height:1.4;word-wrap:break-word;overflow-wrap:break-word;border-top:1px solid var(--line);margin-top:-.3rem}
+        .composer-sensitive-toggle{display:flex;align-items:center;gap:.45rem;font-size:.84rem;font-weight:600;color:var(--text);cursor:pointer}
+        /* Blog + markdown are mode toggles: same pill as the other composer tools. */
+        .composer-blog-toggle,.composer-md-toggle{cursor:pointer}
+        .composer-blog-toggle input,.composer-md-toggle input{margin:0;width:.85rem;height:.85rem;accent-color:var(--accent)}
+        .composer-blog-toggle:has(input:checked),.composer-md-toggle:has(input:checked){background:var(--accent-soft);color:var(--accent-strong);border-color:color-mix(in srgb,var(--accent) 38%,var(--line))}
+        .status-preview{display:flex;margin-top:.7rem;min-height:7rem;overflow:hidden;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);color:inherit;text-decoration:none;transition:border-color .15s,background .15s}
+        .status-preview:hover{border-color:var(--accent);background:var(--surface-3);text-decoration:none}
+        .status-preview-image{width:38%;max-width:14rem;min-width:8rem;object-fit:cover;background:var(--surface-3)}
+        .status-preview-copy{display:flex;min-width:0;flex:1;flex-direction:column;justify-content:center;padding:.75rem .85rem}
+        .status-preview-site{overflow:hidden;color:var(--muted);font-size:.72rem;line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
+        .status-preview-title{display:-webkit-box;overflow:hidden;margin-top:.16rem;color:var(--text);font-size:.92rem;font-weight:700;line-height:1.35;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+        .status-preview-description{display:-webkit-box;overflow:hidden;margin-top:.28rem;color:var(--muted);font-size:.78rem;line-height:1.4;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+        /* Must stay in the layout with a real box: a display:none or zero-area
+           slot never reports an intersection, so the hx-trigger="intersect"
+           preview fetch would never fire. 1px is invisible next to the margins. */
+        .status-preview-slot{display:block;min-height:1px}
+        .status-poll{margin-top:.8rem;padding:.75rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2)}
+        .status-poll fieldset{display:grid;gap:.45rem;margin:0;padding:0;border:0}
+        .poll-option{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.55rem .65rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer}
+        .poll-option.selected{border-color:var(--accent);background:var(--accent-soft)}
+        .status-poll fieldset:disabled .poll-option{cursor:default}
+        .poll-option strong{font-size:.8rem;font-variant-numeric:tabular-nums}
+        .poll-footer{display:flex;align-items:center;gap:.65rem;margin-top:.65rem}
+        .poll-footer small{color:var(--muted)}
+        .status-actions{display:flex;align-items:center;gap:0.2rem;flex-wrap:wrap;margin-top:0.85rem;padding-top:0.65rem;border-top:1px solid var(--line)}
+        .action-btn{position:relative;display:inline-flex;align-items:center;gap:0.35rem;padding:0.36rem 0.7rem;font-size:0.8rem;color:var(--muted);border:none;background:none;cursor:pointer;border-radius:999px;font-weight:550;transition:all .15s;font-family:inherit}
+        /* Transparent submit overlaying an icon pill: graphical browsers see the icon and click anywhere on the pill to submit; text browsers (lynx) ignore the CSS and show the input's value as a clean label with no (BUTTON) marker. */
+        .action-submit{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;background:transparent;opacity:0;cursor:pointer;font:inherit;z-index:1;-webkit-appearance:none;appearance:none}
+        .action-btn .icon{font-size:1.05rem;transition:transform .18s}
+        /* The submit is transparent, so its own focus ring is invisible. Draw it on the pill instead. */
+        .action-btn:focus-within,.desktop-nav>form .nav-link:focus-within{outline:2px solid var(--accent-strong);outline-offset:2px}
+        .action-btn:hover{background:var(--surface-2);color:var(--text)}
+        .action-btn:hover .icon{transform:scale(1.12)}
+        .action-btn .count{font-variant-numeric:tabular-nums;font-size:.78rem}
+        .action-btn a.count{position:relative;z-index:2;color:inherit}
+        /* The count spans stay in the DOM even at zero so a refresh can swap
+           them out of band; an empty one must not claim a flex gap. */
+        .action-btn .count:empty,.action-btn .count-slot:empty{display:none}
+        .action-btn.active{color:var(--accent-strong);background:var(--accent-soft)}
+        .action-btn.like.active{color:var(--like);background:var(--like-soft)}
+        .action-btn.like.active .icon{fill:currentColor}
+        .action-btn.boost.active{color:var(--boost);background:var(--boost-soft)}
+        .status-reactions{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.7rem}
+        .status-reactions form,.reaction-presets form{display:inline-flex}
+        .reaction{display:inline-flex;align-items:center;gap:.3rem;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);color:var(--text);padding:.25rem .55rem;cursor:pointer}
+        .reaction.active{border-color:var(--accent-strong);background:var(--accent-soft)}
+        .reaction img,.reaction-grid img,.reaction-emoji{width:1.2em;height:1.2em;object-fit:contain}
+        .reaction-picker{position:relative}
+        .status:has(.reaction-picker[open]){position:relative;z-index:10}
+        .reaction-picker>summary{display:flex;list-style:none}
+        .reaction-picker>summary::-webkit-details-marker{display:none}
+        .reaction-menu{position:absolute;z-index:60;left:50%;bottom:calc(100% + .4rem);transform:translateX(-50%);width:min(22rem,calc(100vw - 2rem));max-height:calc(100vh - 2rem);overflow-y:auto;padding:.7rem;border:1px solid var(--line);border-radius:.7rem;background:var(--surface);box-shadow:var(--shadow)}
+        .reaction-presets{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem}
+        .reaction-presets button,.reaction-grid button{display:flex;align-items:center;justify-content:center;height:2.4rem;padding:0;border:1px solid var(--line);border-radius:.45rem;background:var(--surface-2);font-family:inherit;font-size:1.25rem;line-height:1;cursor:pointer}
+        .reaction-presets button{width:2.4rem}
+        .reaction-presets button[aria-pressed="true"],.reaction-grid button[aria-pressed="true"]{border-color:var(--accent-strong);background:var(--accent-soft)}
+        .reaction-entry{display:flex;align-items:stretch;gap:.35rem}
+        .reaction-entry input{min-width:0;flex:1;padding:.4rem .55rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font:inherit;font-size:.82rem}
+        .reaction-entry input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+        .reaction-submit{padding:.4rem .75rem;font-size:.8rem;white-space:nowrap;box-shadow:none}
+        .reaction-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(2.4rem,1fr));gap:.3rem;max-height:12rem;overflow:auto;margin-top:.6rem}
+        .action-btn.danger:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 10%,transparent)}
+        .status-interactions{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;gap:.55rem;margin:-.25rem 0 1rem;padding:.65rem .8rem;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm)}
+        [id^="status-interactions-"]{scroll-margin-top:calc(var(--header-height) + var(--header-inset) + .8rem)}
+        .status-interactions details{min-width:0}
+        .status-interactions>.interaction-reaction{grid-column:1/-1}
+        .status-interactions>.interaction-likes{grid-column:1}
+        .status-interactions>.interaction-refresh{grid-column:2;align-self:start;display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;color:var(--muted);border-radius:50%}
+        .status-interactions>.interaction-boosts{grid-column:3}
+        .status-interactions>.interaction-boosts>summary{justify-content:flex-end}
+        .status-interactions>.interaction-quotes{grid-column:1/-1}
+        .status-interactions>.interaction-refresh:hover{color:var(--accent-strong);background:var(--accent-soft)}
+        .status-interactions>.interaction-refresh .icon{width:1rem;height:1rem}
+        .status-interactions summary{display:flex;align-items:center;min-height:2rem;gap:.4rem;cursor:pointer;color:var(--muted);font-size:.82rem;font-weight:650;list-style:none;white-space:nowrap}
+        .status-interactions summary::-webkit-details-marker{display:none}
+        .interaction-accounts{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.35rem;margin-top:.55rem}
+        .interaction-account{display:flex;align-items:center;gap:.5rem;padding:.4rem;border-radius:var(--radius-sm);color:var(--text-soft)}
+        .interaction-account:hover{background:var(--surface);text-decoration:none}
+        .interaction-account img{width:2rem;height:2rem;border-radius:50%;object-fit:cover;background:var(--surface-3)}
+        .interaction-account span{display:flex;flex-direction:column;min-width:0}
+        .interaction-account strong,.interaction-account small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .interaction-account strong{font-size:.82rem}.interaction-account small,.interaction-unavailable{font-size:.72rem;color:var(--muted)}
+
+        /* Buttons */
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:0.6rem 1.15rem;border-radius:999px;font-size:0.875rem;font-weight:650;border:1px solid var(--line);background:var(--surface);color:var(--text-soft);cursor:pointer;transition:all .16s;font-family:inherit;letter-spacing:-0.01em}
+        .btn .icon{font-size:1.05rem}
+        .btn-primary{background:var(--accent-grad);color:#fff;border-color:transparent;box-shadow:0 4px 14px var(--accent-shadow)}
+        .btn-primary:hover{filter:brightness(1.05);box-shadow:0 6px 18px var(--accent-shadow);transform:translateY(-1px);text-decoration:none}
+        .btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none;filter:none}
+        .btn-ghost{background:var(--surface);border:1px solid var(--line);color:var(--text-soft)}
+        .btn-ghost:hover{border-color:var(--line-strong);background:var(--surface-2);text-decoration:none}
+        /* Primary submit with a leading icon drawn as a background image, so the button stays an <input type=submit> (clean label in text browsers) while keeping its icon graphically. */
+        .btn-icon-post{padding-left:2.1rem;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 20 4.5-1.2L19 8.3a3 3 0 0 0-4.2-4.2L4.3 14.6z'/%3E%3Cpath d='m13.5 5.5 4.2 4.2'/%3E%3Cpath d='m4 20 3.2-1.1L5.1 16.8z'/%3E%3C/svg%3E") no-repeat .85rem center/1.05rem, var(--accent-grad)}
+
+        /* Composer */
+        .composer{min-width:0;max-width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.1rem;margin-bottom:1rem;box-shadow:var(--shadow);transition:border-color .18s,box-shadow .18s}
+        .composer form,.composer-inner{min-width:0;max-width:100%}
+        .composer:focus-within{border-color:color-mix(in srgb,var(--accent) 35%,var(--line));box-shadow:var(--shadow-md),0 0 0 3px var(--accent-soft)}
+        .composer-reply-context{min-width:0;font-size:.84rem;color:var(--muted);margin-bottom:.75rem;padding:.55rem .75rem;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);display:flex;align-items:center;gap:.4rem;overflow-wrap:anywhere}
+        .composer-reply-context .icon{color:var(--muted)}
+        .composer-reply-context strong{color:var(--text);font-weight:700}
+        .composer textarea{width:100%;min-height:96px;border:none;outline:none;resize:vertical;font-family:inherit;font-size:1rem;line-height:1.62;padding:0.75rem 0;background:transparent;color:var(--text)}
+        .composer textarea::placeholder{color:var(--muted)}
+		.composer form.composer-collapsed textarea{min-height:2.6rem}
+		.composer-mode-bar{display:flex;align-items:stretch;gap:.35rem;margin-bottom:.25rem}
+		.composer-mode-tabs{display:flex;flex:1;min-width:0;gap:.25rem;padding:.2rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);overflow-x:auto}
+		.composer-mode-tabs button{flex:1 0 auto;min-width:5rem;border:0;border-radius:6px;padding:.38rem .58rem;background:transparent;color:var(--muted);font:inherit;font-size:.78rem;font-weight:650;cursor:pointer}
+		.composer-mode-tabs button:hover{color:var(--text)}
+		.composer-mode-tabs button.active{background:var(--surface);color:var(--accent-strong);box-shadow:0 1px 3px color-mix(in srgb,var(--text) 10%,transparent)}
+		.composer-fullscreen-toggle{flex:0 0 2.35rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--muted);font:inherit;font-size:1.2rem;line-height:1;cursor:pointer}
+		.composer-fullscreen-toggle:hover,.composer-fullscreen-toggle[aria-pressed="true"]{border-color:var(--line-strong);background:var(--accent-soft);color:var(--accent-strong)}
+		/* Glyph in the stylesheet, name in the markup. The second declaration
+		   repeats the first with empty alternative text, which keeps the glyph
+		   out of the accessible name; a browser that does not understand the
+		   syntax drops that line and keeps the glyph. */
+		.composer-fullscreen-toggle::before{content:"⛶"}
+		.composer-fullscreen-toggle::before{content:"⛶" / ""}
+		.composer-fullscreen-toggle[aria-pressed="true"]::before{content:"×"}
+		.composer-fullscreen-toggle[aria-pressed="true"]::before{content:"×" / ""}
+		html.composer-fullscreen-open{overflow:hidden}
+		.composer form.composer-fullscreen{position:fixed;inset:0;z-index:1000;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;padding:max(1rem,env(safe-area-inset-top)) max(1rem,env(safe-area-inset-right)) max(1rem,env(safe-area-inset-bottom)) max(1rem,env(safe-area-inset-left));background:var(--surface)}
+		.composer-fullscreen .composer-inner{width:min(100%,72rem);max-width:72rem;margin:0 auto}
+		.composer-fullscreen .composer-mode-bar{position:sticky;top:0;z-index:5;padding-top:.25rem;background:var(--surface)}
+		.composer form.composer-fullscreen textarea,.composer form.composer-fullscreen .composer-visual-editor,.composer form.composer-fullscreen .composer-preview{min-height:calc(100vh - 8.5rem);min-height:calc(100dvh - 8.5rem)}
+		/* Fullscreen takes the form out of the .composer card, so the editing area
+		   loses the card's border. Give it one back, or the text floats on a bare
+		   background with nothing marking where the field starts. */
+		.composer form.composer-fullscreen textarea,.composer form.composer-fullscreen .composer-visual-editor{padding:.75rem .9rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg)}
+		.composer form.composer-fullscreen textarea:focus,.composer form.composer-fullscreen .composer-visual-editor:focus{border-color:color-mix(in srgb,var(--accent) 35%,var(--line));box-shadow:0 0 0 3px var(--accent-soft)}
+		.composer-rich-toolbar{display:flex;align-items:center;gap:.25rem;margin:.5rem 0 0;padding:.35rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);overflow-x:auto}
+		.composer-rich-toolbar button,.composer-rich-toolbar select,.composer-rich-toolbar input{flex:0 0 auto;min-width:2rem;min-height:2rem;border:1px solid transparent;border-radius:6px;background:var(--surface);color:var(--text-soft);font:inherit;font-size:.78rem}
+		.composer-rich-toolbar button,.composer-rich-toolbar select{cursor:pointer}
+		.composer-rich-toolbar button:hover,.composer-rich-toolbar button[aria-pressed="true"],.composer-rich-toolbar select:hover{border-color:var(--line-strong);background:var(--accent-soft);color:var(--accent-strong)}
+		.composer-rich-toolbar button[data-glyph]::before{content:attr(data-glyph)}
+		.composer-rich-toolbar button[data-glyph]::before{content:attr(data-glyph) / ""}
+		.composer-rich-toolbar button[data-glyph="B"]::before{font-weight:700}
+		.composer-rich-toolbar button[data-glyph="I"]::before{font-style:italic}
+		.composer-rich-toolbar button[data-glyph="S"]::before{text-decoration:line-through}
+		.composer-rich-toolbar select,.composer-rich-toolbar input{padding:0 .45rem}
+		.composer-rich-toolbar input{width:12rem;border-color:var(--line-strong)}
+		.composer-visual-editor{width:100%;min-height:120px;padding:.75rem 0;border:0;outline:0;background:transparent}
+		.composer-visual-editor:empty::before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
+		.composer-visual-editor:focus{outline:0}
+		.composer-preview{min-height:7rem;margin-top:.65rem;padding:.85rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface)}
+		.composer-preview-state{margin:2rem 0;text-align:center;color:var(--muted)}
+		.composer-preview-error{margin:.55rem 0;padding:.55rem .7rem;border:1px solid color-mix(in srgb,var(--danger) 35%,var(--line));border-radius:var(--radius-sm);background:color-mix(in srgb,var(--danger) 8%,var(--surface));color:var(--danger);font-size:.82rem}
+		.composer-preview .status-cw{margin-bottom:.65rem}
+		.composer-preview .composer-preview-no-cw{margin:0;padding:0;border:0;background:transparent}
+		.composer-preview .status-poll{pointer-events:none}
+		.composer-preview .status-quote{margin-top:.8rem}
+        .composer-footer{display:flex;align-items:center;justify-content:space-between;margin-top:0.5rem;padding-top:0.7rem;border-top:1px solid var(--line)}
+        .composer-settings{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.85rem;margin-top:.65rem;padding:.75rem;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm)}
+        .composer-language{display:flex;flex:0 0 9.75rem;min-width:0;flex-direction:column;gap:.32rem}
+        .composer-audience{display:flex;flex:1 1 auto;min-width:0;flex-direction:column;gap:.32rem;border:0}
+        .composer-setting-label{display:flex;align-items:center;gap:.3rem;padding:0 .12rem;font-size:.7rem;line-height:1.2;font-weight:700;letter-spacing:.045em;text-transform:uppercase;color:var(--muted)}
+        .composer-setting-label .icon{font-size:.9rem}
+        .composer-fixed-visibility{align-self:flex-start;min-height:2.15rem;padding:.42rem .65rem;background:var(--surface)}
+        .tool-btn{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:var(--radius-sm);padding:.4rem .6rem;font-weight:600;font-size:.82rem;cursor:pointer;transition:all .15s;font-family:inherit}
+        .tool-btn .icon{font-size:1rem}
+        .tool-btn:hover{color:var(--text);border-color:var(--line-strong)}
+        .tool-btn.active{background:var(--accent-soft);color:var(--accent-strong);border-color:color-mix(in srgb,var(--accent) 38%,var(--line))}
+        /* Native (no-JS) CW / media disclosures */
+        .composer-toggles{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.65rem}
+        .composer-detail{min-width:0}
+        .composer-detail>summary{display:inline-flex;width:fit-content;list-style:none;user-select:none}
+        .composer-detail>summary::-webkit-details-marker{display:none}
+        .composer-detail>summary::marker{content:""}
+        .composer-detail>summary:hover{color:var(--text);border-color:var(--line-strong)}
+        .composer-detail[open]{flex:1 1 100%}
+        .composer-detail[open]>summary{background:var(--accent-soft);color:var(--accent-strong);border-color:color-mix(in srgb,var(--accent) 38%,var(--line));margin-bottom:.1rem}
+        .lang-select{width:100%;min-height:2.15rem;font-family:inherit;font-size:.82rem;font-weight:600;color:var(--text-soft);background-color:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:.42rem 1.8rem .42rem .62rem;cursor:pointer;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%236b7385' stroke-width='1.5' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .65rem center;background-size:.6rem}
+        .lang-select:hover{color:var(--text);border-color:var(--line-strong)}
+        .lang-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+        .visibility-group{display:flex;gap:.3rem;flex-wrap:wrap}
+        .visibility-group label{display:inline-flex;align-items:center;gap:.3rem;min-height:2.15rem;font-size:.78rem;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.38rem .55rem;cursor:pointer;transition:all .15s;font-weight:600}
+        .visibility-group label:hover{color:var(--text);border-color:var(--line-strong)}
+        .visibility-group label:has(input:checked){background:var(--accent-soft);color:var(--accent-strong);border-color:color-mix(in srgb,var(--accent) 38%,var(--line))}
+        .visibility-group input{margin:0;width:.85rem;height:.85rem;accent-color:var(--accent)}
+        .composer-cw{width:100%;margin-top:.65rem;padding:.6rem .8rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text);font-family:inherit;font-size:.9rem}
+        .composer-cw:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+        .composer-media{display:grid;gap:.55rem;margin-top:.65rem;padding:.75rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2)}
+        .composer-media-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto;gap:.65rem;padding:.65rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface)}
+        .composer-media-row label{display:grid;gap:.3rem;min-width:0}
+        .composer-media-remove{align-self:end}
+        .composer-media-help:empty{display:none}
+        .composer form.composer-dropping{outline:2px dashed var(--accent);outline-offset:.35rem;border-radius:var(--radius-sm);background:var(--accent-soft)}
+        .composer-media-label{font-size:.76rem;font-weight:650;color:var(--muted)}
+        .composer-media input[type="file"],.composer-media input[type="text"],.composer-media input[type="datetime-local"]{min-width:0;max-width:100%;font:inherit;color:var(--text)}
+        .composer-media input[type="file"]{width:100%}
+        .composer-media input[type="text"],.composer-media input[type="datetime-local"]{width:100%;padding:.55rem .7rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);color:var(--text)}
+        .composer-media input[type="datetime-local"]:focus,.composer-media select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+        .composer-media select{width:100%;padding:.5rem .7rem;font:inherit;font-size:.9rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);color:var(--text)}
+        .composer-count{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+        .composer-count.danger{color:var(--danger);font-weight:700}
+        .composer-autocomplete-wrapper{position:relative}
+        .composer-autocomplete{position:absolute;bottom:100%;left:0;right:0;z-index:100;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-lg);max-height:240px;overflow-y:auto;margin-bottom:6px}
+        .composer-autocomplete-below{top:100%;bottom:auto;margin-top:6px;margin-bottom:0}
+        .composer-autocomplete-item{display:flex;align-items:center;gap:0.55rem;width:100%;padding:0.55rem 0.8rem;border:none;background:none;cursor:pointer;text-align:left;color:var(--text);font-size:0.875rem;transition:background .12s;font-family:inherit}
+        .composer-autocomplete-item:hover,.composer-autocomplete-item-active{background:var(--surface-2)}
+        .composer-autocomplete-avatar{width:1.85rem;height:1.85rem;border-radius:50%;object-fit:cover;background:var(--surface-3);flex-shrink:0}
+        .composer-autocomplete-emoji-char{font-size:1.5rem;line-height:1;flex-shrink:0;width:1.85rem;height:1.85rem;display:flex;align-items:center;justify-content:center}
+        .composer-autocomplete-info{display:flex;flex-direction:column;min-width:0}
+        .composer-autocomplete-name{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .composer-autocomplete-acct{font-size:0.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        /* Emoji picker. contain:content keeps a grid of several hundred buttons
+           from making the rest of the timeline relayout when a tab changes. */
+        .emoji-panel{width:100%;margin-top:.55rem;padding:.6rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);contain:content}
+        .emoji-search{width:100%;padding:.5rem .7rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:inherit;font-size:.875rem}
+        .emoji-search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+        .emoji-tabs{display:flex;gap:.25rem;margin-top:.5rem;overflow-x:auto;scrollbar-width:thin}
+        .emoji-tabs button{flex:none;padding:.3rem .55rem;border:1px solid transparent;border-radius:var(--radius-sm);background:none;color:var(--muted);font-family:inherit;font-size:.76rem;font-weight:650;white-space:nowrap;cursor:pointer;transition:all .15s}
+        .emoji-tabs button:hover{color:var(--text)}
+        .emoji-tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent-strong);border-color:color-mix(in srgb,var(--accent) 38%,var(--line))}
+        .emoji-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(2.4rem,1fr));gap:.3rem;max-height:15rem;margin-top:.5rem;overflow-y:auto;overscroll-behavior:contain}
+        /* Fixed height rather than aspect-ratio, and the overflow hidden with
+           it: a glyph the font draws taller than expected, or splits in two,
+           then cannot push its whole row down. */
+        .emoji-grid button{display:flex;align-items:center;justify-content:center;height:2.4rem;padding:0;overflow:hidden;border:none;border-radius:var(--radius-sm);background:none;color:var(--text);font-family:inherit;font-size:1.45rem;line-height:1;cursor:pointer;transition:background .12s}
+        .emoji-grid button:hover{background:var(--surface)}
+        .emoji-grid button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+        .emoji-grid img{width:1.4rem;height:1.4rem;object-fit:contain}
+        .emoji-empty{grid-column:1/-1;margin:0;padding:.9rem .2rem;color:var(--muted);font-size:.82rem;text-align:center}
+
+        /* Profile */
+        /* No overflow:hidden here: it would clip the "add to list" panel to
+           the card and cut off long list menus. Banner and tab strip round
+           their own corners instead. */
+        .profile-header{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:1rem;box-shadow:var(--shadow)}
+        .profile-banner{height:180px;background:var(--accent-grad);position:relative;border-radius:var(--radius) var(--radius) 0 0;overflow:hidden}
+        .profile-banner::after{content:"";position:absolute;inset:0;background:radial-gradient(600px 200px at 20% 120%,rgba(255,255,255,.25),transparent 60%)}
+        .profile-info{padding:0 1.1rem 1.1rem;margin-top:-3.2rem;position:relative}
+        .profile-avatar{width:6.5rem;height:6.5rem;border-radius:50%;border:4px solid var(--surface);background:var(--surface-3);overflow:hidden;margin-bottom:0.6rem;box-shadow:var(--shadow-md)}
+        .profile-avatar img{width:100%;height:100%;object-fit:cover}
+        .profile-name{font-size:1.3rem;font-weight:800;letter-spacing:-0.02em}
+        .profile-name-link{color:inherit;text-decoration:none}
+        .profile-name-link:hover,.profile-name-link:focus-visible{text-decoration:underline}
+        .profile-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem}
+        .profile-identity,.profile-actions,.profile-meta{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;min-width:0}
+        .profile-actions{justify-content:flex-end;margin-left:auto}
+        .profile-list-menu{position:relative}
+        .profile-list-menu>summary{min-height:44px;list-style:none}
+        .profile-list-menu>summary::-webkit-details-marker{display:none}
+        .profile-list-menu :focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px}
+        .profile-meta{margin-top:.2rem;font-size:.875rem;color:var(--muted)}
+        .profile-handle{font-size:0.9375rem;color:var(--muted)}
+        .profile-created{white-space:nowrap}
+        .profile-created::before{content:"· "}
+        .profile-created::before{content:"· " / ""}
+        .profile-bio{font-size:0.9375rem;line-height:1.65;margin:0.6rem 0 0.85rem;color:var(--text-soft)}
+        .profile-stats{display:flex;gap:1.4rem;font-size:0.875rem;padding-top:.5rem}
+        .profile-stats div{display:flex;align-items:baseline;gap:.3rem}
+        .profile-stats strong{font-weight:750;font-size:1rem}
+        .profile-stats span{color:var(--muted)}
+        /* Tab strip closing the profile card: full-bleed and rounded to match
+           the card's bottom corners, so it reads as part of the header rather
+           than as two links floating over the page background. */
+        .profile-tabs{display:flex;margin-top:1rem;border-top:1px solid var(--line);border-radius:0 0 var(--radius) var(--radius);overflow:hidden}
+        .profile-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.8rem .5rem;font-size:.875rem;font-weight:650;color:var(--muted);border-bottom:2px solid transparent;transition:color .18s,background .18s}
+        .profile-tab:hover{color:var(--text);background:var(--accent-soft)}
+        .profile-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+        .profile-post-filters{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;padding:.75rem 1rem;background:var(--surface);border:1px solid var(--line);border-top:0;border-radius:0 0 var(--radius) var(--radius);font-size:.875rem}
+        .profile-post-filters label{display:flex;align-items:center;gap:.35rem;color:var(--text-soft)}
+        .profile-post-filters input{width:1rem;height:1rem;accent-color:var(--accent)}
+
+        /* Notifications */
+        .notif-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+        .notif-header-actions{display:flex;flex-wrap:wrap;gap:.5rem}
+        .notification-read-shortcut{-webkit-touch-callout:none;user-select:none;touch-action:manipulation}
+        .notif-tabs{display:flex;gap:.4rem;margin-bottom:1rem;border-bottom:1px solid var(--line)}
+        .notif-tab{padding:.55rem .2rem;margin-right:1rem;font-size:.875rem;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+        .notif-tab:hover{color:var(--text)}
+        .notif-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+        .notification{position:relative;display:flex;align-items:flex-start;gap:0.85rem;padding:0.9rem 1.05rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:0.55rem;box-shadow:var(--shadow);transition:box-shadow .18s,border-color .18s}
+        .notification:hover{box-shadow:var(--shadow-md);border-color:var(--line-strong)}
+        .notification.unread{border-left:3px solid var(--accent);background:linear-gradient(90deg,var(--accent-soft),var(--surface) 30%)}
+        /* Mentions get a coloured left edge so they stand out in the unfiltered list. */
+        .notification:has(.nt-mention){border-left:3px solid var(--mention)}
+        /* Nav unread-count badge (header pill) - unrelated to the list rows below. */
+        .notif-badge{display:inline-flex;align-items:center;justify-content:center;min-width:1.1rem;height:1.1rem;padding:0 .28rem;border-radius:999px;background:var(--danger);color:#fff;font-size:.65rem;font-weight:700;line-height:1;margin-left:-.35rem;margin-top:-.55rem;position:relative;z-index:1}
+        .notif-badge[hidden]{display:none}
+        /* Actor avatar with a color-coded type badge in the corner. */
+        .notif-avatar{position:relative;flex-shrink:0;width:2.6rem;height:2.6rem;margin-top:.1rem}
+        .notif-avatar>img,.notif-avatar-fallback{width:2.6rem;height:2.6rem;border-radius:50%;object-fit:cover;background:var(--surface-3);display:block}
+        .notif-avatar-fallback{display:grid;place-items:center;background:var(--surface-2)}
+        .notif-avatar-fallback .icon{width:1.3rem;height:1.3rem;color:var(--muted)}
+        .notif-type-badge{position:absolute;right:-3px;bottom:-3px;width:1.25rem;height:1.25rem;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);box-shadow:0 0 0 2px var(--surface);overflow:hidden;font-size:.85rem;line-height:1}
+        .notif-type-badge img.emoji{width:.9rem;height:.9rem;margin:0;vertical-align:0}
+        .notif-type-badge .icon{width:.78rem;height:.78rem;color:var(--muted);vertical-align:0}
+        .notif-avatar.nt-follow .notif-type-badge,.notif-avatar.nt-follow_request .notif-type-badge,.notif-avatar.nt-follow_accept .notif-type-badge,.notif-avatar.nt-unblock .notif-type-badge{background:var(--accent-soft)}
+        .notif-avatar.nt-follow .notif-type-badge .icon,.notif-avatar.nt-follow_request .notif-type-badge .icon,.notif-avatar.nt-follow_accept .notif-type-badge .icon,.notif-avatar.nt-unblock .notif-type-badge .icon,.notif-avatar.nt-status .notif-type-badge .icon,.notif-avatar.nt-update .notif-type-badge .icon{color:var(--accent)}
+        .notif-avatar.nt-favourite .notif-type-badge{background:var(--like-soft)}
+        .notif-avatar.nt-favourite .notif-type-badge .icon{color:var(--like);fill:currentColor}
+        .notif-avatar.nt-reblog .notif-type-badge,.notif-avatar.nt-move .notif-type-badge{background:var(--boost-soft)}
+        .notif-avatar.nt-reblog .notif-type-badge .icon,.notif-avatar.nt-move .notif-type-badge .icon{color:var(--boost)}
+        .notif-avatar.nt-mention .notif-type-badge{background:var(--mention-soft)}
+        .notif-avatar.nt-mention .notif-type-badge .icon{color:var(--mention)}
+        .notif-avatar.nt-block .notif-type-badge .icon,.notif-avatar.nt-follow_reject .notif-type-badge .icon,.notif-avatar.nt-unfollow .notif-type-badge .icon{color:var(--danger)}
+        .notification-content{flex:1;min-width:0}
+        .notif-text{font-size:0.9rem;color:var(--text-soft);margin:0;line-height:1.45}
+        .notif-actor{font-weight:680;color:var(--text);position:relative;z-index:2}
+        .notif-actor:hover{text-decoration:underline}
+        .notif-handle{color:var(--muted);font-size:.8rem}
+        .notif-others{color:var(--muted)}
+        .notif-action{color:var(--text-soft)}
+        /* Stretched link: the whole card becomes clickable in graphical browsers,
+           while text browsers still get a real, labelled link. No JavaScript. */
+        .notif-stretch::after{content:"";position:absolute;inset:0;z-index:1}
+        /* Follow request buttons sit above the stretched link that covers the row. */
+        .notif-actions{display:flex;gap:.5rem;margin-top:.55rem;position:relative;z-index:2}
+        .notif-actions .btn{padding:.35rem .9rem;font-size:0.8125rem}
+        .notif-excerpt{margin:.4rem 0 0;font-size:0.8375rem;color:var(--muted);line-height:1.5;border-left:2px solid var(--line);padding-left:0.65rem;position:relative;z-index:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+        .notif-time{display:block;margin-top:.4rem;font-size:0.75rem;color:var(--muted)}
+
+        /* Settings / forms */
+        .page-title{font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:1.1rem;display:flex;align-items:center;gap:.6rem}
+        .page-title .icon{color:var(--accent)}
+        .settings-section{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.35rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+        /* Jump list at the top of the settings page. It carries .settings-section
+           too, so the card shell and the heading come from the rules above and
+           every theme restyles it along with the real sections. The links reuse
+           the pill shape the rest of the navigation already uses. */
+        .settings-contents-links{display:flex;flex-wrap:wrap;gap:.4rem}
+        .settings-contents a{display:inline-flex;align-items:center;padding:.36rem .8rem;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);color:var(--text-soft);font-size:.8125rem;font-weight:600;line-height:1.35;transition:color .15s,border-color .15s,background .15s}
+        .settings-contents a:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-strong)}
+        .settings-contents a:focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px}
+        .settings-row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+        .settings-row label{font-size:.8125rem;color:var(--muted);font-weight:600}
+        .settings-row select{padding:.4rem;font-size:.875rem;min-width:0;max-width:100%;flex:1 1 auto;text-overflow:ellipsis}
+        .settings-row .btn{font-size:.8125rem}
+        .settings-section h2{font-size:1.02rem;font-weight:700;margin-bottom:1.1rem;padding-bottom:0.7rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.5rem;letter-spacing:-0.01em}
+        .form-group{margin-bottom:1.1rem}
+        .form-group label{display:block;font-size:0.8125rem;font-weight:600;margin-bottom:0.35rem;color:var(--text-soft)}
+        .form-group input,.form-group textarea,.form-group select{width:100%;padding:0.62rem 0.85rem;border:1px solid var(--line);border-radius:var(--radius-sm);font-family:inherit;font-size:0.9375rem;background:var(--surface);color:var(--text);transition:border-color .15s,box-shadow .15s}
+        .form-group input[type="checkbox"]{width:1.1rem;height:1.1rem;padding:0;accent-color:var(--accent);flex-shrink:0}
+        .form-group input[type="file"]{min-width:0;padding:.35rem}
+        .form-group input[type="file"]::file-selector-button{margin-right:.75rem;padding:.3rem .65rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text-soft);font:inherit;cursor:pointer}
+        .form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+        .form-row{display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap}
+        .form-row>.form-group{margin-bottom:0}
+        .form-row>.form-grow{flex:1 1 18rem;min-width:0}
+
+        /* Post filters. One card per saved filter; every control sits in a
+           .form-group so the themes that restyle inputs cover these too, and
+           the context fieldset drops the UA border that showed up as a grey
+           box inside the card. */
+        .filter-card{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:1.1rem;margin:1rem 0}
+        .filter-card .form-group input,.filter-card .form-group textarea,.filter-card .form-group select{background:var(--surface)}
+        .filter-fields{display:flex;gap:.75rem;flex-wrap:wrap}
+        .filter-fields>.form-group{flex:1 1 12rem;min-width:0}
+        /* datetime-local renders taller than a select in WebKit, so pin both
+           controls to the same height and the row stops looking lopsided. */
+        .filter-fields .form-group input,.filter-fields .form-group select{height:2.75rem}
+        .filter-contexts{border:0;margin:0 0 1.1rem;padding:0;min-inline-size:0}
+        .filter-contexts>legend{padding:0;margin-bottom:.5rem;font-size:0.8125rem;font-weight:600;color:var(--text-soft)}
+        .filter-context-list{display:flex;flex-wrap:wrap;gap:.45rem .95rem}
+        .filter-context-list label{display:inline-flex;align-items:center;gap:.4rem;margin:0;font-size:0.875rem;font-weight:500;color:var(--text);cursor:pointer}
+        .filter-context-list input[type="checkbox"]{width:1.05rem;height:1.05rem;accent-color:var(--accent);flex-shrink:0}
+        .filter-card-actions{display:flex;gap:.5rem;flex-wrap:wrap}
+        .filter-card-actions .btn{font-size:0.8125rem}
+        .filter-new{margin-top:1.35rem;padding-top:1.35rem;border-top:1px solid var(--line)}
+        .filter-new h3{font-size:0.95rem;font-weight:700;margin-bottom:0.9rem;letter-spacing:-0.01em}
+        /* Saving a filter round-trips through a redirect, so the page comes
+           back looking untouched. The notice says what happened and the card
+           that changed lights up once, both driven by the query string the
+           handler redirects to. */
+        .filter-notice{display:flex;align-items:center;gap:.45rem;margin:.75rem 0 0;padding:.6rem .75rem;border:1px solid color-mix(in srgb,var(--boost) 35%,var(--line));border-radius:var(--radius-sm);background:var(--boost-soft);color:var(--text);font-size:.85rem;font-weight:600;animation:filter-notice-in .25s ease-out}
+        .filter-notice::before{content:"\2713";color:var(--boost);font-weight:700}
+        .filter-card.is-flash{animation:filter-card-flash 1.8s ease-out}
+        @keyframes filter-notice-in{from{opacity:0;transform:translateY(-.35rem)}to{opacity:1;transform:none}}
+        @keyframes filter-card-flash{0%,45%{border-color:var(--boost);box-shadow:0 0 0 3px var(--boost-soft)}100%{border-color:var(--line);box-shadow:0 0 0 0 transparent}}
+        @media(prefers-reduced-motion:reduce){.filter-notice,.filter-card.is-flash{animation:none}}
+        .field{width:100%;padding:0.62rem 0.85rem;border:1px solid var(--line-strong);border-radius:var(--radius-sm);font-family:inherit;font-size:0.9375rem;background:var(--surface);color:var(--text);transition:border-color .15s,box-shadow .15s;margin-bottom:0.75rem}
+        .field:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+        .field::placeholder{color:var(--muted)}
+
+        /* Login / auth cards */
+        .auth-wrap{display:flex;align-items:center;justify-content:center;min-height:82vh;padding:1rem}
+        .auth-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);padding:2.2rem 2rem;width:100%;max-width:400px;text-align:center;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+        .auth-card::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:var(--accent-grad)}
+        .auth-mark{width:56px;height:56px;border-radius:16px;background:var(--accent-grad);display:grid;place-items:center;margin:0 auto 1rem;box-shadow:0 10px 24px var(--accent-shadow)}
+        .auth-mark .icon{color:#fff;width:1.7rem;height:1.7rem;stroke-width:2.4}
+        .auth-card h1{font-size:1.6rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:0.3rem}
+        .auth-card h1 span{color:var(--accent)}
+        .auth-card .sub{color:var(--muted);font-size:0.9rem;margin-bottom:1.6rem}
+        .auth-card .field{margin-bottom:0.85rem;text-align:left}
+        .auth-card .btn{width:100%;margin-top:.3rem}
+
+        /* Misc */
+        .back-link{display:inline-flex;align-items:center;gap:.35rem;margin-bottom:1rem;padding:.4rem .85rem .4rem .65rem;background:var(--surface);border:1px solid var(--line);border-radius:999px;color:var(--text-soft);font-size:.85rem;font-weight:600;box-shadow:var(--shadow);transition:color .15s,border-color .15s,background .15s,transform .12s}
+        .back-link:hover{color:var(--accent-strong);border-color:color-mix(in srgb,var(--accent) 35%,var(--line));background:var(--surface-2);text-decoration:none;transform:translateX(-2px)}
+        .back-link .icon{width:1.05rem;height:1.05rem}
+        .empty-state{text-align:center;padding:3.5rem 1rem;color:var(--muted)}
+        .empty-state .empty-icon{width:64px;height:64px;border-radius:18px;background:var(--surface-2);display:grid;place-items:center;margin:0 auto 1.1rem;color:var(--accent)}
+        .empty-state .empty-icon .icon{width:1.7rem;height:1.7rem}
+        .empty-state h2{font-size:1.05rem;font-weight:700;color:var(--text-soft);margin-bottom:0.35rem}
+        .empty-state p{font-size:0.9rem}
+        .error-message{background:var(--like-soft);border:1px solid color-mix(in srgb,var(--like) 25%,transparent);color:var(--like);padding:0.75rem 1rem;border-radius:var(--radius-sm);font-size:0.85rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;text-align:left}
+        .hx-error-toast{position:fixed;left:50%;bottom:calc(1.25rem + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:1000;max-width:min(90vw,32rem);background:var(--like-soft);border:1px solid color-mix(in srgb,var(--like) 25%,transparent);color:var(--like);padding:0.75rem 1rem;border-radius:var(--radius-sm);font-size:0.85rem;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+        .hx-error-toast[hidden]{display:none}
+        .info-message{background:rgba(5,150,105,.1);border:1px solid color-mix(in srgb,var(--boost) 30%,transparent);color:var(--boost);padding:0.75rem 1rem;border-radius:var(--radius-sm);font-size:0.85rem;margin-bottom:1rem;text-align:left}
+        .info-message ul,.info-message ol{margin:.4rem 0;padding-left:1.4rem}
+        .info-message li{margin:.15rem 0}
+        .pinned-posts-section{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid var(--accent-soft)}
+        .pinned-label{display:flex;align-items:center;gap:.4rem;font-size:.8rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.75rem}
+        .pinned-label .icon{width:.9rem;height:.9rem;color:var(--accent)}
+        .scroll-trigger{height:1px}
+        .load-more{display:flex;align-items:center;justify-content:center;gap:.4rem;margin:.4rem auto 1rem;padding:.7rem 1.2rem;max-width:18rem;background:var(--surface);border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:.85rem;font-weight:600;box-shadow:var(--shadow);transition:color .15s,border-color .15s,background .15s,transform .12s}
+        .load-more:hover{color:var(--accent-strong);border-color:color-mix(in srgb,var(--accent) 35%,var(--line));background:var(--surface-2);text-decoration:none;transform:translateY(-1px)}
+        /* The composer is written after the feed so that reading the page in
+           order reaches the posts first; these two rules put it back on top of
+           the feed on screen. Roost and Herd already lay the timeline out this
+           way for their own reasons. */
+        .timeline{display:flex;flex-direction:column}
+        .timeline>.timeline-nav{order:-2}
+        .timeline>.composer{order:-1}
+        .timeline>.timeline-composer{order:-1}
+        .timeline-composer{margin-bottom:1rem}
+        .timeline-composer>summary,.thread-composer>summary{width:fit-content;list-style:none}
+        .timeline-composer>summary.btn{min-width:9rem;margin-inline:auto;padding:.7rem 1.5rem;font-size:.95rem}
+        .timeline-composer>summary::-webkit-details-marker,.thread-composer>summary::-webkit-details-marker{display:none}
+        .timeline-composer[open]>.composer,.thread-composer[open]>.composer{margin-top:.75rem}
+        #main.container:has(> .back-link + .timeline > .timeline-composer){--timeline-action-width:min(9rem,calc((100% - .75rem)/2))}
+        #main.container:has(> .back-link + .timeline > .timeline-composer)>.back-link{justify-content:center;width:var(--timeline-action-width);height:2.9rem;margin:0 0 1rem;padding:.7rem 1.5rem}
+        #main.container:has(> .back-link + .timeline > .timeline-composer)>.timeline{position:relative}
+        #main.container:has(> .back-link + .timeline > .timeline-composer) .timeline-composer>summary.btn{position:absolute;top:-3.9rem;right:0;width:var(--timeline-action-width);min-width:0;height:2.9rem;margin:0;padding:.7rem 1.5rem;font-size:.85rem}
+        .timeline-composer[open]>summary,.thread-composer[open]>summary{display:none}
+        .timeline-composer[open]>.composer,.thread-composer[open]>.composer{margin-top:0}
+        .timeline-nav{display:flex;justify-content:center;flex-wrap:wrap;gap:0.25rem;margin-bottom:1rem;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0.3rem;box-shadow:var(--shadow)}
+        .timeline-nav a{display:inline-flex;align-items:center;gap:.4rem;padding:0.5rem 0.95rem;font-size:0.875rem;font-weight:600;color:var(--muted);border-radius:999px;transition:all .15s}
+        .timeline-nav a:hover{color:var(--text);background:var(--surface-2)}
+        .timeline-nav a.active{color:#fff;background:var(--accent-grad);box-shadow:0 3px 10px var(--accent-shadow)}
+        html .timeline-nav.timeline-nav-compact a .icon{display:inline-block;width:1.15rem;height:1.15rem}
+        .timeline-nav-compact .timeline-nav-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+        .catchup-title{display:flex;align-items:center;gap:.5rem;font-size:1.15rem;font-weight:700;margin-bottom:.3rem}
+        .catchup-title .icon{width:1.2rem;height:1.2rem;color:var(--accent)}
+        .catchup-window{color:var(--muted);font-size:.85rem;margin-bottom:1rem}
+        .catchup-entry{margin-bottom:.4rem}
+        .catchup-reasons{list-style:none;display:flex;flex-wrap:wrap;gap:.35rem;margin:0 0 .3rem .2rem;padding:0}
+        .catchup-reason{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:.75rem;font-weight:600}
+        .catchup-reason .icon{width:.85rem;height:.85rem;color:var(--accent)}
+        .catchup-none-new{text-align:center;color:var(--muted);font-size:.88rem;padding:1.4rem 1rem}
+        .catchup-seen{opacity:.72}
+        .catchup-seen-heading{display:flex;align-items:center;gap:.6rem;margin:1.4rem 0 .8rem;color:var(--muted);font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+        .catchup-seen-heading::before,.catchup-seen-heading::after{content:"";flex:1;height:1px;background:var(--line)}
+        .catchup-done{text-align:center;margin:1.2rem 0}
+        .catchup-done-btn{padding:0.85rem 2rem;font-size:1rem}
+        .catchup-hint{color:var(--muted);font-size:.78rem;margin-top:.5rem}
+        .catchup-why{margin:1rem 0 2rem;color:var(--muted);font-size:.82rem}
+        .catchup-why summary{cursor:pointer;font-weight:600;color:var(--text-soft)}
+        .catchup-why ul{list-style:none;padding:0;margin:.6rem 0}
+        .catchup-why li{display:flex;gap:.5rem;padding:.15rem 0}
+        .catchup-why p{margin:.5rem 0}
+        .catchup-weight{font-variant-numeric:tabular-nums;font-weight:700;color:var(--text-soft);min-width:3.2rem;text-align:right}
+        .timeline-floating-actions{position:fixed;z-index:70;left:max(1rem,env(safe-area-inset-left));right:max(1rem,env(safe-area-inset-right));bottom:1rem;display:none;justify-content:space-between;pointer-events:none}
+        .timeline-floating-actions[hidden],.timeline-floating-action[hidden]{display:none!important}
+        .timeline-floating-action{width:48px;height:48px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--text-soft);box-shadow:var(--shadow-md);font:inherit;cursor:pointer;pointer-events:auto;transition:color .15s,border-color .15s,background .15s,transform .12s}
+        .timeline-floating-action:hover{color:var(--accent-strong);border-color:color-mix(in srgb,var(--accent) 35%,var(--line));background:var(--surface-2);transform:translateY(-1px)}
+        .timeline-floating-action:focus-visible{outline:3px solid var(--accent-strong);outline-offset:2px}
+        .timeline-floating-action .icon{width:1.3rem;height:1.3rem}
+        .timeline-floating-compose{color:#fff;border-color:transparent;background:var(--accent-grad);box-shadow:0 5px 14px var(--accent-shadow)}
+        .timeline-floating-compose:hover{color:#fff;background:var(--accent-grad)}
+        .timeline-floating-return{margin-left:auto;color:#fff;border-color:transparent;background:var(--accent-grad);box-shadow:0 5px 14px var(--accent-shadow)}
+        .timeline-floating-return:hover{color:#fff;background:var(--accent-grad)}
+        .timeline-filters{display:flex;gap:0.5rem;margin-bottom:0.8rem;align-items:center;flex-wrap:wrap}
+        .filter-btn{display:inline-flex;align-items:center;gap:0.35rem;padding:0.35rem 0.75rem;font-size:0.8rem;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;transition:all .15s;background:var(--surface);cursor:pointer;text-decoration:none}
+        .filter-btn:hover{color:var(--text);border-color:var(--line-strong);background:var(--surface-2)}
+        .filter-btn.active{color:var(--accent-strong);border-color:var(--accent);background:var(--accent-soft)}
+        .thread{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:.1rem}
+        .thread-ancestors,.thread-replies{min-width:0}
+        .thread-item{min-width:0;max-width:100%;position:relative;margin-left:min(calc(var(--thread-depth,0) * 1.15rem),6rem);padding-left:min(calc(var(--thread-depth,0) * .55rem),3rem)}
+        .thread-item::before{content:"";position:absolute;left:max(calc(var(--thread-depth,0) * -.55rem),-3rem);top:0;bottom:.75rem;border-left:2px solid var(--line);opacity:calc(var(--thread-depth,0) * .85)}
+        .thread-item.focus .status{border-color:color-mix(in srgb,var(--accent) 40%,var(--line));box-shadow:0 0 0 3px var(--accent-soft),var(--shadow-md)}
+        .thread-replies{margin-top:.75rem}
+        .follow-btn{display:inline-flex;align-items:center;gap:0.35rem;padding:0.42rem 1rem;border-radius:999px;font-size:0.8125rem;font-weight:650;border:1px solid var(--accent);cursor:pointer;transition:all 0.15s;font-family:inherit}
+        .follow-btn .icon{font-size:1rem}
+        .follow-btn.follow{background:var(--accent);color:#fff;box-shadow:0 3px 10px var(--accent-shadow)}
+        .follow-btn.follow:hover{background:var(--accent-strong)}
+        .follow-btn.following{background:var(--surface);color:var(--accent)}
+        .follow-btn.following:hover{background:var(--like-soft);border-color:var(--like);color:var(--like)}
+        .follow-btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+        .copy-link-action{min-width:44px;min-height:44px;justify-content:center}
+        .relationship-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .55rem;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);font-size:.72rem;font-weight:650;white-space:nowrap}
+
+        /* Tables (admin) */
+        table{width:100%;border-collapse:collapse;font-size:0.875rem}
+        thead th{text-align:left;font-size:0.75rem;font-weight:650;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:0.6rem 0.5rem;border-bottom:1px solid var(--line)}
+        tbody td{padding:0.7rem 0.5rem;border-bottom:1px solid var(--line);color:var(--text-soft)}
+        tbody tr:hover{background:var(--surface-2)}
+        .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.35rem;text-align:center;box-shadow:var(--shadow);transition:transform .18s,box-shadow .18s}
+        .stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+        .stat-card .stat-num{font-size:1.9rem;font-weight:800;color:var(--accent);letter-spacing:-0.02em}
+        .stat-card .stat-label{font-size:0.8rem;color:var(--muted);margin-top:.2rem}
+
+        /* Admin console */
+        .admin-container{max-width:1180px;margin:0 auto;padding:2rem 1rem 4rem}
+        .admin-shell{display:grid;grid-template-columns:220px minmax(0,1fr);gap:1.5rem;align-items:start}
+        .admin-sidebar{position:sticky;top:82px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:.75rem;box-shadow:var(--shadow)}
+        .admin-nav-title{padding:.35rem .65rem .65rem;font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+        .admin-nav-group{margin:.35rem 0 .7rem}
+        .admin-nav-label{display:block;padding:.35rem .65rem;font-size:.68rem;font-weight:750;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+        .admin-nav-link{display:flex;align-items:center;gap:.55rem;padding:.48rem .65rem;border-radius:var(--radius-sm);font-size:.84rem;font-weight:600;color:var(--text-soft)}
+        .admin-nav-link:hover{background:var(--surface-2);color:var(--text)}
+        .admin-nav-link.active{background:var(--accent-soft);color:var(--accent-strong)}
+        .admin-nav-link .icon{width:1rem;height:1rem}
+		.admin-nav-count{margin-left:auto;min-width:1.35rem;text-align:center;border-radius:999px;padding:.05rem .38rem;background:var(--like-soft);color:var(--danger);font-size:.68rem;font-weight:800}
+        .admin-content{min-width:0}
+        .admin-mobile-nav{display:none;margin-bottom:1rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:.6rem .75rem}
+        .admin-mobile-nav summary{cursor:pointer;font-weight:700;list-style:none;display:flex;align-items:center;justify-content:space-between}
+        .admin-mobile-nav summary::-webkit-details-marker{display:none}
+        .admin-mobile-nav summary::after{content:"▾"}
+        .admin-mobile-nav summary::after{content:"▾" / ""}
+        .admin-mobile-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem;margin-top:.65rem;padding-top:.65rem;border-top:1px solid var(--line)}
+        .admin-page-header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1.2rem}
+        .admin-page-header .page-title{margin-bottom:.2rem}
+        .admin-page-description{font-size:.875rem;color:var(--muted);max-width:65ch}
+        .admin-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:.85rem;margin-bottom:1rem}
+        .admin-span-12{grid-column:span 12}.admin-span-8{grid-column:span 8}.admin-span-6{grid-column:span 6}.admin-span-4{grid-column:span 4}.admin-span-3{grid-column:span 3}
+        .admin-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow)}
+        .admin-card-flex{display:flex;flex-direction:column}
+        .admin-card-flex form{display:flex;flex-direction:column;flex:1}
+        .admin-card-flex .form-group{flex:1;display:flex;flex-direction:column}
+        .admin-card-flex .form-group textarea{flex:1}
+        .admin-card-flex button{margin-top:auto;align-self:flex-start}
+        .admin-card h2{font-size:.95rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.45rem}
+        .admin-metric-value{font-size:1.65rem;line-height:1.1;font-weight:800;letter-spacing:-.025em}
+        .admin-metric-label{font-size:.78rem;color:var(--muted);margin-top:.25rem}
+        .admin-badge{display:inline-flex;align-items:center;gap:.3rem;border-radius:999px;padding:.18rem .5rem;font-size:.72rem;font-weight:750;background:var(--surface-2);color:var(--text-soft)}
+        .admin-badge.ok{background:color-mix(in srgb,var(--boost) 14%,transparent);color:color-mix(in srgb,var(--boost) 72%,var(--text))}
+        .admin-badge.warn{background:#fef3c7;color:#92400e}.admin-badge.danger{background:var(--like-soft);color:var(--danger)}
+        .admin-notice{padding:.75rem .85rem;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:.84rem;background:var(--surface-2);margin-bottom:.75rem}
+        .admin-notice.danger{border-color:color-mix(in srgb,var(--danger) 35%,var(--line));background:var(--like-soft)}
+        .admin-attention-list{display:flex;flex-direction:column;gap:.55rem}
+        .admin-attention-item{display:flex;align-items:center;gap:.75rem;padding:.7rem;border:1px solid var(--line);border-radius:var(--radius-sm);color:var(--text)}
+        .admin-attention-item:hover{border-color:var(--accent);background:var(--surface-2)}
+        .admin-attention-copy{flex:1;min-width:0}.admin-attention-copy strong{display:block;font-size:.86rem}.admin-attention-copy span{display:block;font-size:.76rem;color:var(--muted)}
+        .admin-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius)}
+        .admin-table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--surface)}
+        .admin-table th{padding:.6rem .7rem;text-align:left;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;background:var(--surface-2);white-space:nowrap}
+        .admin-table td{padding:.65rem .7rem;border-top:1px solid var(--line);vertical-align:top}
+        .admin-table .num{text-align:right;font-variant-numeric:tabular-nums}
+        .admin-muted{color:var(--muted);font-size:.78rem}
+		.admin-config-list{display:grid;grid-template-columns:minmax(145px,1fr) minmax(0,1fr);gap:.45rem 1rem;font-size:.82rem}.admin-config-list dt{color:var(--muted)}.admin-config-list dd{font-weight:650;overflow-wrap:anywhere}
+		.admin-content table{background:var(--surface)}.admin-content table th{background:var(--surface-2)}
+		.admin-pagination{display:flex;align-items:center;justify-content:space-between;gap:.7rem;margin-top:.8rem;font-size:.78rem;color:var(--muted)}.admin-pagination>div{display:flex;gap:.4rem}
+		.admin-queue-group{border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;margin-top:.55rem}.admin-queue-group summary{display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.65rem .75rem;background:var(--surface-2);cursor:pointer;font-size:.84rem;font-weight:700}.admin-queue-group>.admin-table-wrap{border:0;border-top:1px solid var(--line);border-radius:0}
+
+        .flex{display:flex}.items-center{align-items:center}.gap-2{gap:0.5rem}.mb-2{margin-bottom:0.5rem}.text-sm{font-size:0.8125rem}.font-bold{font-weight:700}.w-full{width:100%}
+        /* Visually hidden, but read by screen readers and shown by text browsers (lynx etc.) that ignore CSS, so icon-only controls still have labels. */
+        .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+        /* The skip link un-hides when keyboard-focused; text browsers show it as the page's first link. */
+        .skip-link:focus{position:fixed;top:.5rem;left:.5rem;width:auto;height:auto;margin:0;padding:.5rem .9rem;clip:auto;white-space:normal;overflow:visible;background:var(--surface);color:var(--accent);z-index:3000;border:1px solid var(--line-strong);border-radius:var(--radius-sm);box-shadow:var(--shadow-md)}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        /* The width lives here rather than on the element so the field can give
+           space back when the row is tight; it is the only item in the header
+           that can. Below its min-width the labels go instead, and below that
+           the whole form is replaced by .nav-search-link. */
+        .nav-search-form{min-width:0;flex:0 1 auto}
+        .nav-search-input{flex:0 1 180px;width:180px;min-width:5.5rem;transition:border-color .15s,box-shadow .15s,width .25s}
+        .nav-search-input:focus{outline:none;border-color:var(--accent)!important;box-shadow:0 0 0 3px var(--accent-soft);width:240px!important}
+        .nav-search-link{display:none}
+        .nav-home-link{display:inline-flex}
+		.mobile-menu-trigger{list-style:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--muted);cursor:pointer}
+		.mobile-menu-trigger::-webkit-details-marker,.mobile-timeline-trigger::-webkit-details-marker{display:none}
+		.mobile-menu-trigger .icon{width:1.35rem;height:1.35rem}
+		.mobile-menu-panel{position:absolute;z-index:40;right:0;top:calc(100% + .45rem);width:min(17rem,calc(100vw - 1.4rem));max-height:min(60vh,26rem);overflow-y:auto;overscroll-behavior:contain;padding:.45rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-lg)}
+		.mobile-menu-panel a,.mobile-menu-panel button{display:flex;align-items:center;gap:.7rem;width:100%;min-height:44px;padding:.6rem .75rem;border:0;border-radius:var(--radius-sm);background:none;color:var(--text-soft);font:inherit;font-size:.9rem;font-weight:600;text-align:left;cursor:pointer}
+		.mobile-menu-panel a:hover,.mobile-menu-panel button:hover{background:var(--surface-2);color:var(--text)}
+		.mobile-menu-panel form{margin-top:.3rem;padding-top:.3rem;border-top:1px solid var(--line)}
+		.mobile-menu-panel .icon{width:1.15rem;height:1.15rem;color:var(--muted)}
+		/* Opaque, and no backdrop-filter: a viewport-wide fixed element that blurs
+		   what is behind it repaints every frame of a momentum scroll, and on iOS
+		   and Android WebView the blurred layer lags a frame behind the page, which
+		   looks like the bar unsticking from the bottom edge. A theme that wants the
+		   glass look opts back in for itself. The inset is padding only, never part
+		   of the height: mobile Safari changes it as the URL bar collapses, and a bar
+		   whose box resizes mid-scroll reads as the same detachment. */
+		.mobile-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:80;min-height:var(--mobile-nav-height);padding:0 max(.55rem,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(.55rem,env(safe-area-inset-left));background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(15,23,42,.08);align-items:stretch;justify-content:space-around}
+		.mobile-bottom-nav>a,.mobile-timeline-trigger{position:relative;display:flex;min-width:76px;min-height:56px;flex-direction:column;align-items:center;justify-content:center;gap:.18rem;padding:.35rem .7rem;border-radius:var(--radius-sm);color:var(--muted);font-size:.69rem;font-weight:650;line-height:1.1;list-style:none;cursor:pointer}
+		.mobile-bottom-nav>a:hover,.mobile-timeline-trigger:hover,.mobile-bottom-nav>a[aria-current="page"],.mobile-timeline-picker[open]>.mobile-timeline-trigger{color:var(--accent-strong);background:var(--accent-soft)}
+		.mobile-bottom-nav .icon{width:1.35rem;height:1.35rem}
+		.mobile-bottom-nav .notif-badge{position:absolute;top:.35rem;left:50%;margin:0 0 0 .25rem}
+		.mobile-timeline-picker{display:flex;align-items:stretch;position:relative}
+		.mobile-timeline-panel{position:fixed;z-index:81;left:max(.7rem,env(safe-area-inset-left));right:max(.7rem,env(safe-area-inset-right));bottom:calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + .55rem);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem;padding:.55rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-lg)}
+		.mobile-timeline-panel a{display:flex;align-items:center;gap:.65rem;min-height:48px;padding:.65rem .75rem;border-radius:var(--radius-sm);color:var(--text-soft);font-size:.86rem;font-weight:650}
+		.mobile-timeline-panel a:hover,.mobile-timeline-panel a[aria-current="page"]{background:var(--accent-soft);color:var(--accent-strong)}
+		.mobile-timeline-panel .icon{width:1.15rem;height:1.15rem}
+        /* Icon-only navigation. The threshold is not about taste: with labels
+           on, the row is around 1250px wide in English and more in the longer
+           locales, against a 1180px header. Everything past the fold is the
+           search field and the sign-out button, so a lower threshold silently
+           took both away on any screen narrower than a large desktop. */
+        @media(max-width:1400px){
+            .nav-link .icon-label{display:none}
+        }
+        .desktop-nav-compact .nav-link .icon-label{display:none}
+        @media(max-width:900px){
+            .nav-search-form{display:none!important}
+            .nav-search-link{display:inline-flex}
+			.admin-shell{display:block}.admin-sidebar{display:none}.admin-mobile-nav{display:block}
+			.admin-span-8,.admin-span-6,.admin-span-4,.admin-span-3{grid-column:span 6}
+        }
+        @media(max-width:640px){
+			:root{--header-height:56px;--header-inset:env(safe-area-inset-top)}
+            .container{padding:0 .7rem}
+			.admin-container{padding:1.2rem .7rem 3rem}.admin-span-8,.admin-span-6,.admin-span-4,.admin-span-3{grid-column:span 12}
+			.admin-page-header{display:block}.admin-page-header>.btn{margin-top:.6rem}.admin-mobile-links{grid-template-columns:1fr}
+			.admin-content{overflow-x:auto}.admin-content form.admin-card{flex-wrap:wrap}.admin-content form.admin-card .form-group{min-width:100%}.admin-pagination{align-items:flex-start;flex-direction:column}
+            .header{padding-top:env(safe-area-inset-top)}
+            .header-inner{padding:0 max(.5rem,env(safe-area-inset-right)) 0 max(.5rem,env(safe-area-inset-left));gap:0.1rem;height:56px;justify-content:space-between}
+			.desktop-nav{display:none}
+			.mobile-header-menu{display:block;position:relative}
+			.mobile-bottom-nav{display:flex}
+			/* The on-screen keyboard shrinks the visual viewport but not the layout
+			   viewport, so bottom:0 resolves to a point the reader cannot see and the
+			   bar draws over the middle of the page instead. Nothing anchored to the
+			   bottom is any use while typing, so take it out of the way. Text entry
+			   only: a checkbox takes focus without bringing up a keyboard. */
+			@supports selector(:has(*)){
+				body:has(textarea:focus,[contenteditable]:focus,input:is([type=text],[type=search],[type=email],[type=password],[type=url],[type=number],[type=tel],[type=date],[type=datetime-local],[type=time]):focus) :is(.mobile-bottom-nav,.mobile-timeline-panel,.timeline-floating-actions){display:none!important}
+			}
+			/* A fixed background repaints on every scroll frame, under a fixed bar
+			   that has to keep up with it. The gradient is barely visible at this
+			   width, so it is not worth the paint. */
+			body{background-attachment:scroll}
+			.timeline-floating-actions{display:flex;bottom:calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + .85rem)}
+            .nav-link{padding:0.5rem 0.5rem}
+            .nav-link .icon-label{display:none}
+            .nav-link .icon{width:1.3rem;height:1.3rem}
+			.logo .logo-wordmark{display:none}
+			.timeline-nav{display:none}
+            .profile-heading{flex-direction:column}
+            .profile-actions{justify-content:flex-start;margin-left:0}
+            .profile-list-menu-panel{left:0;right:auto}
+            .status{padding:0.95rem}
+            .profile-banner{height:130px}
+            .profile-avatar{width:5rem;height:5rem;border-width:3px;margin-top:-2.6rem}
+            .composer-settings{flex-direction:column;padding:.65rem}
+            .composer-media-row{grid-template-columns:minmax(0,1fr)}
+            .composer-language,.composer-audience{width:100%;flex-basis:auto}
+            .visibility-group{width:100%}
+            .visibility-group label{flex:1;justify-content:center;padding:.5rem .4rem}
+            .status-meta .visibility-pill,.status-meta .lang-pill{display:none}
+            .status-meta{padding-left:.35rem}
+            .status-actions{gap:.05rem;justify-content:space-between}
+            .action-btn{padding:.5rem .55rem}
+            .action-btn .icon{width:1.25rem;height:1.25rem}
+            .composer-toggles .tool-btn{padding:.5rem .65rem}
+            .interaction-accounts{grid-template-columns:minmax(0,1fr)}
+            .thread-item{margin-left:min(calc(var(--thread-depth,0) * .55rem),2.2rem);padding-left:min(calc(var(--thread-depth,0) * .35rem),1.4rem)}
+            .thread-item::before{left:max(calc(var(--thread-depth,0) * -.35rem),-1.4rem)}
+            .auth-card{padding:1.8rem 1.4rem}
+			body[data-authenticated] main{padding-bottom:calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 2rem)!important}
+			/* The bottom nav is fixed, so the footer needs its own clearance
+			   or the last row of links sits underneath it. */
+			body[data-authenticated] .site-footer{padding-bottom:calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 1.4rem)}
+            main.container{padding-top:1.4rem!important}
+            .notification{padding:.8rem .85rem;gap:.65rem}
+            .notif-avatar,.notif-avatar>img,.notif-avatar-fallback{width:2.2rem;height:2.2rem}
+            .notif-type-badge{width:1.1rem;height:1.1rem}
+            .notif-text{font-size:.875rem}
+        }
+        @media(display-mode:standalone){
+            .timeline-floating-actions{display:flex}
+        }
+        @media(prefers-reduced-motion:reduce){
+            *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+            .status:hover,.stat-card:hover,.btn-primary:hover,.load-more:hover{transform:none}
+        }
+
+        /* Lightbox */
+        .lightbox-backdrop{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:2rem;cursor:pointer}
+        .lightbox-backdrop img{max-width:92vw;max-height:92vh;object-fit:contain;border-radius:var(--radius);box-shadow:var(--shadow-lg)}
+        .lightbox-close{position:absolute;top:1.1rem;right:1.1rem;background:rgba(255,255,255,.12);border:none;color:#fff;width:2.8rem;height:2.8rem;border-radius:50%;cursor:pointer;font-size:1.6rem;line-height:1;display:grid;place-items:center;transition:background .15s}
+        .lightbox-close:hover{background:rgba(255,255,255,.22)}
+        .lightbox-close::before{content:"×"}
+        .lightbox-close::before{content:"×" / ""}
+        .profile-banner-click{position:absolute;inset:0;z-index:1;cursor:pointer}
+        .profile-avatar a{display:block;width:100%;height:100%;cursor:pointer}
+
+        /* Global "processing" indicator for boosted navigation (nav links, composer
+           post, sign-out, search) so slow/high-latency requests don't look hung. */
+        .hx-loading-bar{position:fixed;top:0;left:0;right:0;height:3px;overflow:hidden;z-index:3000;opacity:0;pointer-events:none;transition:opacity .15s linear;transition-delay:.15s}
+        .hx-loading-bar::after{content:"";position:absolute;top:0;left:0;width:30%;height:100%;background:var(--accent-grad);border-radius:2px;transform:translateX(433%)}
+        html.hx-loading .hx-loading-bar{opacity:1;transition-delay:0s}
+        /* The bar animates only while a request is in flight. opacity:0 does not
+           stop an animation, so leaving it running kept repainting a viewport-wide
+           fixed element over the sticky header's backdrop-filter on every frame,
+           which burns CPU on a page that is doing nothing. Translating instead of
+           moving `left` also keeps the running bar off the layout path. */
+        html.hx-loading .hx-loading-bar::after{animation:hx-bar-slide 2.5s ease-in-out infinite}
+        /* Percentages are relative to the bar's own width (30% of the viewport),
+           so these are the old -30% / 60% / 130% viewport positions. */
+        @keyframes hx-bar-slide{0%{transform:translateX(-100%)}50%{transform:translateX(200%)}100%{transform:translateX(433%)}}
+
+        /* Site footer. */
+        .site-footer{max-width:800px;margin:0 auto;padding:0 1rem 2.4rem;display:flex;flex-wrap:wrap;gap:.9rem;justify-content:center;font-size:.8125rem;color:var(--muted)}
+        .site-footer a{color:var(--muted)}
+        .site-footer a:hover{color:var(--text)}

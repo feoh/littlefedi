@@ -1,0 +1,11 @@
+# littleMesh directory.
+# Keep the listener on loopback and publish it through HTTPS with
+# packaging/Caddyfile-directory.
+
+[directory]
+listen = "127.0.0.1:7850"
+# Create the parent directory and make it writable by the service account.
+state_file = "/var/lib/littlefedi-directory/directory.db"
+# Safe public default: reserve aliases with `littlefedi directory reserve`.
+open_registration = false
+max_records = 100000

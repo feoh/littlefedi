@@ -1,0 +1,54 @@
+<div>
+    <h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-alert"/></svg>Reports</h1>
+
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+        <a href="/admin/reports" class="btn {{if not .ShowingResolved}}btn-primary{{else}}btn-ghost{{end}}" style="font-size:0.8125rem;">Open</a>
+        <a href="/admin/reports?resolved=true" class="btn {{if .ShowingResolved}}btn-primary{{else}}btn-ghost{{end}}" style="font-size:0.8125rem;">Resolved</a>
+    </div>
+
+    {{if .Reports}}
+    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        {{range .Reports}}
+        <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:1rem;">
+            <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+                <div style="min-width:0;">
+                    <div style="font-weight:650;">
+                        Report against
+                        {{if .Target}}<a href="/@{{.Target.Username}}{{if .Target.Domain}}@{{.Target.Domain}}{{end}}">@{{.Target.Username}}{{if .Target.Domain}}@{{.Target.Domain}}{{end}}</a>{{else}}unknown account{{end}}
+                    </div>
+                    <div style="font-size:0.8rem;color:var(--muted);margin-top:0.2rem;">
+                        {{if .Reporter}}by @{{.Reporter.Username}}{{else if .OriginDomain}}forwarded from {{.OriginDomain}}{{else}}by unknown reporter{{end}}
+                        - {{formatTime .CreatedAt}}
+                        - category: {{.Category}}
+                        {{if eq .State "resolved"}}- <span style="color:var(--accent);">resolved{{if .ActionTaken}} ({{.ActionTaken}}){{end}}</span>{{end}}
+                    </div>
+                    {{if .Comment}}<div style="margin-top:0.5rem;white-space:pre-wrap;">{{.Comment}}</div>{{end}}
+					{{if or .Statuses .MissingStatusCount}}<div style="font-size:0.78rem;color:var(--muted);margin-top:0.4rem;">Reported posts:
+							{{range .Statuses}}<div>{{if .Account}}<a href="{{statusPath .}}" hx-boost="false">@{{.Account.Username}}{{if .Account.Domain}}@{{.Account.Domain}}{{end}} - {{formatTime .CreatedAt}}</a>{{else}}unavailable{{end}}</div>{{end}}
+						{{if .MissingStatusCount}}<span>{{.MissingStatusCount}} unavailable</span>{{end}}
+					</div>{{end}}
+                </div>
+            </div>
+            {{if ne .State "resolved"}}
+            <form action="/admin/reports/{{.ID}}/resolve" method="post" style="margin-top:0.75rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                <label for="report-action-{{.ID}}" style="font-size:0.8rem;color:var(--muted);">Action on resolve:</label>
+                <select id="report-action-{{.ID}}" name="action" class="input" style="font-size:0.8rem;padding:0.3rem 0.5rem;">
+                    <option value="none">None (just close)</option>
+                    <option value="silence">Silence account</option>
+                    <option value="quiet">Quiet account</option>
+                    <option value="suspend">Suspend account</option>
+					{{if and .Target (not .Target.Domain)}}<option value="disable">Disable account (local)</option>{{end}}
+                </select>
+                <button type="submit" class="btn btn-primary" style="font-size:0.8rem;padding:0.3rem 0.7rem;">Resolve</button>
+            </form>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+    {{else}}
+    <div class="empty-state" style="padding:1.5rem 1rem;"><p>No {{if .ShowingResolved}}resolved{{else}}open{{end}} reports.</p></div>
+    {{end}}
+    {{template "admin-pagination" .Pagination}}
+
+</div>

@@ -1,0 +1,6 @@
+{{define "admin-pagination"}}{{if gt .Pages 1}}
+<nav class="admin-pagination" aria-label="{{T "nav.pagination"}}">
+    <span>{{.Total}} results - Page {{.Page}} of {{.Pages}}</span>
+    <div>{{if .PrevURL}}<a class="btn btn-ghost" href="{{.PrevURL}}">Previous</a>{{end}}{{if .NextURL}}<a class="btn btn-ghost" href="{{.NextURL}}">Next</a>{{end}}</div>
+</nav>
+{{end}}{{end}}

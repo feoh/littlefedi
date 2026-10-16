@@ -1,0 +1,55 @@
+{{ define "settings_move.html" }}
+<div style="margin-top:0;">
+    <h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-at"/></svg>{{T "move.heading"}}</h1>
+
+    <div class="settings-section">
+        <div style="background:var(--warning-bg, #fff3cd);border:1px solid var(--warning-border, #ffc107);border-radius:0.5rem;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+            <strong style="color:var(--warning-text, #856404);">⚠️ {{T "move.warning_heading"}}</strong>
+            <ul style="margin:0.75rem 0 0 1.25rem;font-size:0.875rem;color:var(--muted);">
+                <li>{{sanitizeHTML (T "move.warning_followers")}}</li>
+                <li>{{sanitizeHTML (T "move.warning_posts")}}</li>
+                <li>{{sanitizeHTML (T "move.warning_locked")}}</li>
+                <li>{{sanitizeHTML (T "move.warning_import")}}</li>
+                <li>{{sanitizeHTML (T "move.warning_permanent")}}</li>
+            </ul>
+        </div>
+
+        <form action="/settings/move" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+
+            <div class="form-group">
+                <label for="target_account">{{T "move.new_handle"}}</label>
+                <input type="text" id="target_account" name="target_account"
+                       placeholder="username@newserver.example.com"
+                       value="{{.TargetAcct}}"
+                       required
+                       style="width:100%;max-width:400px;">
+                <small style="color:var(--muted);">{{T "move.new_handle_help"}}</small>
+            </div>
+
+            <div class="form-group">
+                <label for="password">{{T "password.current"}}</label>
+                <input type="password" id="password" name="password"
+                       placeholder="{{T "move.password_placeholder"}}"
+                       required
+                       style="width:100%;max-width:400px;">
+                <small style="color:var(--muted);">{{T "move.password_help"}}</small>
+            </div>
+
+            <input type="submit" class="btn btn-danger" style="font-size:0.875rem;" value="{{T "move.submit"}}">
+        </form>
+    </div>
+
+    {{if .AlreadyMoved}}
+    <div class="settings-section">
+        <div style="background:var(--info-bg, #d1ecf1);border:1px solid var(--info-border, #17a2b8);border-radius:0.5rem;padding:1rem 1.25rem;">
+            <strong style="color:var(--info-text, #0c5460);">ℹ️ {{T "move.already_moved_heading"}}</strong>
+            <p style="font-size:0.875rem;color:var(--muted);margin-top:0.5rem;">
+                {{sanitizeHTML (T "move.already_moved_body" .MovedToURI)}}
+                {{if .MovedAt}}{{T "move.on_date" .MovedAt}}{{end}}.
+            </p>
+        </div>
+    </div>
+    {{end}}
+</div>
+{{ end }}

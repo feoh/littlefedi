@@ -1,0 +1,44 @@
+<div style="margin-top:0;">
+    <h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-settings"/></svg>{{T "sessions.heading"}}</h1>
+
+    <div class="settings-section">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe-sm"/></svg>{{T "sessions.active_sessions"}}</h2>
+        <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1.2rem;">
+            {{T "sessions.intro"}}
+        </p>
+
+        {{if .Sessions}}
+            {{range .Sessions}}
+            <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:0.9rem 1rem;margin-bottom:0.65rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+                <div style="min-width:0;">
+                    <div style="font-weight:650;color:var(--text);font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        {{if .IsCurrent}}<span style="background:var(--accent-soft);color:var(--accent-strong);padding:0.15rem 0.5rem;border-radius:999px;font-size:0.7rem;font-weight:700;margin-right:0.4rem;">{{T "sessions.current"}}</span>{{end}}
+                        {{.UserAgent}}
+                    </div>
+                    <div style="font-size:0.78rem;color:var(--muted);margin-top:0.2rem;">
+                        <span>{{T "sessions.ip"}}: {{.IP}}</span>
+                        <span style="margin-left:0.8rem;">{{T "sessions.created"}}: {{.CreatedAt}}</span>
+                        <span style="margin-left:0.8rem;">{{T "sessions.expires"}}: {{.ExpiresAt}}</span>
+                    </div>
+                </div>
+                <div style="flex-shrink:0;">
+                    {{if not .IsCurrent}}
+                    <form action="/settings/sessions/{{.ID}}/revoke" method="post" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                        <input type="submit" class="btn btn-ghost" style="font-size:0.78rem;padding:0.35rem 0.8rem;color:var(--danger);" value="{{T "sessions.revoke"}}">
+                    </form>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+        {{else}}
+            <div class="empty-state" style="padding:1.5rem 1rem;">
+                <p>{{T "sessions.empty"}}</p>
+            </div>
+        {{end}}
+    </div>
+
+    <div style="margin-top:1.2rem;">
+        <a href="/settings" class="btn btn-ghost"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-reply"/></svg>{{T "sessions.back_to_settings"}}</a>
+    </div>
+</div>

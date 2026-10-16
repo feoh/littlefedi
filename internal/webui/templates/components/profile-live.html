@@ -1,0 +1,55 @@
+{{define "components/profile-live.html"}}
+<div id="profile-live"{{if .Fetching}} hx-get="/partial/profile/{{.Handle}}/live?tries={{.PollTries}}{{if and (not .OnlyMedia) (not .OnlyBlog)}}&amp;filters=1{{if .ShowReplies}}&amp;replies=1{{end}}{{if .ShowBoosts}}&amp;boosts=1{{end}}{{end}}" hx-trigger="load delay:2s" hx-swap="outerHTML"{{end}}>
+    {{if .PinnedStatuses}}
+    <div class="pinned-posts-section">
+        <div class="pinned-label"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pin"/></svg> {{T "profile.pinned_posts"}}</div>
+        {{range .PinnedStatuses}}
+            {{statusCard . $.Account $.CSRFToken}}
+        {{end}}
+    </div>
+    {{end}}
+
+    <div id="timeline">
+        {{range .Statuses}}
+            {{statusCard . $.Account $.CSRFToken}}
+        {{else}}
+        {{if not $.PinnedStatuses}}
+        <div class="empty-state">
+            <div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg></div>
+            <h2>{{T "profile.empty_heading"}}</h2>
+            <p>{{T "profile.empty_body"}}</p>
+        </div>
+        {{end}}
+        {{end}}
+    </div>
+
+    {{if .TimelineCursor}}
+    <a class="load-more" href="/@{{.Handle}}?max_id={{.TimelineCursor}}{{if .OnlyMedia}}&amp;media=1{{end}}{{if .OnlyBlog}}&amp;blog=1{{end}}{{if and (not .OnlyMedia) (not .OnlyBlog)}}&amp;filters=1{{if .ShowReplies}}&amp;replies=1{{end}}{{if .ShowBoosts}}&amp;boosts=1{{end}}{{end}}"
+       hx-trigger="intersect once" hx-get="/partial/profile/{{.Handle}}?max_id={{.TimelineCursor}}&amp;limit=10{{if .OnlyMedia}}&amp;media=1{{end}}{{if .OnlyBlog}}&amp;blog=1{{end}}{{if and (not .OnlyMedia) (not .OnlyBlog)}}&amp;filters=1{{if .ShowReplies}}&amp;replies=1{{end}}{{if .ShowBoosts}}&amp;boosts=1{{end}}{{end}}" hx-swap="beforeend" hx-target="#timeline">
+        {{T "tag.load_older"}}
+    </a>
+    {{end}}
+</div>
+{{end}}
+
+{{/* profile-poll.html is returned by the /partial/profile/{username}/live
+     polling endpoint. It refreshes the stats out-of-band and re-renders the
+     self-polling profile-live fragment, so a first-ever view of a remote
+     account fills in posts/followers/following within a few seconds instead
+     of staying blank until the next manual page load. */}}
+{{define "components/profile-poll.html"}}
+<div class="profile-stats" id="profile-stats" hx-swap-oob="true">
+    <div><strong>{{.StatusesCount}}</strong> <span>{{T "profile.posts"}}</span></div>
+    {{if .HideFollowers}}
+    <div><span style="color:var(--muted);font-size:0.9rem;">{{T "profile.hidden"}}</span> <span>{{T "follow_list.followers"}}</span></div>
+    {{else}}
+    <div><a href="/@{{.Profile.Username}}/followers" style="color:inherit;text-decoration:none;">{{if not (and .Account .Account.HideFollowerCounts)}}<strong>{{.FollowersCount}}</strong> {{end}}<span>{{T "follow_list.followers"}}</span></a></div>
+    {{end}}
+    {{if .HideFollowing}}
+    <div><span style="color:var(--muted);font-size:0.9rem;">{{T "profile.hidden"}}</span> <span>{{T "follow_list.following"}}</span></div>
+    {{else}}
+    <div><a href="/@{{.Profile.Username}}/following" style="color:inherit;text-decoration:none;"><strong>{{.FollowingCount}}</strong> <span>{{T "follow_list.following"}}</span></a></div>
+    {{end}}
+</div>
+{{template "components/profile-live.html" .}}
+{{end}}

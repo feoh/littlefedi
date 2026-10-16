@@ -1,0 +1,29 @@
+<div class="thread" data-thread-focus="status-{{.Status.ID}}">
+    <h1 class="sr-only">{{T "thread.post_by"}} @{{.Status.Account.Username}}{{if .Status.Account.Domain}}@{{.Status.Account.Domain}}{{end}}</h1>
+    <div id="thread-ancestors" class="thread-ancestors">
+        {{range $i, $ancestor := .Ancestors}}
+        <div class="thread-item ancestor" style="--thread-depth: {{$i}}">
+            {{template "components/status.html" dict "Status" . "Account" $.Account "CSRFToken" $.CSRFToken}}
+        </div>
+        {{end}}
+    </div>
+
+    <div class="thread-item focus" id="thread-focus" style="--thread-depth: {{len .Ancestors}}">
+        {{template "components/status.html" dict "Status" .Status "Account" $.Account "CSRFToken" $.CSRFToken}}
+        {{template "components/status-interactions.html" dict "Status" .Status "Account" .Account "FavouritedBy" .FavouritedBy "RebloggedBy" .RebloggedBy "Quotes" .Quotes "Reactions" .Reactions}}
+    </div>
+    {{if .Account}}
+    <div class="thread-item composer-item" style="--thread-depth: {{add (len .Ancestors) 1}}">
+        {{if .Account.HideTimelineComposer}}
+        <details class="thread-composer"{{if .Replying}} open{{end}}>
+            <summary class="btn btn-primary">{{T "status.action.reply"}}</summary>
+            {{template "components/composer.html" dict "Account" .Account "InReplyToID" .Status.ID "ReplyTo" .Status "ParentVisibility" .Status.Visibility "CSRFToken" .CSRFToken}}
+        </details>
+        {{else}}
+        {{template "components/composer.html" dict "Account" .Account "InReplyToID" .Status.ID "ReplyTo" .Status "ParentVisibility" .Status.Visibility "CSRFToken" .CSRFToken}}
+        {{end}}
+    </div>
+    {{end}}
+
+    {{template "components/thread-replies.html" dict "StatusID" .Status.ID "Descendants" .Descendants "AncestorCount" (len .Ancestors) "Account" .Account "CSRFToken" .CSRFToken "Fetching" .Fetching "PollTries" 1}}
+</div>

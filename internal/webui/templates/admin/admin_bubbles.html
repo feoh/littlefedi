@@ -1,0 +1,56 @@
+<div>
+    <h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg>Bubble Instances</h1>
+    <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1rem;">
+        Manage the instances that form your "community bubble". Posts from these instances
+        (alongside local posts) appear in the Bubble timeline. This lets you curate a
+        trusted set of communities.
+    </p>
+
+    <div class="settings-section">
+        <h2>Add a bubble instance</h2>
+        <form action="/admin/bubbles" method="post" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:end;">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group" style="flex:1;min-width:200px;">
+                <label for="bubble-domain">Domain</label>
+                <input type="text" id="bubble-domain" name="domain" placeholder="social.example.com" required>
+            </div>
+            <div class="form-group" style="flex:1;min-width:200px;">
+                <label for="bubble-note">Note (optional)</label>
+                <input type="text" id="bubble-note" name="note" placeholder="A friendly neighbourhood instance">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-bottom:1rem;">Add instance</button>
+        </form>
+    </div>
+
+    {{if .BubbleInstances}}
+    <table style="width:100%;border-collapse:collapse;"><caption class="sr-only">Bubble instances</caption>
+        <thead>
+            <tr style="text-align:left;font-size:0.8125rem;color:var(--muted);border-bottom:1px solid var(--line);">
+                <th scope="col" style="padding:0.5rem;">Domain</th>
+                <th scope="col" style="padding:0.5rem;">Note</th>
+                <th scope="col" style="padding:0.5rem;">Added</th>
+                <th scope="col" style="padding:0.5rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .BubbleInstances}}
+            <tr style="border-bottom:1px solid var(--line);font-size:0.875rem;">
+                <td style="padding:0.5rem;font-weight:600;">{{.Domain}}</td>
+                <td style="padding:0.5rem;color:var(--muted);">{{if .Note}}{{.Note}}{{else}}-{{end}}</td>
+                <td style="padding:0.5rem;color:var(--muted);font-size:0.8125rem;">{{formatTime .CreatedAt}}</td>
+                <td style="padding:0.5rem;">
+                    <form action="/admin/bubbles/{{.ID}}/delete" method="post" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                        <button type="submit" class="btn" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:var(--line);">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <p style="color:var(--muted);font-size:0.875rem;text-align:center;padding:2rem;">
+        No bubble instances configured yet. Add domains above to curate your bubble.
+    </p>
+    {{end}}
+</div>

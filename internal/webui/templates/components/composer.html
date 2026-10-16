@@ -1,0 +1,405 @@
+{{define "components/composer.html"}}
+{{$inReplyToID := .InReplyToID}}
+{{$replyMention := replyMention .ReplyTo}}
+{{$replyMentions := replyMentions .ReplyTo .Account}}
+{{$parentVis := .ParentVisibility}}
+{{$quoteOf := .QuoteOf}}
+{{$editing := .EditingID}}
+{{$redrafting := .RedraftStatusID}}
+{{$draftContent := .DraftContent}}
+{{$draftMarkdown := .DraftMarkdown}}
+{{if not .DraftMarkdownSet}}{{$draftMarkdown = .Account.DefaultPostMarkdown}}{{end}}
+{{$draftSummary := .DraftSummary}}
+{{$draftSensitive := .DraftSensitive}}
+{{if and .ReplyTo .ReplyTo.Summary (not $editing) (not $redrafting) (not $draftSummary)}}
+{{$draftSummary = unescapeHTML .ReplyTo.Summary}}
+{{$draftSensitive = true}}
+{{end}}
+{{$draftIsBlogPost := .DraftIsBlogPost}}
+{{$draftBlogSlug := .DraftBlogSlug}}
+{{$draftExpiresAt := .DraftExpiresAt}}
+{{$composerID := or .ComposerID "composer"}}
+{{/* Edit/redraft keeps its language; a reply inherits its parent's;
+     otherwise use the account default. */}}
+{{$draftLang := .DraftLanguage}}
+{{if and (not $draftLang) .ReplyTo}}{{$draftLang = .ReplyTo.Language}}{{end}}
+{{if not $draftLang}}{{$draftLang = or .Account.DefaultPostLanguage "en"}}{{end}}
+{{$existingMedia := .ExistingMedia}}
+{{/* Resolved visibility: draft/redraft or parent (reply) takes precedence. */}}
+{{$vis := or .Account.DefaultPostVisibility "public"}}
+{{if $parentVis}}{{$vis = $parentVis}}{{end}}
+{{if .DraftVisibility}}{{$vis = .DraftVisibility}}{{end}}
+{{/* Server-rendered prefill so the composer works without JavaScript. */}}
+{{$prefill := ""}}
+{{if $draftContent}}{{$prefill = $draftContent}}{{else if $replyMentions}}{{$prefill = printf "%s " $replyMentions}}{{end}}
+{{/* A fresh composer starts collapsed: only the text field and Post button,
+     with the options revealed once the user focuses the editor. A reply counts
+     as fresh, since its only content is the mention prefix. Any composer that
+     already carries written content (quote, edit, draft) opens expanded. */}}
+{{$startExpanded := or $editing $redrafting $quoteOf $draftContent $existingMedia $draftSummary $draftSensitive $draftIsBlogPost}}
+{{$action := "/statuses"}}
+{{if $editing}}{{$action = printf "/statuses/%s/edit" $editing}}{{end}}
+<div class="composer" id="{{$composerID}}">
+    <form method="post" action="{{$action}}" enctype="multipart/form-data" x-data="composerState" :class="{'composer-fullscreen': fullscreen, 'composer-collapsed': !expanded, 'composer-dropping': dropping}" @keydown.escape.window="setFullscreen(false)" @submit="prepareComposerSubmit($event)"
+		  @paste="pasteFiles($event)" @dragenter="dragEnter($event)" @dragover="dragOver($event)" @dragleave="dragLeave($event)" @drop="dropFiles($event)"
+		  data-reply-mention="{{$replyMentions}}" data-default-visibility="{{$vis}}"
+		  data-initial-text="{{$prefill}}" data-max-media="{{maxMedia}}"
+		  data-media-limit="{{T "composer.media_limit" (maxMedia)}}"
+		  data-media-drop-help="{{T "composer.media_drop_help"}}"
+		  data-initial-html="{{.DraftHTML}}"
+		  data-is-blog-post="{{if $draftIsBlogPost}}1{{end}}"
+		  data-start-expanded="{{if $startExpanded}}1{{end}}"
+		  data-initial-markdown="{{if $draftMarkdown}}1{{end}}"
+		  data-draft-format-set="{{if .DraftMarkdownSet}}1{{end}}"
+		  data-preview-error="{{T "composer.preview_error"}}"
+		  data-preview-loading="{{T "composer.preview_loading"}}"
+		  data-editor-too-large="{{T "composer.editor_too_large"}}"
+		  data-editor-command-error="{{T "composer.editor_command_error"}}"
+		  data-enter-fullscreen="{{T "composer.enter_fullscreen"}}"
+		  data-exit-fullscreen="{{T "composer.exit_fullscreen"}}"
+		  data-link-prompt="{{T "composer.link_prompt"}}"
+		  {{/* The emoji picker builds its tabs in JavaScript from the group
+		       index shipped with the emoji map, so the category names have to
+		       reach it from here rather than from the markup. Pairs are
+		       slug=label, and a slug with no label falls back to the slug. */}}
+		  data-emoji-none="{{T "composer.emoji_none"}}"
+		  data-emoji-labels="recent={{T "composer.emoji_recent"}}|smileys={{T "composer.emoji_group_smileys"}}|people={{T "composer.emoji_group_people"}}|nature={{T "composer.emoji_group_nature"}}|food={{T "composer.emoji_group_food"}}|travel={{T "composer.emoji_group_travel"}}|activity={{T "composer.emoji_group_activity"}}|objects={{T "composer.emoji_group_objects"}}|symbols={{T "composer.emoji_group_symbols"}}|flags={{T "composer.emoji_group_flags"}}">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        <input type="hidden" name="editor_mode" :value="editableMode()">
+        <input type="hidden" name="wysiwyg_html" x-ref="wysiwygInput">
+        {{if $redrafting}}<input type="hidden" name="redraft_status_id" value="{{$redrafting}}">{{end}}
+        {{if and $inReplyToID (not $editing) (not $redrafting)}}
+        <input type="hidden" name="in_reply_to_id" value="{{$inReplyToID}}">
+        {{end}}
+        {{if and $quoteOf (not $editing)}}
+        <input type="hidden" name="quoted_status_id" value="{{$quoteOf.ID}}">
+        {{end}}
+        <div class="composer-inner">
+            {{if $editing}}
+            <div class="composer-reply-context">
+                <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg>
+                {{T "composer.editing"}}
+            </div>
+            {{end}}
+            {{if $redrafting}}
+            <div class="composer-reply-context">
+                <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-undo"/></svg>
+                {{T "composer.redrafting"}}
+            </div>
+            {{end}}
+            {{if $replyMention}}
+            <div class="composer-reply-context">
+                {{T "status.replying_to"}} <strong>{{$replyMention}}</strong>
+            </div>
+            {{else if and $redrafting .RedraftReplyURI}}
+            <div class="composer-reply-context">{{T "status.reply_unavailable"}}</div>
+            {{end}}
+            {{if $quoteOf}}
+            <div class="composer-quote-context">
+                <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-quote"/></svg>
+                {{T "composer.quoting"}}
+                {{if $quoteOf.Account.Domain}}<strong>@{{$quoteOf.Account.Username}}@{{$quoteOf.Account.Domain}}</strong>{{else}}<strong>@{{$quoteOf.Account.Username}}</strong>{{end}}
+                <div class="composer-quote-preview">{{localizeStatusHTML $quoteOf.ContentHTML}}</div>
+            </div>
+            {{end}}
+            <div class="composer-mode-bar" x-show="expanded" x-cloak>
+                <div class="composer-mode-tabs" role="tablist" aria-label="{{T "composer.editor_mode"}}" @keydown.right.prevent="moveMode(1)" @keydown.left.prevent="moveMode(-1)" @keydown.home.prevent="focusMode('plain')" @keydown.end.prevent="focusMode('preview')">
+                    <button type="button" role="tab" id="composer-tab-plain" aria-controls="composer-panel-editor" data-editor-mode="plain" :tabindex="mode === 'plain' ? 0 : -1" :aria-selected="mode === 'plain'" :class="{active: mode === 'plain'}" @click="setMode('plain')">{{T "composer.mode_text"}}</button>
+                    <button type="button" role="tab" id="composer-tab-markdown" aria-controls="composer-panel-editor" data-editor-mode="markdown" :tabindex="mode === 'markdown' ? 0 : -1" :aria-selected="mode === 'markdown'" :class="{active: mode === 'markdown'}" @click="setMode('markdown')">{{T "composer.markdown"}}</button>
+                    <button type="button" role="tab" id="composer-tab-wysiwyg" aria-controls="composer-panel-editor" data-editor-mode="wysiwyg" x-show="visualSupported" :tabindex="mode === 'wysiwyg' ? 0 : -1" :aria-selected="mode === 'wysiwyg'" :class="{active: mode === 'wysiwyg'}" @click="setMode('wysiwyg')">{{T "composer.mode_visual"}}</button>
+                    <button type="button" role="tab" id="composer-tab-preview" aria-controls="composer-panel-preview" data-editor-mode="preview" :tabindex="mode === 'preview' ? 0 : -1" :aria-selected="mode === 'preview'" :class="{active: mode === 'preview'}" @click="setMode('preview')">{{T "composer.preview"}}</button>
+                </div>
+                <button type="button" class="composer-fullscreen-toggle" :aria-label="fullscreen ? $root.dataset.exitFullscreen : $root.dataset.enterFullscreen" :title="fullscreen ? $root.dataset.exitFullscreen : $root.dataset.enterFullscreen" :aria-pressed="fullscreen" @click="toggleFullscreen()"><span class="sr-only">{{T "composer.enter_fullscreen"}}</span></button>
+            </div>
+            <div class="composer-rich-toolbar" role="toolbar" aria-label="{{T "composer.formatting"}}" x-show="expanded && mode === 'wysiwyg'" x-cloak>
+                <select aria-label="{{T "composer.block_style"}}" x-model="blockStyle" @change="formatBlock($event.target.value)">
+                    <option value="p">{{T "composer.paragraph"}}</option>
+                    <option value="h1">{{T "composer.heading_1"}}</option>
+                    <option value="h2">{{T "composer.heading_2"}}</option>
+                    <option value="h3">{{T "composer.heading_3"}}</option>
+                    <option value="blockquote">{{T "composer.quote"}}</option>
+                    <option value="pre">{{T "composer.code_block"}}</option>
+                </select>
+                {{/* The glyph is drawn by CSS from data-glyph, and the name of
+                     the button is the text inside it. A glyph written into the
+                     markup instead is unreadable in a browser that has no CSS
+                     to shape it and no font to draw it: lynx renders the arrows
+                     and rules as stray bytes next to a nameless button. */}}
+                <button type="button" data-glyph="B" title="{{T "composer.bold"}}" :aria-pressed="commandState('bold')" @click="command('bold')"><span class="sr-only">{{T "composer.bold"}}</span></button>
+                <button type="button" data-glyph="I" title="{{T "composer.italic"}}" :aria-pressed="commandState('italic')" @click="command('italic')"><span class="sr-only">{{T "composer.italic"}}</span></button>
+                <button type="button" data-glyph="S" title="{{T "composer.strikethrough"}}" :aria-pressed="commandState('strikeThrough')" @click="command('strikeThrough')"><span class="sr-only">{{T "composer.strikethrough"}}</span></button>
+                <button type="button" data-glyph="&lt;/&gt;" title="{{T "composer.inline_code"}}" :aria-pressed="commandState('code')" @click="inlineCode()"><span class="sr-only">{{T "composer.inline_code"}}</span></button>
+                <button type="button" data-glyph="↗" title="{{T "composer.link"}}" @click="createLink()"><span class="sr-only">{{T "composer.link"}}</span></button>
+                <input x-ref="linkInput" type="url" x-model="linkURL" x-show="linking" x-cloak aria-label="{{T "composer.link_prompt"}}" placeholder="https://example.com" @keydown.enter.prevent="applyLink()" @keydown.escape.prevent.stop="cancelLink()">
+                <button type="button" data-glyph="×↗" title="{{T "composer.unlink"}}" @click="command('unlink')"><span class="sr-only">{{T "composer.unlink"}}</span></button>
+                <button type="button" data-glyph="•" title="{{T "composer.bulleted_list"}}" :aria-pressed="commandState('insertUnorderedList')" @click="command('insertUnorderedList')"><span class="sr-only">{{T "composer.bulleted_list"}}</span></button>
+                <button type="button" data-glyph="1." title="{{T "composer.numbered_list"}}" :aria-pressed="commandState('insertOrderedList')" @click="command('insertOrderedList')"><span class="sr-only">{{T "composer.numbered_list"}}</span></button>
+                <button type="button" data-glyph="—" title="{{T "composer.horizontal_rule"}}" @click="command('insertHorizontalRule')"><span class="sr-only">{{T "composer.horizontal_rule"}}</span></button>
+                <button type="button" data-glyph="↶" title="{{T "composer.undo"}}" @click="command('undo')"><span class="sr-only">{{T "composer.undo"}}</span></button>
+                <button type="button" data-glyph="↷" title="{{T "composer.redo"}}" @click="command('redo')"><span class="sr-only">{{T "composer.redo"}}</span></button>
+            </div>
+            <div class="composer-autocomplete-wrapper" role="tabpanel" id="composer-panel-editor" aria-label="{{T "composer.editor_mode"}}">
+                <label class="sr-only" for="composer-text">{{T "composer.post_text"}}</label>
+                <textarea x-ref="textarea" id="composer-text" name="status" aria-autocomplete="list" aria-controls="composer-suggestions" :aria-expanded="showSuggestions && mode !== 'preview'" :aria-activedescendant="showSuggestions && selectedIndex >= 0 ? 'composer-suggestion-' + selectedIndex : null" x-show="mode === 'plain' || mode === 'markdown'" placeholder="{{if $replyMention}}{{T "composer.placeholder_reply"}}{{else}}{{T "composer.placeholder_new"}}{{end}}" {{if not $draftIsBlogPost}}maxlength="{{maxStatusChars}}"{{end}} :maxlength="isBlogPost ? null : {{maxStatusChars}}" x-model="text" @focus="expanded = true" @input="onInput" @keydown="onKeydown">{{$prefill}}</textarea>
+                <div x-ref="visual" class="composer-visual-editor status-body" contenteditable="true" role="textbox" aria-multiline="true" aria-label="{{T "composer.mode_visual"}}" aria-autocomplete="list" aria-controls="composer-suggestions" :aria-expanded="showSuggestions && mode !== 'preview'" :aria-activedescendant="showSuggestions && selectedIndex >= 0 ? 'composer-suggestion-' + selectedIndex : null" data-placeholder="{{if $replyMention}}{{T "composer.placeholder_reply"}}{{else}}{{T "composer.placeholder_new"}}{{end}}" x-show="mode === 'wysiwyg'" x-cloak @focus="expanded = true" @input="onVisualInput" @keydown="onKeydown" @paste="pasteVisual($event)" @drop.prevent></div>
+                <div class="composer-autocomplete" x-ref="suggestions" id="composer-suggestions" role="listbox" aria-label="{{T "composer.suggestions"}}" x-show="showSuggestions && mode !== 'preview'" x-cloak>
+                    <template x-for="(suggestion, index) in suggestions" :key="triggerMode + (suggestion.name || suggestion.acct || suggestion.shortcode)">
+                        <div role="option" :id="'composer-suggestion-' + index" :aria-selected="index === selectedIndex" class="composer-autocomplete-item" :class="{ 'composer-autocomplete-item-active': index === selectedIndex }" @click="selectSuggestion(index)" @mouseenter="selectedIndex = index">
+                            <template x-if="triggerMode === 'tag'">
+                                <div class="composer-autocomplete-info">
+                                    <span class="composer-autocomplete-name" x-text="'#' + suggestion.name"></span>
+                                    <span class="composer-autocomplete-acct" x-text="(suggestion.statuses_count || 0) + (suggestion.statuses_count === 1 ? ' post' : ' posts')"></span>
+                                </div>
+                            </template>
+                            <template x-if="triggerMode === 'emoji'">
+                                <span style="display:flex;align-items:center;gap:0.55rem;min-width:0;">
+                                    <template x-if="suggestion.type === 'unicode'">
+                                        <span class="composer-autocomplete-emoji-char" x-text="suggestion.char"></span>
+                                    </template>
+                                    <template x-if="suggestion.type === 'custom'">
+                                        <img :src="suggestion.url" alt="" class="composer-autocomplete-avatar" @error="hideBrokenImage($event)">
+                                    </template>
+                                    <span class="composer-autocomplete-info">
+                                        <span class="composer-autocomplete-name" x-text="':' + suggestion.shortcode + ':'"></span>
+                                        <span class="composer-autocomplete-acct" x-text="suggestion.domain || ''"></span>
+                                    </span>
+                                </span>
+                            </template>
+                            <template x-if="triggerMode === 'mention'">
+                                <span style="display:flex;align-items:center;gap:0.55rem;min-width:0;">
+                                    <img :src="suggestion.avatar" alt="" class="composer-autocomplete-avatar" @error="hideBrokenImage($event)">
+                                    <span class="composer-autocomplete-info">
+                                        <span class="composer-autocomplete-name" x-text="suggestion.display_name || suggestion.username"></span>
+                                        <span class="composer-autocomplete-acct" x-text="'@' + suggestion.acct"></span>
+                                    </span>
+                                </span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            <section class="composer-preview" role="tabpanel" id="composer-panel-preview" aria-labelledby="composer-tab-preview" x-show="mode === 'preview'" x-cloak aria-live="polite" :aria-busy="previewLoading">
+                {{/* The preview only ever fills in under JavaScript, so its
+                     status line arrives from the form dataset. Written into
+                     the page it would read as "rendering" forever in a browser
+                     that renders nothing. */}}
+                <p class="composer-preview-state" x-show="previewLoading" x-text="$root.dataset.previewLoading"></p>
+                <p class="composer-preview-error" x-show="editorError" x-text="editorError" role="alert"></p>
+                <div x-show="!previewLoading && !editorError">
+                        <details class="status-cw" :class="{'composer-preview-no-cw': !spoilerText}" open><summary x-show="spoilerText" x-text="spoilerText"></summary>
+                        <div class="status-media-wrap" :class="{sensitive: sensitive && !previewSensitiveRevealed, revealed: previewSensitiveRevealed}" x-show="mediaCount()">
+                            <button type="button" class="sensitive-media-toggle" x-show="sensitive && !previewSensitiveRevealed" @click="previewSensitiveRevealed = true">{{T "status.show_sensitive_media"}}</button>
+                            <div class="status-media" :class="mediaCount() === 1 ? 'single' : 'multiple'">
+                                {{range $existingMedia}}
+                                <figure class="status-media-item" x-show="keptMedia('{{.ID}}')">
+                                    {{if eq .Type "image"}}<img src="{{proxyMedia (or .PreviewURL .URL)}}" alt="{{.Description}}" loading="lazy">
+                                    {{else if eq .Type "video"}}<video controls preload="metadata" {{if .Description}}aria-label="{{.Description}}"{{end}} src="{{proxyMedia .URL}}" {{if .PreviewURL}}poster="{{proxyMedia .PreviewURL}}"{{end}}></video>
+                                    {{else if eq .Type "audio"}}<audio controls preload="metadata" {{if .Description}}aria-label="{{.Description}}"{{end}} src="{{proxyMedia .URL}}"></audio>
+                                    {{else}}<a href="{{proxyMedia .URL}}">{{.Type}}</a>{{end}}
+                                    {{if .Description}}<figcaption class="status-media-alt">{{.Description}}</figcaption>{{end}}
+                                </figure>
+                                {{end}}
+                                <template x-for="media in selectedMedia()" :key="media.index">
+                                    <figure class="status-media-item">
+                                        {{/* Empty alt until Alpine fills it in: a browser that
+                                             ignores <template> renders the tag as it stands, and a
+                                             source-less image with no alt becomes a stray
+                                             placeholder in the middle of the composer. */}}
+                                        <template x-if="media.type === 'image'"><img alt="" :src="media.url" :alt="mediaDescription(media.index)"></template>
+                                        <template x-if="media.type === 'video'"><video controls preload="metadata" :aria-label="mediaDescription(media.index) || null" :src="media.url"></video></template>
+                                        <template x-if="media.type === 'audio'"><audio controls preload="metadata" :aria-label="mediaDescription(media.index) || null" :src="media.url"></audio></template>
+                                        <figcaption class="status-media-alt" x-show="mediaDescription(media.index)" x-text="mediaDescription(media.index)"></figcaption>
+                                    </figure>
+                                </template>
+                            </div>
+                        </div>
+                        <div x-ref="preview" class="status-body"></div>
+                        {{if $quoteOf}}<div class="status-quote"><div class="status-quote-header"><span class="status-quote-author">{{$quoteOf.Account.DisplayName}}</span><span class="status-quote-handle">@{{$quoteOf.Account.Username}}{{if $quoteOf.Account.Domain}}@{{$quoteOf.Account.Domain}}{{end}}</span></div><div class="status-quote-body">{{localizeStatusHTML $quoteOf.ContentHTML}}</div></div>{{end}}
+                        <div class="status-poll" x-show="nonEmptyPollOptions().length">
+                            <fieldset disabled>
+                                <legend class="sr-only">{{T "status.poll_options"}}</legend>
+                                <template x-for="(option, index) in nonEmptyPollOptions()" :key="index"><label class="poll-option"><span><input type="radio" :type="pollMultiple ? 'checkbox' : 'radio'" disabled> <span x-text="option"></span></span></label></template>
+                            </fieldset>
+                        </div>
+                        </details>
+                </div>
+            </section>
+            <p class="composer-preview-error" x-show="editorError && mode !== 'preview'" x-text="editorError" role="alert" x-cloak></p>
+            <div class="composer-toggles" x-show="expanded" x-cloak>
+                {{if not $editing}}<details class="composer-detail"><summary class="tool-btn">{{T "composer.poll"}}</summary><div class="composer-media"><label class="sr-only" for="composer-poll-options">{{T "composer.poll_option_1"}}</label>
+<input id="composer-poll-options" name="poll_options" x-model="pollOptions[0]" placeholder="{{T "composer.poll_option_1"}}" maxlength="50"><label class="sr-only" for="composer-poll-options-2">{{T "composer.poll_option_2"}}</label>
+<input id="composer-poll-options-2" name="poll_options" x-model="pollOptions[1]" placeholder="{{T "composer.poll_option_2"}}" maxlength="50"><label class="sr-only" for="composer-poll-options-3">{{T "composer.poll_option_3"}}</label>
+<input id="composer-poll-options-3" name="poll_options" x-model="pollOptions[2]" placeholder="{{T "composer.poll_option_3"}}" maxlength="50"><label class="sr-only" for="composer-poll-options-4">{{T "composer.poll_option_4"}}</label>
+<input id="composer-poll-options-4" name="poll_options" x-model="pollOptions[3]" placeholder="{{T "composer.poll_option_4"}}" maxlength="50"><label><input type="checkbox" name="poll_multiple" x-model="pollMultiple"> {{T "composer.poll_allow_multiple"}}</label><label class="sr-only" for="composer-poll-expires">{{T "composer.poll_duration"}}</label><select id="composer-poll-expires" name="poll_expires_in"><option value="3600">{{T "composer.poll_expires_1h"}}</option><option value="86400" selected>{{T "composer.poll_expires_1d"}}</option><option value="604800">{{T "composer.poll_expires_7d"}}</option></select></div></details>{{end}}
+                <details class="composer-detail" {{if $draftSummary}}open{{end}}>
+                    <summary class="tool-btn"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>{{T "composer.content_warning"}}</summary>
+                    <label class="sr-only" for="composer-spoiler-text">{{T "composer.content_warning_placeholder"}}</label>
+                    <input id="composer-spoiler-text" class="composer-cw" type="text" name="spoiler_text" placeholder="{{T "composer.content_warning_placeholder"}}" value="{{$draftSummary}}" x-model="spoilerText">
+                </details>
+                <details class="composer-detail" {{if $existingMedia}}open{{end}}>
+                    <summary class="tool-btn"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-image"/></svg>{{if $existingMedia}}{{T "composer.media"}}{{else}}{{T "composer.add_media"}}{{end}}</summary>
+                    <div class="composer-media">
+                        <label class="composer-sensitive-toggle">
+                            <input type="checkbox" name="sensitive" value="on" {{if $draftSensitive}}checked{{end}} x-model="sensitive">
+                            {{T "composer.mark_sensitive"}}
+                        </label>
+                        {{if $existingMedia}}
+                        {{/* Existing attachments: uncheck to remove on save (works without JS). */}}
+                        <ul class="composer-existing-media">
+                            {{range $existingMedia}}
+                            <li class="composer-media-row">
+                                <label class="composer-keep-media">
+                                    <input type="checkbox" name="media_ids" value="{{.ID}}" checked>
+                                    {{if or (eq .Type "image") .PreviewURL}}<img src="{{proxyMedia (or .PreviewURL .URL)}}" alt="{{.Description}}" loading="lazy">{{else}}<span>{{.Type}}</span>{{end}}
+                                    <span>{{T "composer.keep"}}</span>
+                                </label>
+                                <label>
+                                    <span class="composer-media-label">{{T "composer.alt_text"}}</span>
+                                    <input type="text" name="media_description_existing_{{.ID}}" value="{{.Description}}" maxlength="1500">
+                                </label>
+                            </li>
+                            {{end}}
+                        </ul>
+                        {{end}}
+                        <small class="composer-media-help">{{T "composer.media_help" (maxMedia)}}</small>
+                        {{/* Dragging and pasting only work under JavaScript, so like
+                             the preview status this hint comes from the form
+                             dataset and stays empty in a browser without it. */}}
+                        <small class="composer-media-help" x-text="$root.dataset.mediaDropHelp"></small>
+                        {{range $index := seq 0 (sub (maxMedia) 1)}}
+                        <div class="composer-media-row" x-show="mediaRows > {{$index}}" {{if gt $index 0}}x-cloak{{end}}>
+                            <label>
+                                <span class="composer-media-label">{{T "composer.media_n" (add $index 1)}}</span>
+                                <input type="file" name="media_{{$index}}" accept="image/*,video/*,audio/*" @change="selectMedia({{$index}}, $event)">
+                            </label>
+                            <label>
+                                <span class="composer-media-label">{{T "composer.alt_text"}}</span>
+                                <input type="text" name="media_description_{{$index}}" maxlength="1500" placeholder="{{T "composer.describe_media_n" (add $index 1)}}">
+                            </label>
+							<button type="button" class="tool-btn composer-media-remove" x-show="mediaPreviews[{{$index}}]" @click="clearMedia({{$index}})">{{T "lists.remove"}}</button>
+                        </div>
+                        {{end}}
+                    </div>
+                </details>
+                {{if and (blogEnabled .Account) (not $inReplyToID) (or (not $editing) .CanEditBlogPost)}}
+                <label class="tool-btn composer-blog-toggle">
+                    <input type="checkbox" name="is_blog_post" value="on" x-model="isBlogPost" {{if $draftIsBlogPost}}checked{{end}}>
+                    <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bookmark"/></svg>{{T "composer.blog_post"}}
+                </label>
+                <input type="hidden" name="is_blog_post" value="off">
+                {{if and $redrafting $draftBlogSlug}}<input type="hidden" name="blog_slug" value="{{$draftBlogSlug}}">{{end}}
+                {{if and (not $draftIsBlogPost) (not $draftBlogSlug)}}
+                <div class="composer-media composer-blog-slug" x-show="isBlogPost" x-cloak>
+                    <label>
+                        <span class="composer-media-label">{{T "composer.blog_slug"}}</span>
+                        <input type="text" name="blog_slug" maxlength="200" placeholder="{{T "composer.blog_slug"}}">
+                    </label>
+                    <small class="composer-media-help">{{T "composer.blog_slug_help"}}</small>
+                </div>
+                {{end}}
+                {{end}}
+                {{/* Tabs and grid are filled by JavaScript. Nearly two thousand
+                     buttons rendered here would be dead weight in every page,
+                     and bound through Alpine they would cost a reactive effect
+                     each; the picker builds the one category on screen instead.
+                     Unlike the other tools this one has nothing to offer
+                     without scripting, but .composer-toggles is already
+                     x-cloak, so the button never shows up unusable. */}}
+                <details class="composer-detail composer-emoji" @toggle="onEmojiToggle($event)" @keydown.escape.prevent.stop="closeEmoji()">
+                    <summary class="tool-btn">{{T "composer.emoji"}}</summary>
+                    <div class="emoji-panel">
+                        <label class="sr-only" for="composer-emoji-search">{{T "composer.emoji_search"}}</label>
+                        <input id="composer-emoji-search" class="emoji-search" type="search" autocomplete="off" placeholder="{{T "composer.emoji_search"}}" x-ref="emojiSearch" @input="onEmojiSearch">
+                        <div class="emoji-tabs" role="tablist" aria-label="{{T "composer.emoji_categories"}}" x-ref="emojiTabs" @click="onEmojiTab($event)" @keydown="onEmojiTabKeydown"></div>
+                        <div class="emoji-grid" role="group" aria-label="{{T "composer.emoji"}}" x-ref="emojiGrid" @click="insertEmoji($event)" @keydown="onEmojiGridKeydown"></div>
+                    </div>
+                </details>
+                <label class="tool-btn composer-md-toggle" title="{{T "composer.markdown_title"}}" x-show="!visualSupported">
+                    <input type="checkbox" name="markdown" value="on" {{if $draftMarkdown}}checked{{end}} x-model="markdownEnabled" @change="mode = markdownEnabled ? 'markdown' : 'plain'">
+                    <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg>{{T "composer.markdown"}}
+                </label>
+                {{if and (not $editing) (not $redrafting)}}
+                <details class="composer-detail">
+                    <summary class="tool-btn"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-clock"/></svg>{{T "composer.schedule"}}</summary>
+                    <div class="composer-media">
+                        <label>
+                            <span class="composer-media-label">{{T "composer.publish_at"}}</span>
+                            <input type="datetime-local" name="scheduled_at">
+                        </label>
+                        <input type="hidden" name="scheduled_at_offset_minutes" class="js-tz-offset">
+                        <small class="composer-media-help">{{T "composer.schedule_help"}}</small>
+                    </div>
+                </details>
+                {{end}}
+                <details class="composer-detail">
+                    <summary class="tool-btn"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-trash"/></svg>{{T "composer.expires"}}</summary>
+                    <div class="composer-media">
+                        <label class="sr-only" for="composer-expires">{{T "composer.expires"}}</label>
+                        <select id="composer-expires" name="expires_in">
+                            {{if $editing}}<option value="">{{T "composer.expires_no_change"}}</option>{{else}}<option value="">{{T "composer.expires_never"}}</option>{{end}}
+                            <option value="3600">{{T "composer.expires_1h"}}</option>
+                            <option value="86400">{{T "composer.expires_1d"}}</option>
+                            <option value="604800">{{T "composer.expires_7d"}}</option>
+                            {{if $editing}}<option value="0">{{T "composer.expires_cancel"}}</option>{{end}}
+                        </select>
+                        <label>
+                            <span class="composer-media-label">{{T "composer.expires_custom"}}</span>
+                            <input type="datetime-local" name="expires_at">
+                        </label>
+                        <input type="hidden" name="expires_at_offset_minutes" class="js-tz-offset">
+                        <small class="composer-media-help">{{T "composer.expires_help"}}</small>
+                        {{if $draftExpiresAt}}<small class="composer-media-help">{{T "composer.expires_current" $draftExpiresAt}}</small>{{end}}
+                    </div>
+                </details>
+            </div>
+            <div class="composer-settings" x-show="expanded" x-cloak>
+                <label class="composer-language">
+                    <span class="composer-setting-label"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg>{{T "composer.language"}}</span>
+                    <select name="language" class="lang-select" aria-label="{{T "composer.post_language"}}">
+                        {{range contentLanguages}}
+                        <option value="{{.Code}}" {{if eq $draftLang .Code}}selected{{end}}>{{.Name}}</option>
+                        {{end}}
+                    </select>
+                </label>
+                {{if $editing}}
+                {{/* Visibility cannot change on edit (Mastodon parity); keep it fixed. */}}
+                <input type="hidden" name="visibility" value="{{$vis}}">
+                <div class="composer-audience">
+                    <span class="composer-setting-label">{{T "composer.audience"}}</span>
+                    <span class="visibility-pill composer-fixed-visibility" title="{{T "composer.visibility_locked"}}">
+                        {{if eq $vis "public"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe-sm"/></svg>{{else if eq $vis "direct"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-mail"/></svg>{{else if eq $vis "local"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg>{{else if eq $vis "local_unlisted"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg>{{else if eq $vis "unlisted"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>{{else}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-lock"/></svg>{{end}}
+                        {{visibilityLabel $vis}}
+                    </span>
+                </div>
+                {{else}}
+                <fieldset class="composer-audience">
+                    <legend class="composer-setting-label">{{T "composer.audience"}}</legend>
+                    <div class="visibility-group">
+                        <label><input type="radio" name="visibility" value="public" x-model="visibility" {{if eq $vis "public"}}checked{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe-sm"/></svg>{{T "composer.visibility.public"}}</label>
+                        <label><input type="radio" name="visibility" value="unlisted" x-model="visibility" {{if eq $vis "unlisted"}}checked{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>{{T "composer.visibility.unlisted"}}</label>
+                        <label><input type="radio" name="visibility" value="private" x-model="visibility" {{if eq $vis "private"}}checked{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-lock"/></svg>{{T "composer.visibility.followers"}}</label>
+                        <label><input type="radio" name="visibility" value="direct" x-model="visibility" {{if eq $vis "direct"}}checked{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-mail"/></svg>{{T "composer.visibility.direct"}}</label>
+                        <label title="{{T "composer.visibility.local_title"}}"><input type="radio" name="visibility" value="local" x-model="visibility" {{if eq $vis "local"}}checked{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg>{{T "composer.visibility.local"}}</label>
+                        <label title="{{T "composer.visibility.local_unlisted_title"}}"><input type="radio" name="visibility" value="local_unlisted" x-model="visibility" {{if eq $vis "local_unlisted"}}checked{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg><svg class="icon" aria-hidden="true" style="margin-left:-.2rem"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>{{T "composer.visibility.local_unlisted"}}</label>
+                    </div>
+                </fieldset>
+                {{end}}
+            </div>
+            <div class="composer-footer">
+                {{/* A bare number beside the Post button says nothing on its
+                     own, whether it is read aloud or read in a terminal. */}}
+                <div class="composer-count" :class="{ danger: !isBlogPost && editorLength() > {{maxStatusChars}} * 0.96 }"><span x-text="isBlogPost ? '∞' : ({{maxStatusChars}} - editorLength())">{{if $draftIsBlogPost}}&infin;{{else}}{{maxStatusChars}}{{end}}</span> <span class="sr-only">{{T "composer.characters_left"}}</span></div>
+                {{if $editing}}
+                <a href="/@{{.Account.Username}}/{{$editing}}" class="btn btn-ghost">{{T "composer.cancel"}}</a>
+                <input type="submit" class="btn btn-primary" value="{{T "composer.save_changes"}}">
+                {{else if $redrafting}}
+                <a href="/@{{.Account.Username}}/{{$redrafting}}" class="btn btn-ghost">{{T "composer.cancel"}}</a>
+                <input type="submit" class="btn btn-primary" value="{{T "composer.post"}}">
+                {{else}}
+                <input type="submit" class="btn btn-primary btn-icon-post" value="{{T "composer.post"}}">
+                {{end}}
+            </div>
+        </div>
+    </form>
+</div>
+{{end}}

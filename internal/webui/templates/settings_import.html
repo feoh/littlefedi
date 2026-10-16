@@ -1,0 +1,40 @@
+<div class="settings-page">
+	<h1>{{T "settings.import.heading"}}</h1>
+	<p>{{T "settings.import.intro"}}</p>
+	<p class="info-message">{{T "settings.import.followers_note_pre"}} <a href="/settings/move">{{T "settings.import.followers_note_link"}}</a>{{T "settings.import.followers_note_post"}}</p>
+	{{if .Error}}<div class="error-message">{{if eq .Error "authentication"}}{{T "settings.import.error_auth"}}{{else if eq .Error "rate"}}{{T "settings.import.error_rate"}}{{else if eq .Error "file"}}{{T "settings.import.error_file"}}{{else}}{{T "settings.import.error_generic"}}{{end}}</div>{{end}}
+	{{with .Import}}
+	<div class="info-message">{{T "settings.import.state_label"}} <strong>{{.State}}</strong></div>
+	{{if and $.ImportResult $.ImportResult.FollowImport}}{{template "follow_import_progress.html" $}}
+	{{else if eq .State "queued"}}<p>{{T "settings.import.preparing"}}</p>
+	{{else if eq .State "running"}}<p>{{T "settings.import.preparing"}}</p>
+	{{else if eq .State "complete"}}
+		<p>{{T "settings.import.complete"}}</p>
+		{{with $.ImportResult}}
+		<table class="import-summary"><caption class="sr-only">{{T "settings.import.heading"}}</caption>
+			<tr><th scope="col">{{T "settings.import.result_category"}}</th><th scope="col">{{T "settings.import.result_imported"}}</th><th scope="col">{{T "settings.import.result_skipped"}}</th></tr>
+			<tr><td>{{T "settings.import.result_statuses"}}</td><td>{{.Statuses.Imported}}</td><td>{{.Statuses.Skipped}}</td></tr>
+			<tr><td>{{T "settings.import.result_media"}}</td><td>{{.Media.Imported}}</td><td>{{.Media.Skipped}}</td></tr>
+			<tr><td>{{T "settings.import.result_following"}}</td><td>{{.Following.Imported}}</td><td>{{.Following.Skipped}}</td></tr>
+			<tr><td>{{T "settings.import.result_blocks"}}</td><td>{{.Blocks.Imported}}</td><td>{{.Blocks.Skipped}}</td></tr>
+			<tr><td>{{T "settings.import.result_mutes"}}</td><td>{{.Mutes.Imported}}</td><td>{{.Mutes.Skipped}}</td></tr>
+			<tr><td>{{T "settings.import.result_domain_blocks"}}</td><td>{{.DomainBlocks.Imported}}</td><td>{{.DomainBlocks.Skipped}}</td></tr>
+			<tr><td>{{T "settings.import.result_lists"}}</td><td>{{.Lists.Imported}}</td><td>{{.Lists.Skipped}}</td></tr>
+			<tr><td>{{T "settings.import.result_hashtags"}}</td><td>{{.FollowedTags.Imported}}</td><td>{{.FollowedTags.Skipped}}</td></tr>
+			<tr><td>{{T "settings.import.result_bookmarks"}}</td><td>{{.Bookmarks.Imported}}</td><td>{{.Bookmarks.Skipped}}</td></tr>
+		</table>
+		<p>{{T "settings.import.result_followers_noted" .FollowersNoted}}</p>
+		{{end}}
+	{{end}}
+	{{end}}
+	<form method="post" action="/settings/import" enctype="multipart/form-data" style="margin-top:1.2rem;">
+		<input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+		<label class="sr-only" for="import-file">{{T "settings.import.heading"}}</label>
+		<input type="file" id="import-file" name="import_file" accept=".zip" required>
+		<label class="sr-only" for="settings-import-current-password">{{T "password.current"}}</label>
+		<input id="settings-import-current-password" type="password" name="current_password" placeholder="{{T "password.current"}}" required autocomplete="current-password">
+		{{if .Account.MFAEnabled}}<label class="sr-only" for="settings-import-mfa-code">{{T "auth.mfa_or_recovery_code_placeholder"}}</label>
+<input id="settings-import-mfa-code" type="text" name="mfa_code" placeholder="{{T "auth.mfa_or_recovery_code_placeholder"}}" required autocomplete="one-time-code">{{end}}
+		<button class="btn btn-primary" type="submit">{{T "settings.import.request_button"}}</button>
+	</form>
+</div>

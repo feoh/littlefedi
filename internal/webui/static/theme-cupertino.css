@@ -1,0 +1,417 @@
+/* Cupertino - littleFedi as a Mac application window.
+
+   A source list on the left, a content pane in the middle, an inspector on the
+   right, and a translucent titlebar with three traffic lights at the top of the
+   sidebar. Type is the system face, controls are capsule push buttons, the feed
+   switcher is a segmented control, and focus is the blue halo.
+
+   A layout theme: it reflows the shell above 1050px and repaints every control,
+   so every template is in scope. Below that width it hands the shell back to
+   app.css (top bar, bottom nav), which is what a Mac app does when it becomes
+   an iPhone app.
+
+   Token layering repeats app.css's four states, one specificity step higher so
+   a theme's dark tokens beat the base theme's dark tokens regardless of file
+   order. */
+
+/* ---------- Tokens: light (Aqua) ---------- */
+:root[data-theme="cupertino"]{
+    color-scheme:light;
+    --font-body:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Helvetica Neue',Helvetica,Arial,sans-serif;
+    --font-features:normal;
+    --font-mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;
+    --bg:#ececec;
+    --bg-grad:none;
+    --surface:#ffffff;
+    --surface-2:#f4f4f5;
+    --surface-3:#e8e8ea;
+    --text:#1d1d1f;
+    --text-soft:#2c2c2e;
+    --muted:#63636b;
+    --line:#d8d8dc;
+    --line-strong:#c2c2c7;
+    --accent:#007aff;
+    --accent-strong:#0062cc;
+    --accent-soft:rgba(0,122,255,.12);
+    /* One step deeper than the system blue: a filled button carries white
+       text, and the system blue itself only reaches 3.6:1 behind it. */
+    --accent-grad:linear-gradient(#0a72e6,#0062cc);
+    --accent-shadow:transparent;
+    --like:#d70036;
+    --like-soft:rgba(215,0,54,.10);
+    --boost:#1d8a34;
+    --boost-soft:rgba(29,138,52,.12);
+    --mention:#4b49c6;
+    --mention-soft:rgba(75,73,198,.12);
+    --danger:#d70015;
+    --shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 .5px rgba(0,0,0,.06);
+    --shadow-md:0 4px 14px rgba(0,0,0,.10),0 0 0 .5px rgba(0,0,0,.07);
+    --shadow-lg:0 20px 48px rgba(0,0,0,.22),0 0 0 .5px rgba(0,0,0,.10);
+    --radius:10px;
+    --radius-sm:6px;
+    --radius-lg:12px;
+    --header-height:52px;
+    /* Theme-private. The push-button face: white with a barely-there gradient,
+       which is what separates a Mac control from a flat web button. */
+    --push-face:linear-gradient(#ffffff,#f5f5f6);
+    --push-line:#c6c6cb;
+    --sidebar-tint:rgba(246,246,247,.72);
+    --rail-width:248px;
+    --aside-width:308px;
+    --pane-width:660px;
+}
+
+/* ---------- Tokens: dark ---------- */
+@media(prefers-color-scheme:dark){
+    :root[data-theme="cupertino"][data-appearance="auto"],:root[data-theme="cupertino"]:not([data-appearance]){
+        color-scheme:dark;
+        --bg:#1e1e1e;
+        --surface:#2c2c2e;
+        --surface-2:#3a3a3c;
+        --surface-3:#48484a;
+        --text:#f5f5f7;
+        --text-soft:#e3e3e6;
+        --muted:#a9a9b0;
+        --line:#3d3d40;
+        --line-strong:#545458;
+        --accent:#0a84ff;
+        --accent-strong:#69b1ff;
+        --accent-soft:rgba(10,132,255,.22);
+        --accent-grad:linear-gradient(#0f6fd8,#0a68d0);
+        --like:#ff6b7f;
+        --like-soft:rgba(255,107,127,.16);
+        --boost:#32d74b;
+        --boost-soft:rgba(50,215,75,.16);
+        --mention:#a5a3ff;
+        --mention-soft:rgba(165,163,255,.16);
+        --danger:#ff6b6b;
+        --shadow:0 1px 2px rgba(0,0,0,.36),0 0 0 .5px rgba(255,255,255,.07);
+        --shadow-md:0 6px 18px rgba(0,0,0,.44),0 0 0 .5px rgba(255,255,255,.08);
+        --shadow-lg:0 24px 54px rgba(0,0,0,.62),0 0 0 .5px rgba(255,255,255,.10);
+        --push-face:linear-gradient(#5c5c60,#4e4e52);
+        --push-line:#636368;
+        --sidebar-tint:rgba(38,38,40,.70);
+    }
+}
+/* Explicit dark: the same tokens with no media query. Vanilla CSS cannot reuse
+   an @media block from a plain selector and this project has no build step;
+   keep the two copies in sync rather than adding one. */
+:root[data-theme="cupertino"][data-appearance="dark"],:root[data-theme="cupertino"][data-appearance="black"]{
+    color-scheme:dark;
+    --bg:#1e1e1e;
+    --surface:#2c2c2e;
+    --surface-2:#3a3a3c;
+    --surface-3:#48484a;
+    --text:#f5f5f7;
+    --text-soft:#e3e3e6;
+    --muted:#a9a9b0;
+    --line:#3d3d40;
+    --line-strong:#545458;
+    --accent:#0a84ff;
+    --accent-strong:#69b1ff;
+    --accent-soft:rgba(10,132,255,.22);
+    --accent-grad:linear-gradient(#0f6fd8,#0a68d0);
+    --like:#ff6b7f;
+    --like-soft:rgba(255,107,127,.16);
+    --boost:#32d74b;
+    --boost-soft:rgba(50,215,75,.16);
+    --mention:#a5a3ff;
+    --mention-soft:rgba(165,163,255,.16);
+    --danger:#ff6b6b;
+    --shadow:0 1px 2px rgba(0,0,0,.36),0 0 0 .5px rgba(255,255,255,.07);
+    --shadow-md:0 6px 18px rgba(0,0,0,.44),0 0 0 .5px rgba(255,255,255,.08);
+    --shadow-lg:0 24px 54px rgba(0,0,0,.62),0 0 0 .5px rgba(255,255,255,.10);
+    --push-face:linear-gradient(#5c5c60,#4e4e52);
+    --push-line:#636368;
+    --sidebar-tint:rgba(38,38,40,.70);
+}
+
+/* ---------- Tokens: true black ---------- */
+:root[data-theme="cupertino"][data-appearance="black"]{
+    --bg:#000000;
+    --surface:#0b0b0c;
+    --surface-2:#161618;
+    --surface-3:#1f1f22;
+    --text:#ededf0;
+    --muted:#96969c;
+    --line:#232326;
+    --line-strong:#37373b;
+    --push-face:linear-gradient(#242428,#1b1b1e);
+    --push-line:#3a3a3e;
+    --sidebar-tint:rgba(10,10,11,.72);
+}
+
+/* ---------- Type ---------- */
+[data-theme="cupertino"] body{font-size:.9375rem;line-height:1.5;letter-spacing:-0.006em}
+[data-theme="cupertino"] .status-body a,[data-theme="cupertino"] .profile-bio a,[data-theme="cupertino"] .status-quote-body a{color:var(--accent-strong)}
+[data-theme="cupertino"] .status-body a:hover{text-decoration:underline}
+[data-theme="cupertino"] .page-title,[data-theme="cupertino"] .profile-name,[data-theme="cupertino"] .auth-card h1{font-weight:700;letter-spacing:-0.02em}
+[data-theme="cupertino"] .settings-section h2,[data-theme="cupertino"] .admin-card h2{font-weight:650}
+
+/* ---------- The Mac focus halo ----------
+   Every control gets the same ring, drawn outside the box, with no layout
+   shift. It replaces the box-shadow rather than stacking on it: on the Mac the
+   ring is the whole focus indication. The halo alone sits around 2:1 against a
+   white sheet, so a solid inner edge carries the contrast and the soft ring
+   carries the look. */
+[data-theme="cupertino"] :focus-visible{
+    outline:none;
+    border-radius:var(--radius-sm);
+    box-shadow:0 0 0 1px var(--accent),0 0 0 3.5px color-mix(in srgb,var(--accent) 50%,transparent);
+}
+
+/* ---------- Push buttons ---------- */
+[data-theme="cupertino"] .btn{
+    border-radius:var(--radius-sm);
+    padding:.42rem 1rem;
+    font-size:.8125rem;
+    font-weight:550;
+    letter-spacing:0;
+}
+[data-theme="cupertino"] .btn-primary{background:var(--accent-grad);color:#fff;box-shadow:0 1px 1px rgba(0,0,0,.10)}
+[data-theme="cupertino"] .btn-primary:hover{filter:brightness(1.06);box-shadow:0 1px 2px rgba(0,0,0,.14);transform:none}
+[data-theme="cupertino"] .btn-primary:active{filter:brightness(.94)}
+[data-theme="cupertino"] .btn-ghost,[data-theme="cupertino"] .tool-btn,[data-theme="cupertino"] .filter-btn,[data-theme="cupertino"] .load-more,[data-theme="cupertino"] .back-link{
+    background:var(--push-face);
+    border:1px solid var(--push-line);
+    border-radius:var(--radius-sm);
+    box-shadow:0 1px 1px rgba(0,0,0,.05);
+    color:var(--text);
+}
+[data-theme="cupertino"] .btn-ghost:hover,[data-theme="cupertino"] .tool-btn:hover,[data-theme="cupertino"] .filter-btn:hover,[data-theme="cupertino"] .load-more:hover,[data-theme="cupertino"] .back-link:hover{
+    background:var(--surface-2);
+    border-color:var(--line-strong);
+    color:var(--text);
+    transform:none;
+}
+[data-theme="cupertino"] .follow-btn{border-radius:var(--radius-sm);font-weight:550;box-shadow:none}
+[data-theme="cupertino"] .follow-btn.follow{background:var(--accent-grad);border-color:transparent;box-shadow:0 1px 1px rgba(0,0,0,.10)}
+[data-theme="cupertino"] .follow-btn.following{background:var(--push-face);border-color:var(--push-line);color:var(--text)}
+/* The post button carries its icon as a background image over the accent
+   gradient. A Mac push button is text alone, so the shorthand replaces both
+   layers - dropping only the image would take the gradient with it. */
+[data-theme="cupertino"] .btn-icon-post{background:var(--accent-grad);padding-left:1rem}
+[data-theme="cupertino"] .load-more{max-width:16rem;font-weight:550}
+
+/* ---------- Cards ----------
+   A Mac window paints content on paper, not on floating tiles: the hairline
+   does the work and the shadow stays almost invisible. */
+[data-theme="cupertino"] .status,[data-theme="cupertino"] .composer,[data-theme="cupertino"] .notification,[data-theme="cupertino"] .settings-section,[data-theme="cupertino"] .admin-card,[data-theme="cupertino"] .stat-card,[data-theme="cupertino"] .profile-header{
+    box-shadow:var(--shadow);
+}
+[data-theme="cupertino"] .status:hover{border-color:var(--line-strong);box-shadow:var(--shadow);transform:none}
+[data-theme="cupertino"] .stat-card:hover{transform:none;box-shadow:var(--shadow-md)}
+[data-theme="cupertino"] .status-avatar{box-shadow:0 0 0 .5px rgba(0,0,0,.12)}
+[data-theme="cupertino"] .status-avatar:hover{box-shadow:0 0 0 .5px rgba(0,0,0,.12);opacity:.9}
+[data-theme="cupertino"] .logo-mark{border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.22)}
+[data-theme="cupertino"] .auth-mark{border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+[data-theme="cupertino"] .profile-banner{background:var(--surface-3)}
+[data-theme="cupertino"] .profile-banner::after{display:none}
+[data-theme="cupertino"] .profile-avatar{box-shadow:0 2px 8px rgba(0,0,0,.16)}
+
+/* ---------- Action bar: round icon buttons ---------- */
+[data-theme="cupertino"] .action-btn{border-radius:999px;font-weight:500}
+[data-theme="cupertino"] .action-btn:hover{background:var(--surface-2)}
+[data-theme="cupertino"] .action-btn:hover .icon{transform:none}
+[data-theme="cupertino"] .action-btn.active{background:var(--accent-soft);color:var(--accent-strong)}
+
+/* ---------- Segmented control ----------
+   The feed switcher is an NSSegmentedControl: one recessed track, the selected
+   segment lifted out of it on a white cap. */
+[data-theme="cupertino"] .timeline-nav{
+    justify-content:stretch;
+    gap:1px;
+    padding:2px;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.05);
+}
+[data-theme="cupertino"] .timeline-nav a{
+    flex:1 1 0;
+    justify-content:center;
+    padding:.3rem .55rem;
+    border-radius:6px;
+    font-size:.8125rem;
+    font-weight:500;
+    color:var(--text);
+}
+[data-theme="cupertino"] .timeline-nav a .icon{display:none}
+[data-theme="cupertino"] .timeline-nav a:hover{background:color-mix(in srgb,var(--text) 6%,transparent);color:var(--text)}
+[data-theme="cupertino"] .timeline-nav a.active{
+    background:var(--surface);
+    color:var(--text);
+    box-shadow:0 1px 2px rgba(0,0,0,.16),0 0 0 .5px rgba(0,0,0,.08);
+}
+[data-theme="cupertino"] .profile-tab.active,[data-theme="cupertino"] .notif-tab.active{color:var(--accent-strong);border-bottom-color:var(--accent)}
+
+/* ---------- Fields ---------- */
+[data-theme="cupertino"] .field,[data-theme="cupertino"] .form-group input,[data-theme="cupertino"] .form-group textarea,[data-theme="cupertino"] .form-group select,[data-theme="cupertino"] .lang-select,[data-theme="cupertino"] .composer-cw{
+    border-radius:var(--radius-sm);
+    border:1px solid var(--push-line);
+    box-shadow:inset 0 1px 1px rgba(0,0,0,.04);
+}
+[data-theme="cupertino"] .field:focus,[data-theme="cupertino"] .form-group input:focus,[data-theme="cupertino"] .form-group textarea:focus,[data-theme="cupertino"] .form-group select:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3.5px color-mix(in srgb,var(--accent) 50%,transparent);
+}
+[data-theme="cupertino"] .composer:focus-within{border-color:var(--line-strong);box-shadow:var(--shadow)}
+
+/* ---------- Overlay scrollbars ---------- */
+[data-theme="cupertino"] *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--text) 30%,transparent) transparent}
+[data-theme="cupertino"] ::-webkit-scrollbar{width:11px;height:11px}
+[data-theme="cupertino"] ::-webkit-scrollbar-track{background:transparent}
+[data-theme="cupertino"] ::-webkit-scrollbar-thumb{
+    background:color-mix(in srgb,var(--text) 30%,transparent);
+    border:3px solid transparent;
+    background-clip:content-box;
+    border-radius:999px;
+}
+[data-theme="cupertino"] ::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--text) 48%,transparent);background-clip:content-box}
+
+/* ---------- The window ----------
+   Above 1050px the page becomes a Mac window: vibrant source list pinned left,
+   content pane in the middle, inspector pinned right. */
+@media(min-width:1051px){
+    [data-theme="cupertino"] .header{
+        position:fixed;top:0;bottom:0;left:0;
+        width:var(--rail-width);height:100dvh;
+        display:flex;flex-direction:column;
+        background:var(--sidebar-tint);
+        backdrop-filter:saturate(180%) blur(30px);
+        -webkit-backdrop-filter:saturate(180%) blur(30px);
+        border-bottom:0;
+        border-right:1px solid var(--line);
+    }
+    [data-theme="cupertino"] .header-inner{
+        flex:1;min-height:0;overflow-y:auto;
+        flex-direction:column;align-items:stretch;justify-content:flex-start;
+        max-width:none;height:auto;
+        padding:.65rem .6rem 1.25rem;gap:.08rem;
+    }
+    /* Traffic lights. Three dots painted into one pseudo-element at the top of
+       the source list, where a Mac window keeps them. Generated content, so it
+       needs no markup and no translation. */
+    [data-theme="cupertino"] .header-inner::before{
+        content:"";
+        flex:none;
+        width:52px;height:12px;
+        margin:.15rem .2rem .85rem .35rem;
+        background:
+            radial-gradient(circle 6px at 6px 6px,#ff5f57 98%,transparent),
+            radial-gradient(circle 6px at 26px 6px,#febc2e 98%,transparent),
+            radial-gradient(circle 6px at 46px 6px,#28c840 98%,transparent);
+        background-repeat:no-repeat;
+    }
+    [data-theme="cupertino"] .logo{
+        margin-right:0;
+        padding:.1rem .5rem .7rem;
+        font-size:.9375rem;font-weight:700;
+        letter-spacing:-0.01em;
+    }
+    [data-theme="cupertino"] .desktop-nav{flex-direction:column;align-items:stretch;gap:.06rem}
+    [data-theme="cupertino"] .nav-link{
+        align-self:stretch;justify-content:flex-start;
+        gap:.6rem;padding:.36rem .55rem;
+        border-radius:var(--radius-sm);
+        font-size:.8125rem;font-weight:500;
+        color:var(--text);
+    }
+    [data-theme="cupertino"] .nav-link .icon{width:1.05rem;height:1.05rem;color:var(--accent)}
+    [data-theme="cupertino"] .nav-link .icon-label{display:inline}
+    [data-theme="cupertino"] .nav-link:hover{background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text)}
+    [data-theme="cupertino"] .nav-link.active{background:var(--accent);color:#fff}
+    [data-theme="cupertino"] .nav-link.active .icon{color:#fff}
+    /* Search lives in the inspector here, so the header copy stands down. */
+    [data-theme="cupertino"] .nav-search-form,[data-theme="cupertino"] .nav-search-link{display:none!important}
+    [data-theme="cupertino"] .desktop-nav>form:not(.nav-search-form){display:flex!important}
+    [data-theme="cupertino"] .desktop-nav>form>.nav-link{width:100%}
+    [data-theme="cupertino"] .desktop-nav>form .icon-label{display:inline}
+    [data-theme="cupertino"] .nav-post{
+        display:block;order:99;margin:.9rem .3rem 0;
+        padding:.45rem 1rem;
+        background:var(--accent-grad);color:#fff;
+        border-radius:var(--radius-sm);
+        font-size:.8125rem;font-weight:550;text-align:center;
+        box-shadow:0 1px 1px rgba(0,0,0,.12);
+    }
+    [data-theme="cupertino"] .nav-post:hover{filter:brightness(1.06);color:#fff;text-decoration:none}
+
+    [data-theme="cupertino"] .container{
+        max-width:none;
+        margin-left:var(--rail-width);
+        margin-right:var(--aside-width);
+        padding:1.4rem clamp(1rem,calc((100% - var(--pane-width)) / 2),5rem) 4rem;
+        background:var(--bg);
+        min-height:100dvh;
+    }
+    [data-theme="cupertino"] .admin-container{margin-left:var(--rail-width);margin-right:0;max-width:none;padding:1.6rem 1.6rem 4rem}
+
+    [data-theme="cupertino"] .rail-right{
+        display:block;position:fixed;top:0;right:0;
+        width:var(--aside-width);height:100dvh;overflow-y:auto;
+        padding:.75rem .85rem 2rem;
+        background:var(--surface);
+        border-left:1px solid var(--line);
+    }
+    [data-theme="cupertino"] .rail-search{
+        display:flex;align-items:center;gap:.45rem;
+        padding:.32rem .6rem;margin-bottom:1rem;
+        background:var(--surface-2);
+        border:1px solid var(--push-line);
+        border-radius:var(--radius-sm);
+        box-shadow:inset 0 1px 1px rgba(0,0,0,.04);
+    }
+    [data-theme="cupertino"] .rail-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3.5px color-mix(in srgb,var(--accent) 50%,transparent)}
+    [data-theme="cupertino"] .rail-search .icon{color:var(--muted);width:1rem;height:1rem}
+    [data-theme="cupertino"] .rail-search input{flex:1;min-width:0;border:0;background:none;outline:none;font:inherit;font-size:.8125rem;color:var(--text)}
+    [data-theme="cupertino"] .rail-search input:focus-visible{outline:none;box-shadow:none}
+    /* Inspector groups: the rounded grouped list System Settings uses. */
+    [data-theme="cupertino"] .rail-card{
+        display:grid;gap:0;
+        margin-bottom:1rem;padding:0;
+        background:var(--surface-2);
+        border:1px solid var(--line);
+        border-radius:var(--radius);
+        overflow:hidden;
+    }
+    [data-theme="cupertino"] .rail-card-title{
+        padding:.5rem .7rem;
+        font-size:.72rem;font-weight:650;
+        letter-spacing:.04em;text-transform:uppercase;
+        color:var(--muted);
+    }
+    [data-theme="cupertino"] .rail-card a{
+        display:flex;align-items:center;gap:.55rem;
+        padding:.5rem .7rem;
+        border-top:1px solid var(--line);
+        font-size:.8125rem;font-weight:500;color:var(--text);
+    }
+    [data-theme="cupertino"] .rail-card a:hover{background:var(--surface-3);text-decoration:none}
+    [data-theme="cupertino"] .rail-card .icon{color:var(--accent);width:1rem;height:1rem}
+}
+
+/* Between 1051px and the full three-column width the inspector would crowd the
+   content pane, so it stands down and the pane keeps the space. */
+@media(min-width:1051px) and (max-width:1300px){
+    /* The rail carries the search field, and the rail is not here, so the
+       compact search link comes back to the top bar for this band. */
+    [data-theme="cupertino"] .nav-search-link{display:inline-flex!important}
+    /* Its label is markup for screen readers only, because in the top bar it
+       sits among icons. Here it sits among words, so let it be one. */
+    [data-theme="cupertino"] .nav-search-link .sr-only{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:nowrap}
+
+    [data-theme="cupertino"]{--aside-width:0px}
+    [data-theme="cupertino"] .rail-right{display:none}
+}
+
+/* Below the shell breakpoint the window becomes an iPhone app: app.css's top
+   bar and bottom nav, with the Mac's controls kept. */
+@media(max-width:1050px){
+    [data-theme="cupertino"] .header{
+        background:color-mix(in srgb,var(--surface) 78%,transparent);
+        backdrop-filter:saturate(180%) blur(24px);
+        -webkit-backdrop-filter:saturate(180%) blur(24px);
+    }
+    [data-theme="cupertino"] .header-inner{height:var(--header-height)}
+}

@@ -1,0 +1,148 @@
+/* Marginalia - long-form reading.
+ *
+ * The generator already prints a date and a tag list beside every post. This
+ * theme moves that pair into a margin column on wide screens, where a reader
+ * can ignore it while reading and find it when scanning, and drops it back
+ * under the title when the screen is too narrow to spare the space.
+ *
+ * Type is a system serif at a 34rem measure; no web font is loaded, so the
+ * page renders identically offline and with a blocked network. */
+
+:root {
+    --bg: #eff1ec;
+    --surface: #f7f8f4;
+    --text: #1e2321;
+    --text-soft: #414a45;
+    --muted: #5a635d;
+    --line: #d6dcd3;
+    --accent: #7a2e32;
+    --accent-strong: #6a2529;
+    --max-width: 34rem;
+    --shell-width: 50rem;
+    --margin-column: 10rem;
+    --gutter: 2.5rem;
+    --font-body: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #15181a;
+        --surface: #1c2022;
+        --text: #e3e7e0;
+        --text-soft: #c2c8bf;
+        --muted: #98a098;
+        --line: #2a2f2c;
+        --accent: #e4a0a5;
+        --accent-strong: #efb9bd;
+    }
+}
+
+body {
+    font-family: var(--font-body);
+    font-size: 1.125rem;
+    line-height: 1.7;
+}
+
+/* Everything that is not the text of a post is set in the UI face, small and
+   letterspaced, so the serif reads as the one voice on the page. */
+.site-nav, .post-meta, .site-footer, .tag-count, .post-pager, .back-link,
+.archive-entry time, .blog-reply header, .post-media-item figcaption {
+    font-family: var(--font-ui);
+    font-size: .8125rem;
+    letter-spacing: .04em;
+}
+
+.site-brand a { font-family: var(--font-body); font-weight: 600; letter-spacing: -.01em; }
+.site-nav a { text-transform: lowercase; }
+
+.site-header, main, .site-footer { max-width: var(--shell-width); }
+.site-header { border-bottom: 1px solid var(--line); padding-bottom: 1.25rem; }
+.site-description { max-width: var(--max-width); font-style: italic; }
+
+.post-list { max-width: var(--max-width); }
+.post-summary h2 { font-size: 1.375rem; font-weight: 600; letter-spacing: -.01em; }
+.post-summary { border-bottom: none; padding: 1.75rem 0; }
+.post-summary + .post-summary { border-top: 1px solid var(--line); }
+.post-meta a { text-decoration: none; border-bottom: 1px solid currentColor; }
+
+article h1 { font-size: 2rem; font-weight: 600; letter-spacing: -.015em; line-height: 1.2; }
+.post-body, .post-media, .post-replies, .post-pager, .back-link,
+.fediverse-thread-link, .post-media-cw { max-width: var(--max-width); }
+.post-body p { margin-bottom: 1.25rem; }
+.post-body blockquote { border-left: 2px solid var(--accent); font-style: italic; }
+
+.archive-year { font-family: var(--font-ui); font-size: .875rem; letter-spacing: .08em; text-transform: uppercase; }
+.tag-list { max-width: var(--max-width); }
+
+/* The margin column. It only exists once there is room for it beside the
+   34rem measure; below that the page stays in document order. */
+@media (min-width: 52rem) {
+    .post-list, .tag-list { max-width: none; }
+
+    .post-summary:not(.archive-entry) {
+        display: grid;
+        grid-template-columns: var(--margin-column) minmax(0, var(--max-width));
+        column-gap: var(--gutter);
+    }
+    .post-summary:not(.archive-entry) > h2 { grid-column: 2; grid-row: 1; }
+    .post-summary:not(.archive-entry) > .post-meta {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        text-align: right;
+        margin-top: .45rem;
+    }
+
+    /* Stacked in the margin, the date and each tag are their own line, so the
+       "," and "·" the generator prints between them would start lines rather
+       than join them. Zeroing the loose text nodes drops them from the page
+       while leaving them in the accessibility tree. */
+    .post-summary:not(.archive-entry) > .post-meta,
+    article > .post-meta { font-size: 0; }
+    .post-summary:not(.archive-entry) > .post-meta > time,
+    .post-summary:not(.archive-entry) > .post-meta > a,
+    article > .post-meta > time,
+    article > .post-meta > a {
+        display: block;
+        font-size: .8125rem;
+        line-height: 1.6;
+    }
+    /* Right-aligned in a column, a block-level link would drag its underline
+       across the whole margin, so each one is only as wide as its own text. */
+    .post-summary:not(.archive-entry) > .post-meta > a,
+    article > .post-meta > a { width: fit-content; margin-left: auto; }
+    .post-summary:not(.archive-entry) > .post-excerpt { grid-column: 2; grid-row: 2; }
+
+    article {
+        display: grid;
+        grid-template-columns: var(--margin-column) minmax(0, var(--max-width));
+        column-gap: var(--gutter);
+    }
+    article > * { grid-column: 2; max-width: none; }
+    article > h1 { grid-column: 1 / -1; grid-row: 1; }
+    article > .post-meta {
+        grid-column: 1;
+        grid-row: 2;
+        text-align: right;
+        margin-top: 1.9rem;
+    }
+    article > .post-body { grid-row: 2; }
+
+    /* The thread link, the replies and the pager are siblings of <article>,
+       so the grid above does not reach them and they would sit alone in the
+       margin column. Indent them onto the text column by hand. */
+    .post-replies, .fediverse-thread-link, .post-pager, .back-link {
+        margin-left: calc(var(--margin-column) + var(--gutter));
+        max-width: var(--max-width);
+    }
+
+    .archive-entry { padding-left: calc(var(--margin-column) + var(--gutter)); position: relative; }
+    .archive-entry time { position: absolute; left: 0; width: var(--margin-column); text-align: right; }
+}
+
+@media print {
+    .post-summary:not(.archive-entry), article { display: block; }
+    .post-replies, .fediverse-thread-link, .post-pager, .back-link { margin-left: 0; }
+    .archive-entry { padding-left: 0; }
+    .archive-entry time { position: static; width: auto; text-align: left; }
+}

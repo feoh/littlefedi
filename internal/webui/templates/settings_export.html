@@ -1,0 +1,20 @@
+<div class="settings-page">
+	<h1>{{T "settings.export.heading"}}</h1>
+	<p>{{T "settings.export.contents_pre"}} <code>account.json</code>{{T "settings.export.contents_post"}}</p>
+	{{if .Error}}<div class="error-message">{{if eq .Error "authentication"}}{{T "settings.export.error_auth"}}{{else if eq .Error "rate"}}{{T "settings.export.error_rate"}}{{else}}{{T "settings.export.error_generic"}}{{end}}</div>{{end}}
+	{{with .Export}}
+	<div class="info-message">{{T "settings.export.state_label"}} <strong>{{.State}}</strong>{{if .ExpiresAt}} - {{T "settings.export.expires_at" .ExpiresAt}}{{end}}{{if .Size}} - {{T "settings.export.size_bytes" .Size}}{{end}}</div>
+	{{if eq .State "ready"}}
+		{{if .DownloadedAt}}<p>{{T "settings.export.claimed"}}</p>
+		{{else}}<form method="post" action="/settings/export/{{.ID}}/download" hx-boost="false"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}"><button class="btn btn-primary" type="submit">{{T "settings.export.download_once"}}</button></form>{{end}}
+	{{else}}<p>{{T "settings.export.preparing"}}</p>{{end}}
+	{{end}}
+	<form method="post" action="/settings/export" style="margin-top:1.2rem;">
+		<input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+		<label class="sr-only" for="settings-export-current-password">{{T "password.current"}}</label>
+		<input id="settings-export-current-password" type="password" name="current_password" placeholder="{{T "password.current"}}" required autocomplete="current-password">
+		{{if .Account.MFAEnabled}}<label class="sr-only" for="settings-export-mfa-code">{{T "auth.mfa_or_recovery_code_placeholder"}}</label>
+<input id="settings-export-mfa-code" type="text" name="mfa_code" placeholder="{{T "auth.mfa_or_recovery_code_placeholder"}}" required autocomplete="one-time-code">{{end}}
+		<button class="btn btn-primary" type="submit">{{T "settings.export.request_button"}}</button>
+	</form>
+</div>

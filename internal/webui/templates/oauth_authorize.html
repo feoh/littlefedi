@@ -1,0 +1,55 @@
+<div class="auth-wrap">
+    <div class="auth-card" style="max-width:480px;">
+        <div class="auth-mark" style="background:var(--surface-2);"><svg class="icon" aria-hidden="true" style="color:var(--accent);"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-lock"/></svg></div>
+        <h1>little<span>fedi</span></h1>
+        <p class="sub">{{T "auth.authorize_application"}}</p>
+
+        <div style="text-align:left;margin-bottom:1.2rem;">
+            <div style="font-weight:700;color:var(--text);margin-bottom:0.5rem;">{{.AppName}}</div>
+            {{if .AppWebsite}}<div style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">{{.AppWebsite}}</div>{{end}}
+            <div style="font-size:0.9rem;color:var(--text-soft);margin-bottom:0.8rem;">
+                {{T "auth.requesting_permission"}}
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem;">
+                {{range .Scopes}}
+                <span style="background:var(--accent-soft);color:var(--accent-strong);padding:0.3rem 0.7rem;border-radius:999px;font-size:0.8rem;font-weight:600;">{{.}}</span>
+                {{end}}
+            </div>
+        </div>
+
+        {{if .AllowURL}}
+        <!-- Plain links, and hx-boost="false" on both, are required. These
+             point at the client's own URL scheme (com.tapbots.Ivory.25200:,
+             tusker://, ...). A boosted click is an XHR, which cannot follow a
+             navigation into such a scheme, and a form submit answered with a
+             redirect does not work either: WebKit refuses to leave for an
+             application scheme as the outcome of a form submission, so apps
+             running the login inside ASWebAuthenticationSession never saw their
+             callback. A link the user taps is a navigation the browser always
+             performs. -->
+        <div style="display:flex;gap:0.6rem;">
+            <a href="{{.AllowURL}}" rel="nofollow" hx-boost="false" class="btn btn-primary" style="flex:1;">{{T "auth.allow"}}</a>
+            <a href="{{.DenyURL}}" rel="nofollow" hx-boost="false" class="btn btn-ghost" style="flex:1;">{{T "auth.deny"}}</a>
+        </div>
+        {{else}}
+        <!-- Out-of-band: there is no callback to link to, so the decision is
+             posted back here and the code is shown on the next page. -->
+        <form action="/oauth/authorize" method="post" hx-boost="false" style="display:flex;gap:0.6rem;">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <input type="hidden" name="client_id" value="{{.ClientID}}">
+            <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}">
+            <input type="hidden" name="response_type" value="{{.ResponseType}}">
+            <input type="hidden" name="scope" value="{{.Scope}}">
+            <input type="hidden" name="state" value="{{.State}}">
+            <input type="hidden" name="code_challenge" value="{{.CodeChallenge}}">
+            <input type="hidden" name="code_challenge_method" value="{{.CodeChallengeMethod}}">
+            <button type="submit" name="decision" value="allow" class="btn btn-primary" style="flex:1;">{{T "auth.allow"}}</button>
+            <button type="submit" name="decision" value="deny" class="btn btn-ghost" style="flex:1;">{{T "auth.deny"}}</button>
+        </form>
+        {{end}}
+
+        <p class="sub" style="margin-top:1rem;margin-bottom:0;font-size:0.8rem;">
+            {{T "auth.signed_in_as"}} <strong>@{{.Username}}</strong>
+        </p>
+    </div>
+</div>

@@ -1,0 +1,10 @@
+<div>
+    <div class="admin-page-header"><div><h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-trash"/></svg>Purge {{.Instance.Domain}}</h1><p class="admin-page-description">Permanently remove remote accounts, posts, follows, and instance metadata associated with this domain.</p></div></div>
+    <div class="admin-notice danger"><strong>This cannot be undone.</strong> Domain suspension is safer when the goal is only to stop federation.</div>
+    {{if .Error}}<div class="error-message">{{.Error}}</div>{{end}}
+    <form action="/admin/instances/{{.Instance.ID}}/purge" method="post" class="admin-card">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        <div class="form-group"><label for="confirm-domain">Type <strong>{{.Instance.Domain}}</strong> to confirm</label><input id="confirm-domain" name="confirm_domain" autocomplete="off" required></div>
+        <div style="display:flex;gap:.6rem;"><button class="btn" type="submit" style="border-color:var(--danger);color:var(--danger);">Permanently purge data</button><a class="btn btn-ghost" href="/admin/instances">Cancel</a></div>
+    </form>
+</div>

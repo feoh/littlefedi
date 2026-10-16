@@ -1,0 +1,77 @@
+{{define "components/status-interactions.html"}}
+{{$canRefresh := and .Status.Account .Status.Account.Domain}}
+{{$hideFavourites := and .Account .Account.HideFavouriteCounts}}
+{{$hideBoosts := and .Account .Account.HideBoostCounts}}
+<div id="status-interactions-{{.Status.ID}}" hx-get="/partial/thread/{{.Status.ID}}/interactions" hx-trigger="status-interactions-{{.Status.ID}} from:body" hx-swap="outerHTML">
+{{if or (gt .Status.FavouritesCount 0) (gt .Status.ReblogsCount 0) .Quotes .Reactions $canRefresh}}
+<div class="status-interactions">
+    {{range .Reactions}}
+    <details class="interaction-reaction">
+        <summary>{{if .Emoji}}<img class="reaction-emoji" src="{{proxyMedia .Emoji.URL}}" alt="{{.Name}}" loading="lazy">{{else}}<span aria-hidden="true">{{.Name}}</span>{{end}} {{Tn .Count "interactions.reactions_count" .Count}}</summary>
+        <div class="interaction-accounts">
+            {{range .Accounts}}
+            <a class="interaction-account" href="/@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}">
+                {{if or .Avatar .AvatarRemote}}<img src="{{proxyMedia (or .Avatar .AvatarRemote)}}" alt="" loading="lazy">{{end}}
+                <span><strong>{{if .DisplayName}}{{emojifyName .DisplayName .Emojis}}{{else}}{{.Username}}{{end}}</strong><small>@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}</small></span>
+            </a>
+            {{else}}<span class="interaction-unavailable">{{T "interactions.reactions_unavailable"}}</span>{{end}}
+        </div>
+    </details>
+    {{end}}
+    {{if gt .Status.FavouritesCount 0}}
+    <details class="interaction-likes">
+        <summary><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-heart"/></svg> {{if $hideFavourites}}{{T "interactions.likes"}}{{else}}{{Tn .Status.FavouritesCount "interactions.likes_count" .Status.FavouritesCount}}{{end}}</summary>
+        <div class="interaction-accounts">
+            {{range .FavouritedBy}}
+            <a class="interaction-account" href="/@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}">
+                {{if or .Avatar .AvatarRemote}}<img src="{{proxyMedia (or .Avatar .AvatarRemote)}}" alt="" loading="lazy">{{end}}
+                <span><strong>{{if .DisplayName}}{{emojifyName .DisplayName .Emojis}}{{else}}{{.Username}}{{end}}</strong><small>@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}</small></span>
+            </a>
+            {{else}}<span class="interaction-unavailable">{{T "interactions.likes_unavailable"}}</span>{{end}}
+        </div>
+    </details>
+    {{end}}
+    {{if $canRefresh}}
+    <a class="interaction-refresh" href="{{interactionPath .Status}}" title="{{T "interactions.refresh"}}"
+       hx-get="/partial/thread/{{.Status.ID}}/interactions?refresh=1" hx-target="#status-interactions-{{.Status.ID}}" hx-swap="outerHTML">
+        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-undo"/></svg><span class="sr-only">{{T "interactions.refresh"}}</span>
+    </a>
+    {{end}}
+    {{if gt .Status.ReblogsCount 0}}
+    <details class="interaction-boosts">
+        <summary><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-boost"/></svg> {{if $hideBoosts}}{{T "interactions.boosts"}}{{else}}{{Tn .Status.ReblogsCount "interactions.boosts_count" .Status.ReblogsCount}}{{end}}</summary>
+        <div class="interaction-accounts">
+            {{range .RebloggedBy}}
+            <a class="interaction-account" href="/@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}">
+                {{if or .Avatar .AvatarRemote}}<img src="{{proxyMedia (or .Avatar .AvatarRemote)}}" alt="" loading="lazy">{{end}}
+                <span><strong>{{if .DisplayName}}{{emojifyName .DisplayName .Emojis}}{{else}}{{.Username}}{{end}}</strong><small>@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}</small></span>
+            </a>
+            {{else}}<span class="interaction-unavailable">{{T "interactions.boosts_unavailable"}}</span>{{end}}
+        </div>
+    </details>
+    {{end}}
+    {{if .Quotes}}
+    <details class="interaction-quotes">
+        <summary><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-quote"/></svg> {{Tn (len .Quotes) "interactions.quotes_count" (len .Quotes)}}</summary>
+        <div class="interaction-accounts">
+            {{range .Quotes}}
+            <a class="interaction-account" href="{{statusPath .}}">
+                {{if or .Account.Avatar .Account.AvatarRemote}}<img src="{{proxyMedia (or .Account.Avatar .Account.AvatarRemote)}}" alt="" loading="lazy">{{end}}
+                <span><strong>{{if .Account.DisplayName}}{{emojifyName .Account.DisplayName .Account.Emojis}}{{else}}{{.Account.Username}}{{end}}</strong><small>@{{.Account.Username}}{{if .Account.Domain}}@{{.Account.Domain}}{{end}}</small></span>
+            </a>
+            {{end}}
+        </div>
+    </details>
+    {{end}}
+{{/* A refresh pulls fresh counts from the origin; the action bar above shows
+     the same numbers, so swap those two out of band or they stay stale until
+     the next page load. Only on the partial: the full page already renders
+     these spans, and a second copy would duplicate their ids. */}}
+{{if .OOBCounts}}
+<span class="count" id="boost-count-{{.Status.ID}}" hx-swap-oob="true">{{if and (not $hideBoosts) (gt .Status.ReblogsCount 0)}}{{.Status.ReblogsCount}}{{end}}</span>
+<span class="count-slot" id="fav-count-{{.Status.ID}}" hx-swap-oob="true">{{if and (not $hideFavourites) (gt .Status.FavouritesCount 0)}}<a class="count" href="{{statusInteractionsPath .Status}}" hx-boost="false">{{.Status.FavouritesCount}}</a>{{end}}</span>
+{{end}}
+</div>
+{{end}}
+</div>
+{{end}}

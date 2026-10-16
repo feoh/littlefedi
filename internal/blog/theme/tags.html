@@ -1,0 +1,7 @@
+{{define "tags"}}{{template "header" .}}
+<h1>Tags</h1>
+{{if not .Tags}}<p class="empty">No tags yet.</p>{{end}}
+<ul class="tag-list">
+{{range .Tags}}<li><a href="{{.URL}}">#{{.Name}}</a> <span class="tag-count">{{.Count}}</span></li>
+{{end}}</ul>
+{{template "footer" .}}{{end}}

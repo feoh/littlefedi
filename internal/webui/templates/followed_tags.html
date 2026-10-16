@@ -1,0 +1,65 @@
+<div class="timeline">
+    <div class="profile-header" style="padding:1.1rem;">
+        <h1 class="profile-name" style="font-size:1.2rem;">{{T "followed_tags.heading"}}</h1>
+        <div class="profile-meta" style="color:var(--muted);font-size:0.85rem;">{{T "followed_tags.subtitle"}}</div>
+    </div>
+
+    <!-- Plain GET form: the page itself renders the results, so this works with
+         JavaScript off and the query stays in a shareable URL. -->
+    <form method="get" action="/tags" style="display:flex;gap:0.5rem;padding:0.85rem 1.1rem;border-bottom:1px solid var(--line);">
+        <label class="sr-only" for="tag-search">{{T "followed_tags.search_placeholder"}}</label>
+        <input id="tag-search" class="field" type="search" name="q" value="{{.Query}}" placeholder="{{T "followed_tags.search_placeholder"}}" style="margin:0;">
+        <button class="btn btn-primary" type="submit">{{T "followed_tags.search_button"}}</button>
+    </form>
+
+    {{if .Searched}}
+    <div class="lists-list">
+        <div style="padding:0.85rem 1.1rem 0.35rem;font-weight:700;font-size:0.85rem;color:var(--muted);">{{T "followed_tags.results_heading"}}</div>
+        {{range .Results}}
+        <div class="status" style="display:flex;align-items:center;justify-content:space-between;gap:0.85rem;padding:0.85rem 1.1rem;">
+            <a href="/tags/{{.Name}}" style="font-weight:700;font-size:0.95rem;color:var(--text);">
+                <span style="color:var(--accent);">#</span>{{.Name}}
+                {{if gt .StatusesCount 0}}<span style="color:var(--muted);font-weight:400;font-size:0.8rem;margin-left:0.35rem;">{{Tn .StatusesCount "tag.posts_count" .StatusesCount}}</span>{{end}}
+            </a>
+            {{if index $.Followed .Name}}
+            <form method="post" action="/tags/{{.Name}}/unfollow" hx-post="/tags/{{.Name}}/unfollow" hx-swap="outerHTML" style="display:inline-flex;">
+                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                <button class="btn btn-ghost" type="submit">{{T "followed_tags.following"}}</button>
+            </form>
+            {{else}}
+            <form method="post" action="/tags/{{.Name}}/follow" hx-post="/tags/{{.Name}}/follow" hx-swap="outerHTML" style="display:inline-flex;">
+                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                <button class="btn btn-primary" type="submit" aria-label="{{T "follow_list.follow"}} #{{.Name}}">{{T "follow_list.follow"}}</button>
+            </form>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="empty-state"><p>{{T "followed_tags.no_results" $.Query}}</p></div>
+        {{end}}
+    </div>
+    {{end}}
+
+    {{if .Tags}}
+    <div class="followed-tags-list">
+        {{range .Tags}}
+        <div class="status" style="display:flex;align-items:center;justify-content:space-between;gap:0.85rem;padding:0.85rem 1.1rem;">
+            <a href="/tags/{{.Name}}" style="font-weight:700;font-size:0.95rem;color:var(--text);">
+                <span style="color:var(--accent);">#</span>{{.Name}}
+                {{if gt .StatusesCount 0}}<span style="color:var(--muted);font-weight:400;font-size:0.8rem;margin-left:0.35rem;">{{Tn .StatusesCount "tag.posts_count" .StatusesCount}}</span>{{end}}
+            </a>
+            <!-- Real form so the toggle works without JavaScript; htmx swaps the form in place. -->
+            <form method="post" action="/tags/{{.Name}}/unfollow" hx-post="/tags/{{.Name}}/unfollow" hx-swap="outerHTML" style="display:inline-flex;">
+                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                <button class="btn btn-ghost" type="submit">{{T "followed_tags.following"}}</button>
+            </form>
+        </div>
+        {{end}}
+    </div>
+    {{else}}
+    <div class="empty-state">
+        <div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-search"/></svg></div>
+        <h2>{{T "followed_tags.empty_heading"}}</h2>
+        <p>{{T "followed_tags.empty_body"}}</p>
+    </div>
+    {{end}}
+</div>

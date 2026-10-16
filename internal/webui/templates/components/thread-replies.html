@@ -1,0 +1,29 @@
+{{define "components/thread-replies.html"}}
+<div id="thread-replies" class="thread-replies"{{if .Fetching}} hx-get="/partial/thread/{{.StatusID}}?tries={{.PollTries}}" hx-trigger="load delay:2s" hx-swap="outerHTML" hx-target="this"{{end}}>
+    {{range .Descendants}}
+    <div class="thread-item reply" style="--thread-depth: {{add $.AncestorCount .Depth}}">
+        {{template "components/status.html" dict "Status" .Status "Account" $.Account "CSRFToken" $.CSRFToken}}
+    </div>
+    {{end}}
+    {{if and .Fetching (not .Descendants)}}
+    <div class="thread-loading" style="text-align:center;padding:1rem;color:var(--muted);font-size:0.8125rem;">
+        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg> {{T "thread.fetching"}}
+    </div>
+    {{end}}
+</div>
+{{end}}
+
+{{/* thread-poll.html is returned by the /partial/thread/{id} polling endpoint.
+     It swaps the replies container (primary target) and refreshes the ancestors
+     container out-of-band, so a thread opened cold by URL fills in both
+     directions as the background crawl imports statuses. */}}
+{{define "components/thread-poll.html"}}
+<div id="thread-ancestors" class="thread-ancestors" hx-swap-oob="true">
+    {{range $i, $a := .Ancestors}}
+    <div class="thread-item ancestor" style="--thread-depth: {{$i}}">
+        {{template "components/status.html" dict "Status" $a "Account" $.Account "CSRFToken" $.CSRFToken}}
+    </div>
+    {{end}}
+</div>
+{{template "components/thread-replies.html" dict "StatusID" .StatusID "Descendants" .Descendants "AncestorCount" (len .Ancestors) "Account" .Account "CSRFToken" .CSRFToken "Fetching" .Fetching "PollTries" .PollTries}}
+{{end}}

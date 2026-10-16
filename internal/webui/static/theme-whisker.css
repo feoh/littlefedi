@@ -1,0 +1,421 @@
+/* Whisker - littleFedi as an Xfce application.
+
+   A dark panel down the left edge carrying the navigation, a light grey-blue
+   work area beside it, a file-manager side pane on the right. Compact rows,
+   3px corners, DejaVu on the desktops that have it.
+
+   Alone among littleFedi's themes this one is not flat: controls are lit from
+   above. Buttons carry the faint top-to-bottom gradient and inner highlight the
+   traditional desktop uses to say "this is raised, press it", pressed states
+   invert into the surface, and the feed switcher is a real notebook - raised
+   tabs, the current one joined to the pane below it with no line between them.
+
+   A layout theme: it reflows the shell above 1050px and repaints every control,
+   so every template is in scope. The dark panel stays dark at every width,
+   because a light titlebar is not what this desktop looks like.
+
+   Token layering repeats app.css's four states, one specificity step higher so
+   a theme's dark tokens beat the base theme's dark tokens regardless of file
+   order. */
+
+/* ---------- Tokens: light ---------- */
+:root[data-theme="whisker"]{
+    color-scheme:light;
+    --font-body:'DejaVu Sans','Bitstream Vera Sans',Verdana,'Noto Sans',sans-serif;
+    --font-features:normal;
+    --font-mono:'DejaVu Sans Mono','Bitstream Vera Sans Mono',ui-monospace,monospace;
+    --bg:#e4e6e9;
+    --bg-grad:none;
+    --surface:#fbfbfc;
+    --surface-2:#eceef1;
+    --surface-3:#dfe2e6;
+    --text:#2e3436;
+    --text-soft:#3b4245;
+    --muted:#5c6468;
+    --line:#b6bcc2;
+    --line-strong:#98a0a6;
+    --accent:#4a90d9;
+    --accent-strong:#2a6099;
+    --accent-soft:rgba(74,144,217,.14);
+    --accent-grad:linear-gradient(#4478b5,#35699f);
+    --accent-shadow:transparent;
+    --like:#a40000;
+    --like-soft:rgba(164,0,0,.10);
+    --boost:#3a7d34;
+    --boost-soft:rgba(58,125,52,.11);
+    --mention:#5c3566;
+    --mention-soft:rgba(92,53,102,.11);
+    --danger:#a40000;
+    --shadow:0 1px 1px rgba(0,0,0,.06);
+    --shadow-md:0 2px 6px rgba(0,0,0,.14);
+    --shadow-lg:0 8px 22px rgba(0,0,0,.24);
+    --radius:3px;
+    --radius-sm:3px;
+    --radius-lg:4px;
+    --header-height:46px;
+    /* Theme-private. The raised control face and the panel it all hangs from. */
+    --raised:linear-gradient(#fdfdfd,#eceef1);
+    --raised-hover:linear-gradient(#ffffff,#f4f6f8);
+    --raised-line:#b6bcc2;
+    --raised-lip:inset 0 1px 0 rgba(255,255,255,.85);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.18);
+    --panel:linear-gradient(#4b5054,#41464a);
+    --panel-line:#2b2f31;
+    --panel-text:#e8eaec;
+    --panel-muted:#b3babd;
+    --rail-width:214px;
+    --aside-width:280px;
+    --pane-width:660px;
+}
+
+/* ---------- Tokens: dark ---------- */
+@media(prefers-color-scheme:dark){
+    :root[data-theme="whisker"][data-appearance="auto"],:root[data-theme="whisker"]:not([data-appearance]){
+        color-scheme:dark;
+        --bg:#26292b;
+        --surface:#303336;
+        --surface-2:#3a3e42;
+        --surface-3:#454a4e;
+        --text:#eff0f1;
+        --text-soft:#dfe1e2;
+        --muted:#a5adb2;
+        --line:#4a4f53;
+        --line-strong:#61686d;
+        --accent:#6ea3d9;
+        --accent-strong:#9cc2e8;
+        --accent-soft:rgba(110,163,217,.18);
+        --accent-grad:linear-gradient(#4478b5,#35699f);
+        --like:#eb7a70;
+        --like-soft:rgba(235,122,112,.16);
+        --boost:#73c66c;
+        --boost-soft:rgba(115,198,108,.16);
+        --mention:#bf8fcc;
+        --mention-soft:rgba(191,143,204,.16);
+        --danger:#eb7a70;
+        --shadow:0 1px 1px rgba(0,0,0,.30);
+        --shadow-md:0 2px 8px rgba(0,0,0,.45);
+        --shadow-lg:0 10px 26px rgba(0,0,0,.60);
+        --raised:linear-gradient(#41464a,#383c40);
+        --raised-hover:linear-gradient(#4a4f54,#41464a);
+        --raised-line:#565c61;
+        --raised-lip:inset 0 1px 0 rgba(255,255,255,.08);
+        --sunk:inset 0 1px 2px rgba(0,0,0,.45);
+        --panel:linear-gradient(#33373a,#2b2f31);
+        --panel-line:#1f2224;
+    }
+}
+/* Explicit dark: the same tokens with no media query. Vanilla CSS cannot reuse
+   an @media block from a plain selector and this project has no build step;
+   keep the two copies in sync rather than adding one. */
+:root[data-theme="whisker"][data-appearance="dark"],:root[data-theme="whisker"][data-appearance="black"]{
+    color-scheme:dark;
+    --bg:#26292b;
+    --surface:#303336;
+    --surface-2:#3a3e42;
+    --surface-3:#454a4e;
+    --text:#eff0f1;
+    --text-soft:#dfe1e2;
+    --muted:#a5adb2;
+    --line:#4a4f53;
+    --line-strong:#61686d;
+    --accent:#6ea3d9;
+    --accent-strong:#9cc2e8;
+    --accent-soft:rgba(110,163,217,.18);
+    --accent-grad:linear-gradient(#4478b5,#35699f);
+    --like:#eb7a70;
+    --like-soft:rgba(235,122,112,.16);
+    --boost:#73c66c;
+    --boost-soft:rgba(115,198,108,.16);
+    --mention:#bf8fcc;
+    --mention-soft:rgba(191,143,204,.16);
+    --danger:#eb7a70;
+    --shadow:0 1px 1px rgba(0,0,0,.30);
+    --shadow-md:0 2px 8px rgba(0,0,0,.45);
+    --shadow-lg:0 10px 26px rgba(0,0,0,.60);
+    --raised:linear-gradient(#41464a,#383c40);
+    --raised-hover:linear-gradient(#4a4f54,#41464a);
+    --raised-line:#565c61;
+    --raised-lip:inset 0 1px 0 rgba(255,255,255,.08);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.45);
+    --panel:linear-gradient(#33373a,#2b2f31);
+    --panel-line:#1f2224;
+}
+
+/* ---------- Tokens: true black ---------- */
+:root[data-theme="whisker"][data-appearance="black"]{
+    --bg:#000000;
+    --surface:#0b0b0c;
+    --surface-2:#161618;
+    --surface-3:#1f1f22;
+    --text:#ededf0;
+    --muted:#96969c;
+    --line:#232326;
+    --line-strong:#37373b;
+    --raised:linear-gradient(#1b1b1e,#141416);
+    --raised-hover:linear-gradient(#232326,#1b1b1e);
+    --raised-line:#2f2f33;
+    --panel:linear-gradient(#0d0d0f,#000000);
+    --panel-line:#232326;
+}
+
+/* ---------- Type and density ---------- */
+[data-theme="whisker"] body{font-size:.875rem;line-height:1.45}
+[data-theme="whisker"] .status{padding:.8rem .85rem;margin-bottom:.45rem}
+[data-theme="whisker"] .notification{padding:.7rem .85rem;margin-bottom:.35rem}
+[data-theme="whisker"] .settings-section{padding:1rem}
+[data-theme="whisker"] .status-body{font-size:.875rem;line-height:1.5}
+[data-theme="whisker"] .status-body a,[data-theme="whisker"] .profile-bio a,[data-theme="whisker"] .status-quote-body a{color:var(--accent-strong);text-decoration:underline}
+[data-theme="whisker"] .page-title,[data-theme="whisker"] .profile-name{font-size:1.15rem;font-weight:700;letter-spacing:0}
+
+/* ---------- Raised controls ----------
+   The signature. One face, lit from above, pressed states inverted. */
+[data-theme="whisker"] .btn{border-radius:var(--radius-sm);padding:.4rem .95rem;font-size:.8125rem;font-weight:700;letter-spacing:0}
+[data-theme="whisker"] .btn-primary{background:var(--accent-grad);color:#fff;box-shadow:var(--raised-lip)}
+[data-theme="whisker"] .btn-primary:hover{filter:brightness(1.06);box-shadow:var(--raised-lip);transform:none}
+[data-theme="whisker"] .btn-primary:active{filter:brightness(.9);box-shadow:var(--sunk)}
+[data-theme="whisker"] .btn-ghost,[data-theme="whisker"] .tool-btn,[data-theme="whisker"] .filter-btn,[data-theme="whisker"] .load-more,[data-theme="whisker"] .back-link,[data-theme="whisker"] .relationship-badge,[data-theme="whisker"] .catchup-reason,[data-theme="whisker"] .timeline-floating-action{
+    background:var(--raised);
+    border:1px solid var(--raised-line);
+    border-radius:var(--radius-sm);
+    box-shadow:var(--raised-lip);
+    color:var(--text);
+}
+[data-theme="whisker"] .btn-ghost:hover,[data-theme="whisker"] .tool-btn:hover,[data-theme="whisker"] .filter-btn:hover,[data-theme="whisker"] .load-more:hover,[data-theme="whisker"] .back-link:hover,[data-theme="whisker"] .timeline-floating-action:hover{
+    background:var(--raised-hover);
+    border-color:var(--line-strong);
+    color:var(--text);
+    transform:none;
+}
+[data-theme="whisker"] .btn-ghost:active,[data-theme="whisker"] .tool-btn:active,[data-theme="whisker"] .load-more:active{background:var(--surface-2);box-shadow:var(--sunk)}
+[data-theme="whisker"] .tool-btn.active,[data-theme="whisker"] .filter-btn.active,[data-theme="whisker"] .composer-detail[open]>summary{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-strong);box-shadow:var(--sunk)}
+[data-theme="whisker"] .load-more{max-width:14rem;font-weight:700}
+[data-theme="whisker"] .follow-btn{border-radius:var(--radius-sm);box-shadow:var(--raised-lip)}
+[data-theme="whisker"] .follow-btn.follow{background:var(--accent-grad);border-color:var(--line-strong);color:#fff}
+[data-theme="whisker"] .follow-btn.following{background:var(--raised);border-color:var(--raised-line);color:var(--text)}
+/* The post button carries its icon as a background image over the accent
+   gradient. This desktop labels its buttons with words, so the shorthand
+   replaces both layers - dropping only the image would take the gradient. */
+[data-theme="whisker"] .btn-icon-post{background:var(--accent-grad);padding-left:.95rem}
+[data-theme="whisker"] .action-btn{border-radius:var(--radius-sm);font-weight:700}
+[data-theme="whisker"] .action-btn:hover{background:var(--raised);box-shadow:var(--raised-lip)}
+[data-theme="whisker"] .action-btn:hover .icon{transform:none}
+/* The deeper accent: the panel blue is only 2.7:1 against the work area. */
+[data-theme="whisker"] :focus-visible{outline:2px solid var(--accent-strong);outline-offset:1px;border-radius:var(--radius-sm)}
+
+/* ---------- Frames ---------- */
+[data-theme="whisker"] .status,[data-theme="whisker"] .composer,[data-theme="whisker"] .notification,[data-theme="whisker"] .settings-section,[data-theme="whisker"] .admin-card,[data-theme="whisker"] .stat-card,[data-theme="whisker"] .profile-header,[data-theme="whisker"] .auth-card{
+    box-shadow:var(--shadow);
+}
+[data-theme="whisker"] .status:hover{background:var(--surface-2);border-color:var(--line-strong);box-shadow:var(--shadow);transform:none}
+[data-theme="whisker"] .stat-card:hover{transform:none;box-shadow:var(--shadow-md)}
+[data-theme="whisker"] .status-avatar,[data-theme="whisker"] .status-avatar img{border-radius:var(--radius-sm)}
+[data-theme="whisker"] .status-avatar{box-shadow:0 0 0 1px var(--line)}
+[data-theme="whisker"] .status-avatar:hover{box-shadow:0 0 0 1px var(--accent)}
+[data-theme="whisker"] .profile-avatar{border-radius:var(--radius);border-width:2px;box-shadow:var(--shadow-md)}
+[data-theme="whisker"] .logo-mark{border-radius:var(--radius-sm);box-shadow:none}
+[data-theme="whisker"] .auth-mark{border-radius:var(--radius);box-shadow:var(--shadow-md)}
+[data-theme="whisker"] .profile-banner{background:var(--surface-3)}
+[data-theme="whisker"] .profile-banner::after{display:none}
+[data-theme="whisker"] .empty-state .empty-icon{border-radius:var(--radius);background:var(--surface-2)}
+
+/* ---------- Notebook ----------
+   Raised tabs on a ruled bar; the current tab has no line under it, so it reads
+   as one surface with the pane below. */
+[data-theme="whisker"] .timeline-nav{
+    justify-content:flex-start;
+    flex-wrap:nowrap;overflow-x:auto;
+    gap:2px;padding:.3rem .3rem 0;
+    margin-bottom:.9rem;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius) var(--radius) 0 0;
+    box-shadow:none;
+    scrollbar-width:none;
+}
+[data-theme="whisker"] .timeline-nav::-webkit-scrollbar{display:none}
+[data-theme="whisker"] .timeline-nav a{
+    flex:0 0 auto;
+    padding:.4rem .8rem;
+    margin-bottom:-1px;
+    background:transparent;
+    border:1px solid transparent;
+    border-radius:var(--radius) var(--radius) 0 0;
+    font-size:.8125rem;font-weight:700;
+    color:var(--muted);
+    white-space:nowrap;
+}
+[data-theme="whisker"] .timeline-nav a .icon{width:.95rem;height:.95rem}
+[data-theme="whisker"] .timeline-nav a:hover{background:var(--raised);color:var(--text)}
+[data-theme="whisker"] .timeline-nav a.active{
+    background:var(--surface);
+    border-color:var(--line);
+    border-bottom-color:var(--surface);
+    color:var(--text);
+    box-shadow:var(--raised-lip);
+}
+[data-theme="whisker"] .profile-tab.active,[data-theme="whisker"] .notif-tab.active{color:var(--accent-strong);border-bottom-color:var(--accent)}
+
+/* ---------- Sunken fields ---------- */
+[data-theme="whisker"] .field,[data-theme="whisker"] .form-group input,[data-theme="whisker"] .form-group textarea,[data-theme="whisker"] .form-group select,[data-theme="whisker"] .lang-select,[data-theme="whisker"] .composer-cw,[data-theme="whisker"] .composer-media input[type="text"]{
+    background:var(--surface);
+    border:1px solid var(--line-strong);
+    border-radius:var(--radius-sm);
+    box-shadow:var(--sunk);
+}
+[data-theme="whisker"] .field:focus,[data-theme="whisker"] .form-group input:focus,[data-theme="whisker"] .form-group textarea:focus,[data-theme="whisker"] .form-group select:focus{
+    border-color:var(--accent);
+    box-shadow:var(--sunk),0 0 0 2px var(--accent-soft);
+}
+[data-theme="whisker"] .composer:focus-within{border-color:var(--line-strong);box-shadow:var(--shadow)}
+
+/* ---------- Classic scrollbars ----------
+   A visible trough with a raised thumb in it, the way this desktop has always
+   drawn them. */
+[data-theme="whisker"] *{scrollbar-width:auto;scrollbar-color:var(--line-strong) var(--surface-2)}
+[data-theme="whisker"] ::-webkit-scrollbar{width:13px;height:13px;background:var(--surface-2)}
+[data-theme="whisker"] ::-webkit-scrollbar-track{background:var(--surface-2);border-left:1px solid var(--line)}
+[data-theme="whisker"] ::-webkit-scrollbar-thumb{
+    background:var(--raised);
+    border:1px solid var(--line-strong);
+    border-radius:var(--radius-sm);
+}
+[data-theme="whisker"] ::-webkit-scrollbar-thumb:hover{background:var(--raised-hover)}
+
+/* ---------- The panel ----------
+   Dark at every width. On a phone it is the top bar; from 1051px it stands up
+   on the left edge and becomes the panel proper. */
+[data-theme="whisker"] .header{
+    background:var(--panel);
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+    border-bottom:1px solid var(--panel-line);
+}
+[data-theme="whisker"] .header .logo,[data-theme="whisker"] .header .nav-link{color:var(--panel-text)}
+[data-theme="whisker"] .header .logo span b{color:#8fc0f0}
+[data-theme="whisker"] .header .nav-link .icon{color:var(--panel-muted)}
+[data-theme="whisker"] .header .nav-link:hover{background:rgba(255,255,255,.10);color:#fff}
+[data-theme="whisker"] .header .nav-link:hover .icon{color:#fff}
+[data-theme="whisker"] .header .nav-link.active{background:var(--accent-grad);color:#fff}
+[data-theme="whisker"] .header .nav-link.active .icon{color:#fff}
+[data-theme="whisker"] .header .mobile-menu-trigger{color:var(--panel-text)}
+[data-theme="whisker"] .header .nav-search-input{background:rgba(0,0,0,.28);border-color:var(--panel-line);color:var(--panel-text)}
+
+@media(min-width:1051px){
+    [data-theme="whisker"] .header{
+        position:fixed;top:0;bottom:0;left:0;
+        width:var(--rail-width);height:100dvh;
+        display:flex;flex-direction:column;
+        border-bottom:0;
+        border-right:1px solid var(--panel-line);
+    }
+    [data-theme="whisker"] .header-inner{
+        flex:1;min-height:0;overflow-y:auto;
+        flex-direction:column;align-items:stretch;justify-content:flex-start;
+        max-width:none;height:auto;
+        padding:.45rem .4rem 1.25rem;gap:.05rem;
+    }
+    /* Where the menu button sits on a real panel: top of the stack, ruled off
+       from the launchers below it. */
+    [data-theme="whisker"] .logo{
+        margin-right:0;
+        padding:.5rem .55rem .6rem;
+        margin-bottom:.35rem;
+        border-bottom:1px solid var(--panel-line);
+        font-size:.9375rem;font-weight:700;letter-spacing:0;
+    }
+    [data-theme="whisker"] .desktop-nav{flex-direction:column;align-items:stretch;gap:.05rem}
+    [data-theme="whisker"] .nav-link{
+        align-self:stretch;justify-content:flex-start;
+        gap:.6rem;padding:.4rem .55rem;
+        border-radius:var(--radius-sm);
+        font-size:.8125rem;font-weight:600;
+    }
+    [data-theme="whisker"] .nav-link .icon{width:1.05rem;height:1.05rem}
+    [data-theme="whisker"] .nav-link .icon-label{display:inline}
+    [data-theme="whisker"] .nav-search-form,[data-theme="whisker"] .nav-search-link{display:none!important}
+    [data-theme="whisker"] .desktop-nav>form:not(.nav-search-form){display:flex!important}
+    [data-theme="whisker"] .desktop-nav>form>.nav-link{width:100%}
+    [data-theme="whisker"] .desktop-nav>form .icon-label{display:inline}
+    [data-theme="whisker"] .nav-post{
+        display:block;order:99;margin:.8rem .25rem 0;
+        padding:.4rem 1rem;
+        background:var(--accent-grad);color:#fff;
+        border:1px solid var(--panel-line);
+        border-radius:var(--radius-sm);
+        box-shadow:var(--raised-lip);
+        font-size:.8125rem;font-weight:700;text-align:center;
+    }
+    [data-theme="whisker"] .nav-post:hover{filter:brightness(1.06);color:#fff;text-decoration:none}
+
+    [data-theme="whisker"] .container{
+        max-width:none;
+        margin-left:var(--rail-width);
+        margin-right:var(--aside-width);
+        padding:1.1rem clamp(.9rem,calc((100% - var(--pane-width)) / 2),4rem) 3.5rem;
+        min-height:100dvh;
+    }
+    [data-theme="whisker"] .admin-container{margin-left:var(--rail-width);margin-right:0;max-width:none;padding:1.4rem 1.4rem 3.5rem}
+
+    /* The side pane, framed the way a file manager frames one. */
+    [data-theme="whisker"] .rail-right{
+        display:block;position:fixed;top:0;right:0;
+        width:var(--aside-width);height:100dvh;overflow-y:auto;
+        padding:.6rem .65rem 2rem;
+        background:var(--surface-2);
+        border-left:1px solid var(--line);
+    }
+    [data-theme="whisker"] .rail-search{
+        display:flex;align-items:center;gap:.45rem;
+        padding:.35rem .55rem;margin-bottom:.85rem;
+        background:var(--surface);
+        border:1px solid var(--line-strong);
+        border-radius:var(--radius-sm);
+        box-shadow:var(--sunk);
+    }
+    [data-theme="whisker"] .rail-search:focus-within{border-color:var(--accent);box-shadow:var(--sunk),0 0 0 2px var(--accent-soft)}
+    [data-theme="whisker"] .rail-search .icon{color:var(--muted);width:1rem;height:1rem}
+    [data-theme="whisker"] .rail-search input{flex:1;min-width:0;border:0;background:none;outline:none;font:inherit;font-size:.8125rem;color:var(--text)}
+    [data-theme="whisker"] .rail-search input:focus-visible{outline:none;box-shadow:none}
+    [data-theme="whisker"] .rail-card{
+        display:grid;gap:0;
+        margin-bottom:.85rem;padding:0;
+        background:var(--surface);
+        border:1px solid var(--line);
+        border-radius:var(--radius);
+        overflow:hidden;
+    }
+    [data-theme="whisker"] .rail-card-title{
+        padding:.4rem .6rem;
+        background:var(--surface-2);
+        border-bottom:1px solid var(--line);
+        font-size:.72rem;font-weight:700;
+        letter-spacing:.05em;text-transform:uppercase;
+        color:var(--muted);
+    }
+    [data-theme="whisker"] .rail-card a{
+        display:flex;align-items:center;gap:.55rem;
+        padding:.4rem .6rem;
+        font-size:.8125rem;font-weight:600;color:var(--text);
+    }
+    [data-theme="whisker"] .rail-card a:hover{background:var(--accent-soft);color:var(--accent-strong);text-decoration:none}
+    [data-theme="whisker"] .rail-card .icon{color:var(--muted);width:1rem;height:1rem}
+}
+
+/* Between 1051px and the full three-column width the side pane would crowd the
+   work area, so it stands down. */
+@media(min-width:1051px) and (max-width:1260px){
+    /* The rail carries the search field, and the rail is not here, so the
+       compact search link comes back to the top bar for this band. */
+    [data-theme="whisker"] .nav-search-link{display:inline-flex!important}
+    /* Its label is markup for screen readers only, because in the top bar it
+       sits among icons. Here it sits among words, so let it be one. */
+    [data-theme="whisker"] .nav-search-link .sr-only{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:nowrap}
+
+    [data-theme="whisker"]{--aside-width:0px}
+    [data-theme="whisker"] .rail-right{display:none}
+}
+
+@media(max-width:640px){
+    /* app.css hides the tab strip here because the bottom nav picks up feed
+       switching; this theme's unconditional flex would otherwise show both. */
+    [data-theme="whisker"] .timeline-nav{display:none}
+}

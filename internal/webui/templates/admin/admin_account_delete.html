@@ -1,0 +1,14 @@
+<div>
+    <h1 class="page-title">Delete @{{.Target.Username}}</h1>
+    <div class="admin-card">
+        <p>This immediately disables authentication, snapshots follower inboxes, and durably delivers <code>Delete(Person)</code>. The signing key is retained until delivery succeeds or the 72-hour deadline expires; then all account data and owned media are purged.</p>
+        <p><strong>This cannot be cancelled.</strong> Type <code>{{.Target.Username}}</code> to confirm.</p>
+        <form action="/admin/accounts/{{.Target.ID}}/delete" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <label class="sr-only" for="confirm-username">Username to confirm</label>
+            <input type="text" id="confirm-username" name="confirm" required autocomplete="off">
+            <button type="submit" class="btn" style="border-color:var(--danger);color:var(--danger);">Start deletion</button>
+            <a class="btn" href="/admin/accounts">Cancel</a>
+        </form>
+    </div>
+</div>

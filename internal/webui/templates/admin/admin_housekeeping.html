@@ -1,0 +1,96 @@
+<div>
+    <h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-trash"/></svg>Housekeeping</h1>
+    <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1rem;">
+        Run maintenance tasks on demand. These tasks are also performed automatically on a schedule,
+        but you can trigger them manually here when needed.
+    </p>
+
+    {{if .Result}}
+    <div style="padding:0.75rem;background:var(--success-bg, #dcfce7);color:var(--success-fg, #166534);border-radius:0.5rem;margin-bottom:1rem;font-size:0.875rem;">
+        Task completed successfully.
+        {{if $.Result}}<br><code>{{$.Result}}</code>{{end}}
+    </div>
+    {{end}}
+
+    {{if .Error}}
+    <div style="padding:0.75rem;background:var(--danger-bg, #fee2e2);color:var(--danger-fg, #991b1b);border-radius:0.5rem;margin-bottom:1rem;font-size:0.875rem;">
+        Task failed: <code>{{$.Error}}</code>
+    </div>
+    {{end}}
+
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+        {{if .HasHousekeeper}}
+        <div class="settings-section">
+            <h2>Status Pruning</h2>
+            <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">
+                Remove old statuses according to the configured thresholds.
+            </p>
+            <dl style="font-size:0.875rem;display:grid;grid-template-columns:auto 1fr;gap:0.25rem 1rem;margin-bottom:0.75rem;">
+                <dt style="font-weight:600;">Remote prune after:</dt>
+                <dd>{{if .PruneRemoteDays}}<strong>{{.PruneRemoteDays}}</strong> days{{else}}Disabled{{end}}</dd>
+                <dt style="font-weight:600;">Own prune after:</dt>
+                <dd>{{if .PruneOwnDays}}<strong>{{.PruneOwnDays}}</strong> days (min {{.PruneOwnMinLikes}} likes / {{.PruneOwnMinBoosts}} boosts){{else}}Disabled{{end}}</dd>
+                <dt style="font-weight:600;">Max per run:</dt>
+                <dd>{{.PruneMaxPerRun}}</dd>
+            </dl>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <form action="/admin/housekeeping/prune_remote" method="post" data-confirm="Prune remote statuses? This cannot be undone.">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                    <button type="submit" class="btn" style="border-color:var(--danger);color:var(--danger);">Prune remote statuses</button>
+                </form>
+                <form action="/admin/housekeeping/prune_own" method="post" data-confirm="Prune own low-interaction statuses? This cannot be undone.">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                    <button type="submit" class="btn" style="border-color:var(--danger);color:var(--danger);">Prune own low-interaction statuses</button>
+                </form>
+            </div>
+        </div>
+        {{else}}
+        <div class="settings-section">
+            <h2>Status Pruning</h2>
+            <p style="font-size:0.875rem;color:var(--muted);">
+                Housekeeping is not configured. Set <code>prune_remote_statuses_after_days</code> or
+                <code>prune_own_statuses_after_days</code> in the config file to enable status pruning.
+            </p>
+        </div>
+        {{end}}
+
+        <div class="settings-section">
+            <h2>Media Cleanup</h2>
+            <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">
+                Remove media files that are no longer needed. These tasks run automatically every hour
+                (24h threshold), but the manual triggers below use shorter thresholds for immediate cleanup.
+            </p>
+            <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">
+                Media path: <code>{{.MediaPath}}</code>
+            </p>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <form action="/admin/housekeeping/prune_stale_media" method="post" data-confirm="Remove unattached media uploaded more than 1 hour ago? This cleans up files that were uploaded but never attached to a post.">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                    <button type="submit" class="btn" style="border-color:var(--danger);color:var(--danger);">Prune stale unattached media (older than 1h)</button>
+                </form>
+                <form action="/admin/housekeeping/remove_orphaned_media" method="post" data-confirm="Remove media whose parent status no longer exists? This cleans up leftover files from posts that were deleted but whose media was not cleaned up.">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                    <button type="submit" class="btn" style="border-color:var(--danger);color:var(--danger);">Remove orphaned media (broken status references)</button>
+                </form>
+                <form action="/admin/housekeeping/remove_unreferenced_media" method="post" data-confirm="Remove media files on disk with no database record? This cleans up leftover files from failed uploads or manual database cleanup.">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                    <button type="submit" class="btn" style="border-color:var(--danger);color:var(--danger);">Remove unreferenced disk media (no DB record)</button>
+                </form>
+            </div>
+        </div>
+        {{if .BlogCapable}}
+        <div class="settings-section">
+            <h2>Static Blogs</h2>
+            <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">
+                Regenerate every account's static blog site from the posts currently in the database.
+                Use this after a restored backup, a half-finished build, or an upgrade that changed the templates.
+            </p>
+            <form action="/admin/housekeeping/regenerate_all_blogs" method="post" data-confirm="Regenerate every account's static blog site now?">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <button type="submit" class="btn">Regenerate all blogs</button>
+            </form>
+        </div>
+        {{end}}
+    </div>
+
+</div>

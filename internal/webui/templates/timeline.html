@@ -1,0 +1,68 @@
+<div class="timeline">
+    <h1 class="sr-only">{{if eq .Timeline "home"}}{{T "timeline.home"}}{{else if eq .Timeline "public"}}{{T "timeline.federated"}}{{else if eq .Timeline "local"}}{{T "timeline.local"}}{{else if eq .Timeline "bubble"}}{{T "timeline.bubble"}}{{else if eq .Timeline "bookmarks"}}{{T "mobile.bookmarks"}}{{else if eq .Timeline "favourites"}}{{T "mobile.favourites"}}{{else if eq .Timeline "direct"}}{{T "mobile.direct"}}{{else}}{{T "timeline.default"}}{{end}}</h1>
+    {{template "components/timeline-nav.html" dict "Timeline" .Timeline "Account" .Account}}
+
+    {{/* The composer is rendered after the feed and lifted back above it by
+         .timeline's flex order, so the posts are what follows the navigation
+         for anyone reading the page in the order it was written: a screen
+         reader, a keyboard, a text browser. On screen nothing moves. The link
+         is how those readers reach the form without scrolling past the feed. */}}
+    {{if .Account}}
+    <a class="skip-link sr-only" href="#composer">{{T "timeline.compose_post"}}</a>
+    {{end}}
+
+    <div id="timeline" tabindex="-1"{{if eq .Timeline "home"}} data-stream="user"{{else if eq .Timeline "public"}} data-stream="public"{{else if eq .Timeline "local"}} data-stream="public:local"{{end}}>
+        {{range .Statuses}}
+            {{statusCard . $.Account $.CSRFToken}}
+        {{else}}
+            <div class="empty-state">
+                <div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg></div>
+                <h2>{{T "timeline.nothing_here"}}</h2>
+                {{if eq .Timeline "home"}}
+                <p>{{T "timeline.empty_home"}}</p>
+                {{else if eq .Timeline "bookmarks"}}
+                <p>{{T "timeline.empty_bookmarks_prefix"}} <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bookmark"/></svg> {{T "timeline.empty_bookmarks_suffix"}}</p>
+                {{else if eq .Timeline "favourites"}}
+                <p>{{T "timeline.empty_favourites_prefix"}} <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-heart"/></svg> {{T "timeline.empty_favourites_suffix"}}</p>
+                {{else if eq .Timeline "direct"}}
+                <p>{{T "timeline.empty_direct_prefix"}} <strong>{{T "timeline.empty_direct_direct_word"}}</strong> {{T "timeline.empty_direct_suffix"}}</p>
+                {{else}}
+                <p>{{T "timeline.empty_default"}}</p>
+                {{end}}
+            </div>
+        {{end}}
+    </div>
+
+    {{if .Statuses}}
+    {{$more := "/"}}{{if eq .Timeline "public"}}{{$more = "/public"}}{{else if eq .Timeline "local"}}{{$more = "/public/local"}}{{else if eq .Timeline "bubble"}}{{$more = "/public/bubble"}}{{else if eq .Timeline "bookmarks"}}{{$more = "/bookmarks"}}{{else if eq .Timeline "favourites"}}{{$more = "/favourites"}}{{else if eq .Timeline "direct"}}{{$more = "/direct"}}{{end}}
+    <a class="load-more" href="{{$more}}?max_id={{.TimelineCursor}}"
+       hx-trigger="intersect once, timeline-restore once" hx-get="/partial/timeline/{{.Timeline}}?max_id={{.TimelineCursor}}&amp;limit=10" hx-swap="beforeend" hx-target="#timeline">
+        {{T "tag.load_older"}}
+    </a>
+    {{end}}
+
+    {{if .Account}}
+    {{if and .Account.HideTimelineComposer (not .QuotedStatus) (not .DraftContent)}}
+    <details class="timeline-composer">
+        <summary class="btn btn-primary">{{T "composer.post"}}</summary>
+        {{template "components/composer.html" dict "Account" .Account "CSRFToken" .CSRFToken "QuoteOf" .QuotedStatus "DraftContent" .DraftContent "DraftMarkdown" .DraftMarkdown "DraftMarkdownSet" .DraftMarkdownSet "DraftSummary" .DraftSummary "DraftSensitive" .DraftSensitive "DraftVisibility" .DraftVisibility "DraftLanguage" .DraftLanguage "DraftIsBlogPost" .DraftIsBlogPost}}
+    </details>
+    {{else}}
+    {{template "components/composer.html" dict "Account" .Account "CSRFToken" .CSRFToken "QuoteOf" .QuotedStatus "DraftContent" .DraftContent "DraftMarkdown" .DraftMarkdown "DraftMarkdownSet" .DraftMarkdownSet "DraftSummary" .DraftSummary "DraftSensitive" .DraftSensitive "DraftVisibility" .DraftVisibility "DraftLanguage" .DraftLanguage "DraftIsBlogPost" .DraftIsBlogPost}}
+    {{end}}
+    <div class="timeline-floating-actions" role="group" aria-label="{{T "timeline.floating_actions_aria"}}" data-timeline-floating-actions hidden>
+        {{/* Named in text rather than in an attribute: these buttons are shown
+             and hidden by script, and a browser without it renders three
+             unnamed controls. */}}
+        <button class="timeline-floating-action" type="button" data-timeline-top hidden title="{{T "timeline.back_to_top"}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-arrow-up"/></svg><span class="sr-only">{{T "timeline.back_to_top"}}</span>
+        </button>
+        <button class="timeline-floating-action timeline-floating-compose" type="button" data-timeline-compose hidden title="{{T "timeline.compose_post"}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg><span class="sr-only">{{T "timeline.compose_post"}}</span>
+        </button>
+        <button class="timeline-floating-action timeline-floating-return" type="button" data-timeline-return hidden title="{{T "page.back_to_timeline"}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-arrow-down"/></svg><span class="sr-only">{{T "page.back_to_timeline"}}</span>
+        </button>
+    </div>
+    {{end}}
+</div>

@@ -1,0 +1,11 @@
+<div class="auth-wrap">
+    <div class="auth-card">
+        <h1>{{T "auth.resend_verification.title"}}</h1>
+        {{if .Info}}<div class="info-message">{{.Info}}</div>{{end}}
+        <form action="/auth/verify_email/resend" method="post">
+            <label class="sr-only" for="email-verification-resend-email">{{T "auth.email_placeholder"}}</label>
+            <input id="email-verification-resend-email" type="email" name="email" class="field" placeholder="{{T "auth.email_placeholder"}}" required autocomplete="email">
+            <input type="submit" class="btn btn-primary" value="{{T "auth.resend_verification.submit"}}">
+        </form>
+    </div>
+</div>

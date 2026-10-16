@@ -1,0 +1,41 @@
+<div>
+    <h1 class="page-title">Multi-factor authentication</h1>
+    {{if not .Configured}}
+    <div class="error-message">The operator must set <code>LITTLEFEDI_AUTH_MFA_ENCRYPTION_KEY</code> before MFA can be enrolled.</div>
+    {{else if .Account.MFAEnabled}}
+    <div class="settings-section">
+        <p>MFA is enabled.</p>
+        <form action="/settings/mfa/recovery" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <label class="sr-only" for="settings-mfa-current-password">{{T "password.current"}}</label>
+            <input id="settings-mfa-current-password" type="password" name="current_password" placeholder="{{T "password.current"}}" required autocomplete="current-password">
+            <label class="sr-only" for="settings-mfa-mfa-code">{{T "auth.mfa_or_recovery_code_placeholder"}}</label>
+            <input id="settings-mfa-mfa-code" type="text" name="mfa_code" placeholder="{{T "auth.mfa_or_recovery_code_placeholder"}}" required autocomplete="one-time-code">
+            <button class="btn btn-primary" type="submit">Regenerate recovery codes</button>
+        </form>
+        <form action="/settings/mfa/disable" method="post" style="margin-top:1rem;">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <label class="sr-only" for="settings-mfa-current-password-2">{{T "password.current"}}</label>
+            <input id="settings-mfa-current-password-2" type="password" name="current_password" placeholder="{{T "password.current"}}" required autocomplete="current-password">
+            <label class="sr-only" for="settings-mfa-mfa-code-2">{{T "auth.mfa_or_recovery_code_placeholder"}}</label>
+            <input id="settings-mfa-mfa-code-2" type="text" name="mfa_code" placeholder="{{T "auth.mfa_or_recovery_code_placeholder"}}" required autocomplete="one-time-code">
+            <button class="btn" style="border-color:var(--danger);color:var(--danger);" type="submit">Disable MFA</button>
+        </form>
+    </div>
+    {{else}}
+    <div class="settings-section">
+        <p>Add this secret to a TOTP authenticator, then enter its current six-digit code.</p>
+        <p><code style="overflow-wrap:anywhere;">{{.Secret}}</code></p>
+        <details><summary>Authenticator URI</summary><code style="overflow-wrap:anywhere;">{{.OTPAuthURL}}</code></details>
+        <form action="/settings/mfa/enroll" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <input type="hidden" name="secret" value="{{.Secret}}">
+            <label class="sr-only" for="settings-mfa-current-password-3">{{T "password.current"}}</label>
+            <input id="settings-mfa-current-password-3" type="password" name="current_password" placeholder="{{T "password.current"}}" required autocomplete="current-password">
+            <label class="sr-only" for="settings-mfa-mfa-code-3">{{T "auth.mfa_six_digit_placeholder"}}</label>
+            <input id="settings-mfa-mfa-code-3" type="text" name="mfa_code" placeholder="{{T "auth.mfa_six_digit_placeholder"}}" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}">
+            <button class="btn btn-primary" type="submit">Enable MFA</button>
+        </form>
+    </div>
+    {{end}}
+</div>

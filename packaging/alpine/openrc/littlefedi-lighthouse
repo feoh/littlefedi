@@ -1,0 +1,33 @@
+#!/sbin/openrc-run
+
+name="littlefedi-lighthouse"
+description="littleMesh lighthouse relay"
+
+: ${littlefedi_lighthouse_user:="littlefedi-lighthouse"}
+: ${littlefedi_lighthouse_config:="/etc/littlefedi/lighthouse.toml"}
+: ${littlefedi_lighthouse_chdir:="/var/lib/littlefedi-lighthouse"}
+
+command="/usr/local/bin/littlefedi"
+command_args="--config ${littlefedi_lighthouse_config} lighthouse"
+command_user="${littlefedi_lighthouse_user}"
+directory="${littlefedi_lighthouse_chdir}"
+pidfile="/run/${RC_SVCNAME}.pid"
+output_log="/var/log/littlefedi-lighthouse/littlefedi-lighthouse.log"
+error_log="/var/log/littlefedi-lighthouse/littlefedi-lighthouse.log"
+
+supervisor="supervise-daemon"
+respawn_delay=5
+respawn_max=0
+
+: ${rc_ulimit:="-n 65536"}
+
+depend() {
+	need net
+	after firewall
+}
+
+start_pre() {
+	checkpath -d -m 0750 -o "${littlefedi_lighthouse_user}:${littlefedi_lighthouse_user}" \
+		/var/log/littlefedi-lighthouse
+	umask 0077
+}

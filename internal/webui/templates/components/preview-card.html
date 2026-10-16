@@ -1,0 +1,10 @@
+{{define "components/preview-card.html"}}
+<a class="status-preview" href="{{.URL}}" target="_blank" rel="noopener noreferrer">
+    {{if .Image}}<img class="status-preview-image" src="{{proxyMedia .Image}}" alt="" loading="lazy" data-remove-on-error>{{end}}
+    <span class="status-preview-copy">
+        <span class="status-preview-site">{{.SiteName}}</span>
+        <span class="status-preview-title">{{.Title}}</span>
+        {{if .Description}}<span class="status-preview-description">{{.Description}}</span>{{end}}
+    </span>
+</a>
+{{end}}

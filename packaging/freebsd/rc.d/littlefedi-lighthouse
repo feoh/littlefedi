@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# PROVIDE: littlefedi_lighthouse
+# REQUIRE: LOGIN NETWORKING
+# KEYWORD: shutdown
+#
+# Add the following line to /etc/rc.conf to enable it:
+#
+# littlefedi_lighthouse_enable="YES"
+
+. /etc/rc.subr
+
+name="littlefedi_lighthouse"
+rcvar="littlefedi_lighthouse_enable"
+desc="littleMesh lighthouse relay"
+
+load_rc_config $name
+
+: ${littlefedi_lighthouse_enable:="NO"}
+: ${littlefedi_lighthouse_run_user:="littlefedi-lighthouse"}
+: ${littlefedi_lighthouse_config:="/usr/local/etc/littlefedi/lighthouse.toml"}
+: ${littlefedi_lighthouse_chdir:="/var/db/littlefedi-lighthouse"}
+
+littlefedi_lighthouse_bin="/usr/local/bin/littlefedi"
+
+pidfile="/var/run/littlefedi-lighthouse.supervisor.pid"
+child_pidfile="/var/run/littlefedi-lighthouse.pid"
+procname="/usr/sbin/daemon"
+command="/usr/sbin/daemon"
+command_args="-f -T littlefedi-lighthouse -R 5 -P ${pidfile} -p ${child_pidfile} \
+	-u ${littlefedi_lighthouse_run_user} \
+	${littlefedi_lighthouse_bin} \
+	--config ${littlefedi_lighthouse_config} lighthouse"
+
+start_precmd="littlefedi_lighthouse_precmd"
+
+littlefedi_lighthouse_precmd()
+{
+	umask 0077
+}
+
+run_rc_command "$1"

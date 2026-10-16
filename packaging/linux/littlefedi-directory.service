@@ -1,0 +1,31 @@
+[Unit]
+Description=littleMesh signed alias and lighthouse directory
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=littlefedi-directory
+Group=littlefedi-directory
+WorkingDirectory=/var/lib/littlefedi-directory
+ExecStart=/usr/local/bin/littlefedi --config /etc/littlefedi/directory.toml directory
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=20s
+KillSignal=SIGTERM
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/var/lib/littlefedi-directory
+
+[Install]
+WantedBy=multi-user.target

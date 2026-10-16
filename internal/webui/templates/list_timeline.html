@@ -1,0 +1,96 @@
+<div class="timeline">
+    <div class="profile-header" style="padding:1.1rem;">
+        <h1 class="profile-name" style="font-size:1.2rem;">{{.List.Title}}</h1>
+        <div class="profile-meta" style="color:var(--muted);font-size:0.85rem;">
+            {{Tn (len .Members) "lists.member_count" (len .Members)}}{{if .List.Exclusive}} - {{T "lists.hidden_from_home"}}{{end}}
+        </div>
+    </div>
+
+    {{if .MemberError}}
+    <div class="empty-state" role="alert" style="color:var(--danger,#c0392b);padding:0.85rem 1.1rem;">{{.MemberError}}</div>
+    {{end}}
+
+    <details class="settings-section" style="padding:1.1rem;">
+        <summary style="cursor:pointer;font-weight:600;">{{T "lists.manage"}}</summary>
+
+        <form method="post" action="/lists/{{.List.ID}}" style="display:flex;flex-direction:column;gap:0.6rem;margin-top:0.85rem;">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group">
+                <label for="list-title">{{T "lists.name"}}</label>
+                <input type="text" id="list-title" name="title" value="{{.List.Title}}" maxlength="120" style="width:100%;">
+            </div>
+            <div class="form-group">
+                <label for="list-replies">{{T "lists.show_replies_to"}}</label>
+                <select id="list-replies" name="replies_policy">
+                    <option value="list"{{if eq .List.RepliesPolicy "list"}} selected{{end}}>{{T "lists.replies_list_members"}}</option>
+                    <option value="followed"{{if eq .List.RepliesPolicy "followed"}} selected{{end}}>{{T "lists.replies_followed"}}</option>
+                    <option value="none"{{if eq .List.RepliesPolicy "none"}} selected{{end}}>{{T "lists.replies_none"}}</option>
+                </select>
+            </div>
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;">
+                <input type="checkbox" name="exclusive" value="1"{{if .List.Exclusive}} checked{{end}}>
+                {{T "lists.exclusive_help"}}
+            </label>
+            <div><button class="btn btn-primary" type="submit">{{T "composer.save_changes"}}</button></div>
+        </form>
+
+        <form method="post" action="/lists/{{.List.ID}}/accounts/add" style="display:flex;gap:0.5rem;margin-top:1rem;align-items:flex-end;"
+              x-data="listMemberPicker">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group" style="flex:1;margin:0;position:relative;">
+                <label for="list-add-acct">{{T "lists.add_member"}}</label>
+                <input type="text" id="list-add-acct" name="acct" required autocomplete="off"
+                       placeholder="{{T "lists.add_member_placeholder"}}" style="width:100%;"
+                       x-model="query" @input.debounce.200ms="search()" @focus="search()">
+                <div class="autocomplete-menu" x-show="results.length" x-cloak style="position:absolute;left:0;right:0;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);">
+                    <template x-for="r in results" :key="r.id">
+                        <button type="button" class="autocomplete-item" style="display:block;width:100%;text-align:left;padding:0.4rem 0.6rem;background:none;border:none;color:var(--text);cursor:pointer;"
+                                @click="query = r.acct; results = []">
+                            <span x-text="r.display_name || r.username"></span>
+                            <span style="color:var(--muted);" x-text="'@' + r.acct"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+            <button class="btn btn-primary" type="submit">{{T "lists.add"}}</button>
+        </form>
+
+        {{if .Members}}
+        <div id="list-members" style="margin-top:1rem;">
+            {{range .Members}}
+            <div class="status" style="display:flex;align-items:center;gap:0.85rem;padding:0.6rem 0;">
+                <div style="flex:1;min-width:0;">
+                    <a href="/@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}" class="status-author" style="font-weight:700;font-size:0.9rem;color:var(--text);">{{if .DisplayName}}{{emojifyName .DisplayName .Emojis}}{{else}}{{.Username}}{{end}}</a>
+                    <div class="status-handle" style="font-size:0.76rem;color:var(--muted);">@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}</div>
+                </div>
+                <form method="post" action="/lists/{{$.List.ID}}/accounts/{{.ID}}/remove" style="display:inline-flex;">
+                    <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                    <button class="btn btn-ghost" type="submit">{{T "lists.remove"}}<span class="sr-only"> {{T "lists.remove_sr" .Username}}</span></button>
+                </form>
+            </div>
+            {{end}}
+        </div>
+        {{else}}
+        <p style="color:var(--muted);margin-top:1rem;">{{T "lists.no_members"}}</p>
+        {{end}}
+    </details>
+
+    <div id="timeline" data-stream="list" data-stream-list="{{.List.ID}}">
+        {{range .Statuses}}
+            {{statusCard . $.Account $.CSRFToken}}
+        {{else}}
+            <div class="empty-state">
+                <div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg></div>
+                <h2>{{T "lists.no_posts_heading"}}</h2>
+                <p>{{T "lists.no_posts_body"}}</p>
+            </div>
+        {{end}}
+    </div>
+
+    {{if .Statuses}}
+    <a class="load-more" href="/lists/{{.List.ID}}?max_id={{.TimelineCursor}}"
+       hx-trigger="intersect once" hx-get="/partial/list/{{.List.ID}}?max_id={{.TimelineCursor}}&amp;limit=10" hx-swap="afterend">
+        {{T "tag.load_older"}}
+    </a>
+    {{end}}
+</div>

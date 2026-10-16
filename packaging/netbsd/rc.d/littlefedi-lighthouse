@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# PROVIDE: littlefedi_lighthouse
+# REQUIRE: DAEMON NETWORKING
+# KEYWORD: shutdown
+#
+# Install as /etc/rc.d/littlefedi_lighthouse
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="littlefedi_lighthouse"
+rcvar=$name
+command="/usr/local/bin/littlefedi"
+start_cmd="littlefedi_lighthouse_start"
+
+load_rc_config $name
+
+: ${littlefedi_lighthouse_user:="littlefedi-lighthouse"}
+: ${littlefedi_lighthouse_config:="/usr/local/etc/littlefedi/lighthouse.toml"}
+: ${littlefedi_lighthouse_chdir:="/var/db/littlefedi-lighthouse"}
+
+required_files="${littlefedi_lighthouse_config}"
+pidfile="/var/run/${name}.pid"
+
+littlefedi_lighthouse_start()
+{
+	echo "Starting ${name}."
+	umask 0077
+	cd "${littlefedi_lighthouse_chdir}" || return 1
+	# written by the service itself; the three scripts share one binary
+	: > "${pidfile}" && chown "${littlefedi_lighthouse_user}" "${pidfile}" || return 1
+	{
+		/usr/bin/su -m "${littlefedi_lighthouse_user}" -c \
+			"echo \$\$ > ${pidfile}; exec ${command} --config ${littlefedi_lighthouse_config} lighthouse" 2>&1 |
+			/usr/bin/logger -t littlefedi-lighthouse -p daemon.info
+	} </dev/null >/dev/null 2>&1 &
+}
+
+run_rc_command "$1"

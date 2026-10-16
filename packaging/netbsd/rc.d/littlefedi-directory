@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# PROVIDE: littlefedi_directory
+# REQUIRE: DAEMON NETWORKING
+# KEYWORD: shutdown
+#
+# Install as /etc/rc.d/littlefedi_directory
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="littlefedi_directory"
+rcvar=$name
+command="/usr/local/bin/littlefedi"
+start_cmd="littlefedi_directory_start"
+
+load_rc_config $name
+
+: ${littlefedi_directory_user:="littlefedi-directory"}
+: ${littlefedi_directory_config:="/usr/local/etc/littlefedi/directory.toml"}
+: ${littlefedi_directory_chdir:="/var/db/littlefedi-directory"}
+
+required_files="${littlefedi_directory_config}"
+pidfile="/var/run/${name}.pid"
+
+littlefedi_directory_start()
+{
+	echo "Starting ${name}."
+	umask 0077
+	cd "${littlefedi_directory_chdir}" || return 1
+	# written by the service itself; the three scripts share one binary
+	: > "${pidfile}" && chown "${littlefedi_directory_user}" "${pidfile}" || return 1
+	{
+		/usr/bin/su -m "${littlefedi_directory_user}" -c \
+			"echo \$\$ > ${pidfile}; exec ${command} --config ${littlefedi_directory_config} directory" 2>&1 |
+			/usr/bin/logger -t littlefedi-directory -p daemon.info
+	} </dev/null >/dev/null 2>&1 &
+}
+
+run_rc_command "$1"

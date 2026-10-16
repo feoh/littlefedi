@@ -1,0 +1,80 @@
+<div style="margin-top:0;">
+    <h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-settings"/></svg>{{T "moderation.heading"}}</h1>
+
+    <div class="settings-section">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-alert"/></svg>{{T "moderation.blocked_accounts"}}</h2>
+        <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1.2rem;">
+            {{T "moderation.blocked_accounts_intro"}}
+        </p>
+        {{if .BlockedAccounts}}
+            {{range .BlockedAccounts}}
+            <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:0.7rem 1rem;margin-bottom:0.55rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+                <a href="/@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}" style="text-decoration:none;color:inherit;min-width:0;">
+                    <strong>{{emojifyName .DisplayName .Emojis}}</strong>
+                    <span style="color:var(--muted);">@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}</span>
+                </a>
+                <form action="/accounts/{{.ID}}/unblock" method="post" style="display:inline;flex-shrink:0;">
+                    <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                    <input type="submit" class="btn btn-ghost" style="font-size:0.78rem;padding:0.35rem 0.8rem;" value="{{T "moderation.unblock"}}">
+                </form>
+            </div>
+            {{end}}
+        {{else}}
+            <div class="empty-state" style="padding:1.2rem 1rem;"><p>{{T "moderation.no_blocked"}}</p></div>
+        {{end}}
+    </div>
+
+    <div class="settings-section" style="margin-top:1.2rem;">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>{{T "moderation.muted_accounts"}}</h2>
+        <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1.2rem;">
+            {{T "moderation.muted_accounts_intro"}}
+        </p>
+        {{if .MutedAccounts}}
+            {{range .MutedAccounts}}
+            <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:0.7rem 1rem;margin-bottom:0.55rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+                <a href="/@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}" style="text-decoration:none;color:inherit;min-width:0;">
+                    <strong>{{emojifyName .DisplayName .Emojis}}</strong>
+                    <span style="color:var(--muted);">@{{.Username}}{{if .Domain}}@{{.Domain}}{{end}}</span>
+                </a>
+                <form action="/accounts/{{.ID}}/unmute" method="post" style="display:inline;flex-shrink:0;">
+                    <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                    <input type="submit" class="btn btn-ghost" style="font-size:0.78rem;padding:0.35rem 0.8rem;" value="{{T "moderation.unmute"}}">
+                </form>
+            </div>
+            {{end}}
+        {{else}}
+            <div class="empty-state" style="padding:1.2rem 1rem;"><p>{{T "moderation.no_muted"}}</p></div>
+        {{end}}
+    </div>
+
+    <div class="settings-section" style="margin-top:1.2rem;">
+        <h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe-sm"/></svg>{{T "moderation.blocked_domains"}}</h2>
+        <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1.2rem;">
+            {{T "moderation.blocked_domains_intro"}}
+        </p>
+        <form action="/settings/domain_blocks" method="post" style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <label class="sr-only" for="moderation-domain">{{T "moderation.block_domain"}}</label>
+            <input type="text" id="moderation-domain" name="domain" placeholder="example.social" class="field" style="flex:1;min-width:12rem;">
+            <input type="submit" class="btn btn-ghost" value="{{T "moderation.block_domain"}}">
+        </form>
+        {{if .BlockedDomains}}
+            {{range .BlockedDomains}}
+            <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:0.6rem 1rem;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+                <span style="font-weight:650;">{{.}}</span>
+                <form action="/settings/domain_blocks/delete" method="post" style="display:inline;flex-shrink:0;">
+                    <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                    <input type="hidden" name="domain" value="{{.}}">
+                    <input type="submit" class="btn btn-ghost" style="font-size:0.78rem;padding:0.35rem 0.8rem;" value="{{T "moderation.unblock"}}">
+                </form>
+            </div>
+            {{end}}
+        {{else}}
+            <div class="empty-state" style="padding:1.2rem 1rem;"><p>{{T "moderation.no_blocked_domains"}}</p></div>
+        {{end}}
+    </div>
+
+    <div style="margin-top:1.2rem;">
+        <a href="/settings" class="btn btn-ghost"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-reply"/></svg>{{T "sessions.back_to_settings"}}</a>
+    </div>
+</div>

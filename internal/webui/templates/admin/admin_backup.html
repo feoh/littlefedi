@@ -1,0 +1,94 @@
+<div>
+    <h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-download"/></svg>Backup</h1>
+    <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1rem;">
+        Create and manage database backups. Backups are processed asynchronously, so you'll be
+        redirected immediately after queuing one.
+    </p>
+
+    {{if .Result}}
+    <div style="padding:0.75rem;background:var(--success-bg, #dcfce7);color:var(--success-fg, #166534);border-radius:0.5rem;margin-bottom:1rem;font-size:0.875rem;">
+        {{if eq .Result "backup-queued"}}Backup job has been queued. It will be processed by a background worker. Check back shortly.{{else}}<code>{{$.Result}}</code>{{end}}
+    </div>
+    {{end}}
+
+    {{if .Error}}
+    <div style="padding:0.75rem;background:var(--danger-bg, #fee2e2);color:var(--danger-fg, #991b1b);border-radius:0.5rem;margin-bottom:1rem;font-size:0.875rem;">
+        Task failed: <code>{{$.Error}}</code>
+    </div>
+    {{end}}
+
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="settings-section">
+            <h2>Backup Configuration</h2>
+            <dl style="font-size:0.875rem;display:grid;grid-template-columns:auto 1fr;gap:0.25rem 1rem;margin-bottom:0.75rem;">
+                <dt style="font-weight:600;">Periodic backups:</dt>
+                <dd>
+                    {{if and .BackupEnabled .MaintenanceEnabled}}<strong>Enabled on this process</strong>
+                    {{else if .BackupEnabled}}Configured, inactive on this process
+                    {{else}}Disabled{{end}}
+                </dd>
+                <dt style="font-weight:600;">Interval:</dt>
+                <dd>{{.BackupInterval}}</dd>
+                <dt style="font-weight:600;">Path:</dt>
+                <dd><code>{{.BackupPath}}</code></dd>
+                <dt style="font-weight:600;">Include media:</dt>
+                <dd>{{if .BackupIncludeMedia}}Yes{{else}}No{{end}}</dd>
+                <dt style="font-weight:600;">Retain:</dt>
+                <dd>{{if .BackupRetain}}{{$r := .BackupRetain}}{{$r}} backups{{else}}Unlimited{{end}}</dd>
+                {{if .NextBackup}}
+                <dt style="font-weight:600;">Next backup:</dt>
+                <dd>{{.NextBackup}}</dd>
+                {{end}}
+            </dl>
+        </div>
+
+        <div class="settings-section">
+            <h2>Create Manual Backup</h2>
+            <p style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem;">
+                Backups include the configuration file and a full database dump.
+                {{if .MediaBackupAllowed}}Media is owned uploads only; the remote media cache is always excluded.
+                {{else}}Owned media uses object storage; use the provider's backup and versioning features.{{end}}
+            </p>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <form action="/admin/backup/create" method="post" data-confirm="Create a backup of the database and configuration?">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                    <input type="hidden" name="media" value="false">
+                    <button type="submit" class="btn">Backup (database + config)</button>
+                </form>
+                {{if .MediaBackupAllowed}}<form action="/admin/backup/create" method="post" data-confirm="Create a backup including owned media files? This may take a while and use significant disk space.">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                    <input type="hidden" name="media" value="true">
+                    <button type="submit" class="btn">Backup (including media)</button>
+                </form>{{end}}
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h2>Existing Backups</h2>
+            {{if .Backups}}
+            <div class="admin-table-wrap">
+                <table class="admin-table"><caption class="sr-only">Existing backups</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Timestamp</th>
+                            <th scope="col">Database</th>
+                            <th scope="col">Media</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Backups}}
+                        <tr>
+                            <td>{{.Timestamp}}</td>
+                            <td>{{.Driver}}</td>
+                            <td>{{if .MediaIncluded}}{{.MediaCount}} files{{else}}-{{end}}</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <p style="font-size:0.875rem;color:var(--muted);">No backups found in <code>{{.BackupPath}}</code>.</p>
+            {{end}}
+        </div>
+    </div>
+</div>

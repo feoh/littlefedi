@@ -1,0 +1,123 @@
+/* Contrast - maximum legibility: pure black and white, hard borders, links
+   always underlined, a focus ring you cannot miss. Loaded after app.css, only
+   when the account selects it.
+
+   This one is a need, not a taste. It composes with the appearance axis rather
+   than replacing it: high-contrast light and high-contrast dark are both real
+   requirements, and which one helps depends on the reader.
+
+   Every foreground/background pair here clears 7:1 (WCAG AAA for body text),
+   including --muted against --surface-2, which is the pair that usually fails.
+   Nothing signals state by colour alone - actions keep their labels, and the
+   focus ring is a shape change as well as a colour change.
+
+   Token layering repeats app.css's four states, one specificity step higher so
+   a theme's dark tokens beat the base theme's dark tokens regardless of file
+   order. */
+
+/* ---------- Tokens: light ---------- */
+:root[data-theme="contrast"]{
+    color-scheme:light;
+    --bg:#ffffff;
+    --bg-grad:none;
+    --surface:#ffffff;
+    --surface-2:#f0f0f0;
+    --surface-3:#e4e4e4;
+    --text:#000000;
+    --text-soft:#000000;
+    --muted:#454545;
+    --line:#000000;
+    --line-strong:#000000;
+    --accent:#0000cc;
+    --accent-strong:#00008b;
+    --accent-soft:rgba(0,0,204,.10);
+    --accent-grad:#0000cc;
+    --accent-shadow:transparent;
+    --like:#8b0000;
+    --like-soft:rgba(139,0,0,.10);
+    --boost:#00551a;
+    --boost-soft:rgba(0,85,26,.10);
+    --mention:#5c0099;
+    --mention-soft:rgba(92,0,153,.10);
+    --danger:#8b0000;
+    --shadow:none;
+    --shadow-md:none;
+    --shadow-lg:none;
+    --radius:2px;
+    --radius-sm:2px;
+    --radius-lg:2px;
+}
+
+/* ---------- Tokens: dark ---------- */
+@media(prefers-color-scheme:dark){
+    :root[data-theme="contrast"][data-appearance="auto"],:root[data-theme="contrast"]:not([data-appearance]){
+        color-scheme:dark;
+        --bg:#000000;
+        --surface:#000000;
+        --surface-2:#1a1a1a;
+        --surface-3:#262626;
+        --text:#ffffff;
+        --text-soft:#ffffff;
+        --muted:#c8c8c8;
+        --line:#ffffff;
+        --line-strong:#ffffff;
+        --accent:#66ccff;
+        --accent-strong:#99ddff;
+        --accent-soft:rgba(102,204,255,.18);
+        --accent-grad:#66ccff;
+        --like:#ff8080;
+        --like-soft:rgba(255,128,128,.18);
+        --boost:#66ff99;
+        --boost-soft:rgba(102,255,153,.18);
+        --mention:#d0a0ff;
+        --mention-soft:rgba(208,160,255,.18);
+        --danger:#ff8080;
+        --shadow:none;
+        --shadow-md:none;
+        --shadow-lg:none;
+    }
+}
+/* Explicit dark: the same tokens with no media query. Vanilla CSS cannot reuse
+   an @media block from a plain selector and this project has no build step;
+   keep the two copies in sync rather than adding one. "black" needs no third
+   block - this theme's dark ground is already #000. */
+:root[data-theme="contrast"][data-appearance="dark"],:root[data-theme="contrast"][data-appearance="black"]{
+    color-scheme:dark;
+    --bg:#000000;
+    --surface:#000000;
+    --surface-2:#1a1a1a;
+    --surface-3:#262626;
+    --text:#ffffff;
+    --text-soft:#ffffff;
+    --muted:#c8c8c8;
+    --line:#ffffff;
+    --line-strong:#ffffff;
+    --accent:#66ccff;
+    --accent-strong:#99ddff;
+    --accent-soft:rgba(102,204,255,.18);
+    --accent-grad:#66ccff;
+    --like:#ff8080;
+    --like-soft:rgba(255,128,128,.18);
+    --boost:#66ff99;
+    --boost-soft:rgba(102,255,153,.18);
+    --mention:#d0a0ff;
+    --mention-soft:rgba(208,160,255,.18);
+    --danger:#ff8080;
+    --shadow:none;
+    --shadow-md:none;
+    --shadow-lg:none;
+}
+
+/* ---------- The handful of selectors the palette implies ---------- */
+/* Links are underlined everywhere they are text, not only on hover: colour
+   alone is not a distinguishing mark. */
+[data-theme="contrast"] .status-body a,[data-theme="contrast"] .profile-bio a,[data-theme="contrast"] .status-quote-body a{color:var(--accent);text-decoration:underline}
+/* 3px outside the element, so it reads against any surface it can land on. */
+[data-theme="contrast"] :focus-visible{outline:3px solid var(--accent-strong);outline-offset:2px}
+[data-theme="contrast"] .icon{stroke-width:2.2}
+[data-theme="contrast"] .btn{border:2px solid var(--line)}
+[data-theme="contrast"] .btn-primary{background:var(--accent);color:var(--bg);box-shadow:none}
+[data-theme="contrast"] .btn-primary:hover{background:var(--accent-strong);filter:none;box-shadow:none;transform:none}
+[data-theme="contrast"] .status-avatar{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--line)}
+[data-theme="contrast"] .status:hover{border-color:var(--line);box-shadow:none;transform:none}
+[data-theme="contrast"] .timeline-nav a.active{color:var(--bg);background:var(--accent);box-shadow:none}

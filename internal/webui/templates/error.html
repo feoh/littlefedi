@@ -1,0 +1,11 @@
+<div class="empty-state" style="margin-top:3rem;">
+    <div class="empty-icon" style="color:var(--danger);background:var(--like-soft);"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-alert"/></svg></div>
+    <h1>{{T "error.something_wrong"}}</h1>
+    {{if .Message}}
+    <p>{{.Message}}</p>
+    {{else}}
+    <p>{{T "error.unexpected"}}</p>
+    {{end}}
+    {{if .OriginalURL}}<p><a href="{{.OriginalURL}}">{{T "redraft.original_post"}}</a> · <a href="{{.NewURL}}">{{T "redraft.new_post"}}</a></p>{{end}}
+    <a href="/" class="btn btn-ghost" style="margin-top:1.4rem;"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg>{{T "error.go_home"}}</a>
+</div>

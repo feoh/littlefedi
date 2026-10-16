@@ -1,0 +1,135 @@
+/* Console - monospace and flat, for people who like their server in a closet.
+   littleFedi runs on a Pi Zero in the corner of a room; this is what that looks
+   like. Loaded after app.css, only when the account selects it.
+
+   A palette theme: it redefines tokens and takes a handful of selectors that
+   follow from the palette (square everything, underlined links). It does not
+   touch the layout, so it cannot break a page it was never opened on.
+
+   Token layering repeats app.css's four states, one specificity step higher so
+   a theme's dark tokens beat the base theme's dark tokens regardless of file
+   order. */
+
+/* ---------- Tokens: light ("paper terminal") ---------- */
+:root[data-theme="console"]{
+    color-scheme:light;
+    --font-body:var(--font-mono);
+    --font-features:normal;
+    --bg:#f7f5f0;
+    --bg-grad:none;
+    --surface:#fffdf8;
+    --surface-2:#efece4;
+    --surface-3:#e5e1d6;
+    --text:#1c1c1c;
+    --text-soft:#333333;
+    --muted:#5c5c5c;
+    --line:#ddd8cd;
+    --line-strong:#bdb7a8;
+    --accent:#a35d12;
+    --accent-strong:#7d4508;
+    --accent-soft:rgba(163,93,18,.10);
+    --accent-grad:#a35d12;
+    --accent-shadow:transparent;
+    --like:#b02b32;
+    --like-soft:rgba(176,43,50,.10);
+    --boost:#2f6b3a;
+    --boost-soft:rgba(47,107,58,.10);
+    --mention:#3a5c8c;
+    --mention-soft:rgba(58,92,140,.10);
+    --danger:#b02b32;
+    --shadow:none;
+    --shadow-md:none;
+    --shadow-lg:0 0 0 1px var(--line-strong);
+    --radius:0;
+    --radius-sm:0;
+    --radius-lg:0;
+}
+
+/* ---------- Tokens: dark (amber on charcoal) ---------- */
+@media(prefers-color-scheme:dark){
+    :root[data-theme="console"][data-appearance="auto"],:root[data-theme="console"]:not([data-appearance]){
+        color-scheme:dark;
+        --bg:#0f1115;
+        --surface:#14171c;
+        --surface-2:#1b1f26;
+        --surface-3:#232830;
+        --text:#d5d9de;
+        --text-soft:#c0c5cc;
+        --muted:#8b949e;
+        --line:#262b33;
+        --line-strong:#39404a;
+        --accent:#e0a458;
+        --accent-strong:#f0bd7a;
+        --accent-soft:rgba(224,164,88,.14);
+        --accent-grad:#e0a458;
+        --like:#e06c75;
+        --like-soft:rgba(224,108,117,.14);
+        --boost:#98c379;
+        --boost-soft:rgba(152,195,121,.14);
+        --mention:#7aa2f7;
+        --mention-soft:rgba(122,162,247,.14);
+        --danger:#e06c75;
+        --shadow:none;
+        --shadow-md:none;
+        --shadow-lg:0 0 0 1px var(--line-strong);
+    }
+}
+/* Explicit dark: the same tokens with no media query. Vanilla CSS cannot reuse
+   an @media block from a plain selector and this project has no build step;
+   keep the two copies in sync rather than adding one. */
+:root[data-theme="console"][data-appearance="dark"],:root[data-theme="console"][data-appearance="black"]{
+    color-scheme:dark;
+    --bg:#0f1115;
+    --surface:#14171c;
+    --surface-2:#1b1f26;
+    --surface-3:#232830;
+    --text:#d5d9de;
+    --text-soft:#c0c5cc;
+    --muted:#8b949e;
+    --line:#262b33;
+    --line-strong:#39404a;
+    --accent:#e0a458;
+    --accent-strong:#f0bd7a;
+    --accent-soft:rgba(224,164,88,.14);
+    --accent-grad:#e0a458;
+    --like:#e06c75;
+    --like-soft:rgba(224,108,117,.14);
+    --boost:#98c379;
+    --boost-soft:rgba(152,195,121,.14);
+    --mention:#7aa2f7;
+    --mention-soft:rgba(122,162,247,.14);
+    --danger:#e06c75;
+    --shadow:none;
+    --shadow-md:none;
+    --shadow-lg:0 0 0 1px var(--line-strong);
+}
+
+/* ---------- Tokens: true black ---------- */
+:root[data-theme="console"][data-appearance="black"]{
+    --bg:#000000;
+    --surface:#000000;
+    --surface-2:#0c0c0c;
+    --surface-3:#161616;
+    --text:#e4e4e4;
+    --muted:#8a8a8a;
+    --line:#1e1e1e;
+    --line-strong:#2e2e2e;
+}
+
+/* ---------- The handful of selectors the palette implies ---------- */
+[data-theme="console"] body{font-size:.875rem;line-height:1.5}
+/* Monospace has no italic or weight range to spare, so links are marked the
+   way a terminal marks them. */
+[data-theme="console"] .status-body a,[data-theme="console"] .profile-bio a,[data-theme="console"] .status-quote-body a{color:var(--accent-strong);text-decoration:underline}
+[data-theme="console"] .status-avatar,[data-theme="console"] .status-avatar img,[data-theme="console"] .profile-avatar{border-radius:0}
+[data-theme="console"] .status-avatar{box-shadow:0 0 0 1px var(--line-strong)}
+[data-theme="console"] .btn,[data-theme="console"] .action-btn,[data-theme="console"] .load-more,[data-theme="console"] .timeline-nav,[data-theme="console"] .timeline-nav a,[data-theme="console"] .back-link{border-radius:0}
+[data-theme="console"] .timeline-nav a{padding-inline:.8rem}
+[data-theme="console"] .btn-primary{background:var(--accent);color:var(--bg);box-shadow:none}
+[data-theme="console"] .btn-icon-post{padding-inline:1.15rem}
+[data-theme="console"] .btn-primary:hover{background:var(--accent-strong);filter:none;box-shadow:none;transform:none}
+[data-theme="console"] :focus-visible{outline:2px solid var(--accent-strong);outline-offset:1px;border-radius:0}
+/* Signature: a prompt caret on the feed you are looking at. Generated content,
+   so it needs no translation and no markup. */
+[data-theme="console"] .timeline-nav a.active::before{content:"> ";font-weight:700}
+[data-theme="console"] .timeline-nav a.active{background:var(--accent-soft);color:var(--accent-strong);box-shadow:none}

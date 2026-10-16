@@ -1,0 +1,11 @@
+{{define "tag"}}{{template "header" .}}
+<h1>Tagged: #{{.Tag}}</h1>
+<ul class="post-list">
+{{range .Posts}}<li class="post-summary">
+<h2><a href="{{.Permalink}}">{{.Title}}</a></h2>
+<p class="post-meta"><time datetime="{{.Date.UTC.Format "2006-01-02T15:04:05Z07:00"}}">{{.Date.UTC.Format "2006-01-02 15:04"}} UTC</time></p>
+<p class="post-excerpt">{{.Excerpt}}</p>
+</li>
+{{end}}</ul>
+<p class="back-link"><a href="{{.BlogRoot}}/"><span aria-hidden="true">←</span> All posts</a></p>
+{{template "footer" .}}{{end}}

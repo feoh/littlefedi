@@ -1,0 +1,97 @@
+/* Dusk - a personal journal, read at night.
+ *
+ * Dark by default, with a full light palette for anyone whose system asks for
+ * one. There is not a single rule on the page: sections are separated by
+ * space, and the only mark is a short amber bar above each post title, so the
+ * eye has one place to land per screen.
+ *
+ * Wide leading and a system serif; nothing is fetched, nothing animates. */
+
+:root {
+    --bg: #1b2128;
+    --surface: #232a32;
+    --text: #e9e3d9;
+    --text-soft: #cac4b9;
+    --muted: #a29a8d;
+    --line: #2c343d;
+    --accent: #e0a75e;
+    --accent-strong: #f0c288;
+    --max-width: 36rem;
+    --font-body: Palatino, "Palatino Linotype", "Book Antiqua", ui-serif, Georgia, serif;
+    --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #f6f4f0;
+        --surface: #ffffff;
+        --text: #22262b;
+        --text-soft: #454b52;
+        --muted: #63696f;
+        --line: #e5e1da;
+        --accent: #9a5b12;
+        --accent-strong: #7e4a0c;
+    }
+}
+
+body {
+    font-family: var(--font-body);
+    font-size: 1.125rem;
+    line-height: 1.8;
+}
+
+.site-nav, .post-meta, .site-footer, .tag-count, .archive-entry time,
+.blog-reply header, .post-media-item figcaption, .post-pager, .back-link {
+    font-family: var(--font-ui);
+    font-size: .8125rem;
+}
+
+/* No rules anywhere: every border the stock sheet draws is replaced by
+   breathing room. */
+.site-header, .post-summary, .post-pager, .post-replies, .archive-year,
+.tag-list li, .post-media-cw {
+    border: none;
+}
+.site-header { padding-bottom: 1.75rem; }
+.site-brand a { font-weight: 400; letter-spacing: .01em; }
+.site-nav a { color: var(--muted); }
+
+.site-description { color: var(--text-soft); font-style: italic; }
+
+.post-list { display: grid; gap: 1.25rem; }
+.post-summary { padding: 1rem 1.1rem; background: var(--surface); border-radius: .5rem; }
+.post-summary:first-child { padding-top: 1rem; }
+.post-summary h2 { font-weight: 400; font-size: 1.25rem; }
+.post-excerpt { color: var(--text-soft); }
+
+/* The one mark on the page. */
+article h1 { font-weight: 400; font-size: 1.875rem; line-height: 1.3; }
+article h1::before {
+    content: "";
+    display: block;
+    width: 2.5rem;
+    height: 3px;
+    background: var(--accent);
+    margin-bottom: 1rem;
+}
+
+.post-body p { margin-bottom: 1.35rem; }
+.post-body blockquote { border-left: none; padding-left: 0; font-style: italic; color: var(--text-soft); }
+.post-body pre { border: none; background: var(--surface); }
+.post-body img, .post-media-item, .post-media-item img, .post-media-item video { border-radius: .5rem; }
+
+.post-replies { padding-top: 2rem; }
+.blog-reply { padding: .75rem 1rem; background: var(--surface); border-radius: .5rem; }
+
+.archive-year { font-weight: 400; font-size: 1.125rem; color: var(--muted); letter-spacing: .05em; padding-bottom: 0; margin-bottom: .75rem; }
+.archive-entry { padding: .35rem 0; }
+
+.tag-list li { padding: .45rem 0; }
+
+.post-pager { padding-top: 2rem; }
+.site-footer { padding-top: 2.5rem; }
+
+@media print {
+    article h1::before { background: #000; }
+    .post-summary, .blog-reply, .post-body pre { background: none; }
+}

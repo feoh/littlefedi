@@ -1,0 +1,98 @@
+/* Ledger - technical notes and devlogs.
+ *
+ * The generator stamps every post with an ISO-style timestamp. Here that
+ * timestamp is the alignment device: metadata, headings and navigation are
+ * monospaced and sit on one column, prose is sans and sits on another, and
+ * a long command line scrolls inside its block rather than wrapping, because
+ * a wrapped command line is a bug report waiting to happen.
+ *
+ * System faces only - no web font is fetched, so an offline copy of the site
+ * looks the same as the served one. */
+
+:root {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --text: #12161c;
+    --text-soft: #39424e;
+    --muted: #59636f;
+    --line: #dde1e7;
+    --accent: #1b4fd8;
+    --accent-strong: #163fae;
+    --max-width: 40rem;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1319;
+        --surface: #161b23;
+        --text: #dce2ea;
+        --text-soft: #b4becb;
+        --muted: #8792a0;
+        --line: #232b35;
+        --accent: #88abff;
+        --accent-strong: #a9c4ff;
+    }
+}
+
+body {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.site-brand a, .site-nav a, .post-meta, .post-summary h2, article h1,
+.archive-year, .archive-entry, .tag-list, .post-pager, .back-link,
+.site-footer, .blog-reply header, .post-media-item figcaption {
+    font-family: var(--font-mono);
+}
+
+.site-header {
+    padding-top: 1.5rem;
+    border-bottom: 1px solid var(--text);
+}
+.site-brand a { font-size: 1.125rem; font-weight: 600; letter-spacing: -.02em; }
+.site-brand a::before { content: "$ "; color: var(--muted); }
+.site-nav { font-size: .8125rem; }
+.site-nav a { text-transform: lowercase; }
+.site-nav a::before { content: "/"; color: var(--muted); margin-right: .15rem; }
+
+.site-description { border-left: 2px solid var(--accent); padding-left: .9rem; }
+
+.post-summary { padding: 1.25rem 0; }
+.post-summary h2 { font-size: 1.0625rem; font-weight: 600; letter-spacing: -.01em; }
+.post-meta { font-size: .8125rem; font-variant-numeric: tabular-nums; }
+.post-meta time { color: var(--accent-strong); }
+
+article h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.02em; }
+
+.post-body h2, .post-body h3 { font-family: var(--font-mono); letter-spacing: -.01em; margin: 1.75rem 0 .6rem; }
+.post-body code { font-family: var(--font-mono); font-size: .9375em; background: var(--surface); border: 1px solid var(--line); padding: 0 .2rem; }
+.post-body pre {
+    border-radius: 0;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    font-size: .875rem;
+    line-height: 1.5;
+}
+.post-body pre code { background: none; border: none; padding: 0; }
+.post-body blockquote { border-left: 3px solid var(--line); }
+.post-media-item, .post-media-item img, .post-media-item video, .post-body img { border-radius: 0; }
+.post-media-cw { border-radius: 0; }
+
+/* The archive is the actual ledger: one fixed timestamp column, entries
+   aligned against it. */
+.archive-year {
+    font-size: .875rem;
+    letter-spacing: .1em;
+    border-bottom: 1px solid var(--text);
+}
+.archive-entry { font-size: .9375rem; gap: 1rem; }
+.archive-entry time { flex: 0 0 10.5rem; font-variant-numeric: tabular-nums; color: var(--accent-strong); }
+
+.tag-list li { border-bottom: 1px dashed var(--line); font-size: .9375rem; }
+.tag-count { font-variant-numeric: tabular-nums; }
+
+.post-pager { font-size: .8125rem; border-top: 1px solid var(--text); }
+.site-footer { font-size: .75rem; }

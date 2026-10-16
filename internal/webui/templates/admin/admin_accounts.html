@@ -1,0 +1,70 @@
+<div>
+    <div class="admin-page-header"><div><h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-users"/></svg>{{if .IsPending}}Pending approvals{{else}}Accounts{{end}}</h1><p class="admin-page-description">{{if .IsPending}}Registration requests awaiting a decision.{{else}}Local accounts, roles, and moderation state.{{end}}</p></div></div>
+    {{if not .IsPending}}<form method="get" class="admin-card" style="display:flex;gap:.6rem;margin-bottom:.85rem;align-items:end;"><div class="form-group" style="margin:0;flex:1;"><label for="account-search">Search</label><input id="account-search" name="q" value="{{.Query}}" placeholder="Username or email"></div><div class="form-group" style="margin:0;"><label for="account-state">State</label><select id="account-state" name="state"><option value="">All</option><option value="active" {{if eq .State "active"}}selected{{end}}>Active</option><option value="pending" {{if eq .State "pending"}}selected{{end}}>Pending</option><option value="admin" {{if eq .State "admin"}}selected{{end}}>Admins</option><option value="moderated" {{if eq .State "moderated"}}selected{{end}}>Moderated</option></select></div><button class="btn btn-primary">Filter</button></form>{{end}}
+
+    <table style="width:100%;border-collapse:collapse;"><caption class="sr-only">{{if .IsPending}}Pending approvals{{else}}Accounts{{end}}</caption>
+        <thead>
+            <tr style="text-align:left;font-size:0.8125rem;color:var(--muted);border-bottom:1px solid var(--line);">
+                <th scope="col" style="padding:0.5rem;">Username</th>
+                <th scope="col" style="padding:0.5rem;">Email</th>
+                <th scope="col" style="padding:0.5rem;">Created</th>
+                <th scope="col" style="padding:0.5rem;">Statuses</th>
+                <th scope="col" style="padding:0.5rem;">Admin</th>
+                <th scope="col" style="padding:0.5rem;">Approved</th>
+                <th scope="col" style="padding:0.5rem;">Suspended</th>
+                <th scope="col" style="padding:0.5rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Accounts}}
+            <tr style="border-bottom:1px solid var(--line);font-size:0.875rem;">
+                <td style="padding:0.5rem;font-weight:600;">{{.Username}}</td>
+                <td style="padding:0.5rem;color:var(--muted);">{{.Email}}</td>
+                <td style="padding:0.5rem;color:var(--muted);font-size:0.8125rem;">{{formatTime .CreatedAt}}</td>
+                <td style="padding:0.5rem;">{{.StatusesCount}}</td>
+                <td style="padding:0.5rem;">{{if .IsAdmin}}Yes{{else}}No{{end}}</td>
+                <td style="padding:0.5rem;">{{if .Approved}}Yes{{else}}<span style="color:var(--danger);">Pending</span>{{end}}</td>
+                <td style="padding:0.5rem;">{{if .SuspendedAt}}<span style="color:var(--danger);">Suspended</span>{{else if eq .ModerationState "silenced"}}<span style="color:var(--warning,#b45309);">Silenced</span>{{else if eq .ModerationState "quiet"}}<span style="color:var(--warning,#b45309);">Quiet</span>{{else if eq .ModerationState "disabled"}}<span style="color:var(--danger);">Disabled</span>{{else}}-{{end}}</td>
+                <td style="padding:0.5rem;">
+                    <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+                        {{if not .IsAdmin}}
+                        <form action="/admin/accounts/{{.ID}}/admin" method="post" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                            <button type="submit" class="btn" aria-label="Make admin {{.Username}}" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:var(--line);">Make admin</button>
+                        </form>
+                        {{else}}
+                        <form action="/admin/accounts/{{.ID}}/admin" method="post" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                            <button type="submit" class="btn" aria-label="Remove admin {{.Username}}" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:var(--line);">Remove admin</button>
+                        </form>
+                        {{end}}
+						<form action="/admin/accounts/{{.ID}}/moderate" method="post" style="display:flex;gap:.25rem;flex-wrap:wrap;">
+							<input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+							<select name="action" aria-label="Moderation action for {{.Username}}" style="font-size:.75rem;"><option value="none"{{if eq .ModerationState ""}} selected{{end}}>Clear</option><option value="silence"{{if eq .ModerationState "silenced"}} selected{{end}}>Silence</option><option value="quiet"{{if eq .ModerationState "quiet"}} selected{{end}}>Quiet</option><option value="suspend"{{if eq .ModerationState "suspended"}} selected{{end}}>Suspend</option><option value="disable"{{if eq .ModerationState "disabled"}} selected{{end}}>Disable</option></select>
+							<input name="text" value="{{.ModerationNote}}" placeholder="Reason (optional)" aria-label="Moderation reason for {{.Username}}" style="font-size:.75rem;max-width:12rem;">
+							<button type="submit" class="btn" style="padding:.25rem .5rem;font-size:.75rem;border-color:var(--line);">Apply</button>
+						</form>
+						{{if and $.BlogCapable $.BlogAllAccounts}}
+						<span class="btn" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:var(--line);color:var(--muted);cursor:default;" title="Every account may blog while [blog] all_accounts is on">Blog: all accounts</span>
+						{{else if $.BlogCapable}}
+						<form action="/admin/accounts/{{.ID}}/blog" method="post" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                            {{if .BlogAllowed}}
+                            <button type="submit" class="btn" aria-label="Block blog {{.Username}}" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:var(--line);">Block blog</button>
+                            {{else}}
+                            <button type="submit" class="btn" aria-label="Allow blog {{.Username}}" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:var(--line);">Allow blog</button>
+                            {{end}}
+                        </form>
+						{{end}}
+						{{if not .Domain}}
+						<a href="/admin/accounts/{{.ID}}/delete" class="btn" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:var(--danger);color:var(--danger);">Delete…</a>
+						{{end}}
+                    </div>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{template "admin-pagination" .Pagination}}
+
+</div>

@@ -1,0 +1,93 @@
+<div>
+    <h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg>Federation policy</h1>
+    <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1rem;">Policy changes are immediate and never delete stored accounts, relationships, posts, or media. Manual suspension wins over allows; explicit allows override only the automatic Big Tech list.</p>
+
+    <div class="settings-section">
+        <h2>Federation mode</h2>
+        <form action="/admin/domain_blocks/mode" method="post" class="form-row">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group"><label for="federation-mode">Mode</label><select id="federation-mode" name="mode"><option value="open" {{if eq .Policy.Mode "open"}}selected{{end}}>Open federation</option><option value="allowlist" {{if eq .Policy.Mode "allowlist"}}selected{{end}}>Allowlist federation</option></select></div>
+            <button type="submit" class="btn btn-primary">Save mode</button>
+        </form>
+        {{if eq .Policy.Mode "allowlist"}}<p style="color:var(--warning);font-size:0.875rem;">Authorized fetch is active. Only explicitly allowed peer hostnames can read ActivityPub resources or federate.</p>{{end}}
+    </div>
+
+    <div class="settings-section">
+        <h2>Allowed domains</h2>
+        <form action="/admin/domain_blocks/allows" method="post" class="form-row">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><div class="form-group"><label for="allow-domain">Domain</label><input id="allow-domain" name="domain" placeholder="peer.example" required></div><button class="btn btn-primary" type="submit">Allow domain</button>
+        </form>
+        {{range .DomainAllows}}<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--line);"><span>{{.Domain}} {{with index $.AllowConflicts .Domain}}<small style="color:var(--warning);">— {{.}}</small>{{end}}</span><form action="/admin/domain_blocks/allows/{{.ID}}/delete" method="post"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}"><button class="btn btn-ghost" type="submit">Remove</button></form></div>{{else}}<p style="color:var(--muted);">No allowed domains.</p>{{end}}
+        <form action="/admin/domain_blocks/import" method="post" enctype="multipart/form-data" class="form-row" style="margin-top:1rem;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><input type="hidden" name="kind" value="allow"><div class="form-group form-grow"><label for="allow-import">Import allowlist (text or CSV)</label><input id="allow-import" type="file" name="file" required></div><button class="btn btn-ghost" type="submit">Import</button></form>
+    </div>
+
+    <div class="settings-section">
+        <h2>Commercial Big Tech instances</h2>
+        <p style="font-size:0.875rem;color:var(--muted);">{{.CommercialCount}} entries · source {{if .Policy.SourceURL}}{{.Policy.SourceURL}}{{else}}{{.ConfiguredCommercialURL}}{{end}} · last attempt {{if .Policy.LastAttempt}}{{formatTime .Policy.LastAttempt}}{{else}}never{{end}} · last success {{if .Policy.LastSuccess}}{{formatTime .Policy.LastSuccess}}{{else}}never{{end}}. {{if not .MaintenanceEnabled}}Background maintenance is disabled; refreshes are manual.{{end}} {{if eq .Policy.Mode "allowlist"}}In allowlist mode this is normally redundant; an explicit allow remains the exception.{{end}}</p>
+        {{if .Policy.LastError}}<p style="color:var(--danger);">{{.Policy.LastError}}</p>{{end}}
+        <form action="/admin/domain_blocks/commercial-bigtech" method="post" class="form-row"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}">{{if .Policy.CommercialBigTechEnabled}}<button class="btn btn-ghost" name="action" value="disable">Disable</button>{{else}}<button class="btn btn-primary" name="action" value="enable">Download and enable</button>{{end}}<button class="btn btn-ghost" name="action" value="refresh">Refresh now</button></form>
+    </div>
+
+    <div class="settings-section">
+        <h2>Block a domain</h2>
+        <form action="/admin/domain_blocks" method="post" class="form-row">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group" style="flex:1;min-width:200px;">
+                <label for="block-domain">Domain</label>
+                <input type="text" id="block-domain" name="domain" placeholder="example.com" required>
+            </div>
+            <div class="form-group" style="width:120px;">
+                <label for="block-severity">Severity</label>
+                <select id="block-severity" name="severity" style="width:100%;padding:0.55rem 0.75rem;border:1px solid var(--line);border-radius:0.45rem;background:var(--surface);color:var(--text);font-family:inherit;">
+                    <option value="silence">Silence</option>
+                    <option value="suspend" selected>Suspend</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:1;min-width:200px;">
+                <label for="block-comment">Comment (optional)</label>
+                <input type="text" id="block-comment" name="comment" placeholder="Reason for block">
+            </div>
+            <div style="flex-basis:100%;display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;font-size:0.85rem;color:var(--text-soft);margin-bottom:0.4rem;">
+                <label style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;font-weight:500;white-space:nowrap;"><input type="checkbox" name="reject_media" value="on" style="width:auto;margin:0;"> Reject media</label>
+                <label style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;font-weight:500;white-space:nowrap;"><input type="checkbox" name="reject_reports" value="on" style="width:auto;margin:0;"> Reject reports</label>
+                <label style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;font-weight:500;white-space:nowrap;"><input type="checkbox" name="public" value="on" style="width:auto;margin:0;"> List publicly</label>
+                <label style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;font-weight:500;white-space:nowrap;"><input type="checkbox" name="obfuscate" value="on" style="width:auto;margin:0;"> Obfuscate in public list</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Block domain</button>
+        </form>
+    </div>
+
+    <div class="settings-section"><h2>Import domain blocks</h2><form action="/admin/domain_blocks/import" method="post" enctype="multipart/form-data" class="form-row"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><input type="hidden" name="kind" value="block"><div class="form-group form-grow"><label for="block-import">Import file</label><input id="block-import" type="file" name="file" required></div><button class="btn btn-ghost" type="submit">Import</button></form></div>
+
+    {{if .DomainBlocks}}
+    <table style="width:100%;border-collapse:collapse;"><caption class="sr-only">Blocked domains</caption>
+        <thead>
+            <tr style="text-align:left;font-size:0.8125rem;color:var(--muted);border-bottom:1px solid var(--line);">
+                <th scope="col" style="padding:0.5rem;">Domain</th>
+                <th scope="col" style="padding:0.5rem;">Severity</th>
+                <th scope="col" style="padding:0.5rem;">Created</th>
+                <th scope="col" style="padding:0.5rem;">Comment</th>
+                <th scope="col" style="padding:0.5rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .DomainBlocks}}
+            <tr style="border-bottom:1px solid var(--line);font-size:0.875rem;">
+                <td style="padding:0.5rem;font-weight:600;">{{.Domain}}</td>
+                <td style="padding:0.5rem;">{{if eq .Severity "suspend"}}<span style="color:var(--danger);font-weight:600;">Suspended</span>{{else}}Silenced{{end}}</td>
+                <td style="padding:0.5rem;color:var(--muted);font-size:0.8125rem;">{{formatTime .CreatedAt}}</td>
+                <td style="padding:0.5rem;color:var(--muted);">{{.Comment}}</td>
+                <td style="padding:0.5rem;">
+                    <form action="/admin/domain_blocks/{{.ID}}/delete" method="post" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                        <button type="submit" class="btn btn-ghost" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:var(--line);">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <p style="color:var(--muted);font-size:0.875rem;text-align:center;padding:2rem;">No domain blocks configured.</p>
+    {{end}}
+</div>

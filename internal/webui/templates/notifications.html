@@ -1,0 +1,47 @@
+<div style="margin-top:0;">
+    <div class="notif-header">
+        <h1 class="page-title" style="margin:0;"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg>{{T "nav.notifications"}}</h1>
+        <div class="notif-header-actions">
+        <form action="/notifications/read" method="post">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <input type="submit" class="btn btn-ghost" style="font-size:0.8125rem;" value="{{T "notifications.mark_all_read"}}">
+        </form>
+        {{if .Notifications}}
+        <form action="/notifications/clear" method="post" style="flex-shrink:0;">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <input type="submit" class="btn btn-ghost" style="font-size:0.8125rem;" value="{{T "notifications.clear_all"}}">
+        </form>
+        {{end}}
+        </div>
+    </div>
+
+    <div class="notif-tabs">
+        <a href="/notifications" class="notif-tab{{if not .Filter}} active{{end}}"{{if not .Filter}} aria-current="page"{{end}}>{{T "notifications.tab_all"}}</a>
+        <a href="/notifications?filter=mentions" class="notif-tab{{if eq .Filter "mentions"}} active{{end}}"{{if eq .Filter "mentions"}} aria-current="page"{{end}}>{{T "notifications.tab_mentions"}}</a>
+        <a href="/follow_requests" class="notif-tab">{{T "notifications.tab_requests"}}</a>
+    </div>
+
+    <div id="notifications">
+        {{range .Notifications}}
+        {{template "components/notification.html" .}}
+        {{else}}
+        <div class="empty-state">
+            <div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg></div>
+            {{if eq .Filter "mentions"}}
+            <h2>{{T "notifications.empty_mentions_heading"}}</h2>
+            <p>{{T "notifications.empty_mentions_body"}}</p>
+            {{else}}
+            <h2>{{T "notifications.empty_heading"}}</h2>
+            <p>{{T "notifications.empty_body"}}</p>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+
+    {{if .HasMore}}
+    <a class="load-more" href="/notifications?max_id={{.TimelineCursor}}{{if .Filter}}&amp;filter={{.Filter}}{{end}}"
+       hx-trigger="intersect once" hx-get="/partial/notifications?max_id={{.TimelineCursor}}&amp;limit=20{{if .Filter}}&amp;filter={{.Filter}}{{end}}" hx-swap="beforeend" hx-target="#notifications">
+        {{T "notifications.load_older"}}
+    </a>
+    {{end}}
+</div>

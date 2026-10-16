@@ -1,0 +1,177 @@
+/* Press - the reading half of the web UI theme of the same name.
+ *
+ * Two flat inks on stock paper, printed slightly out of register. The web UI
+ * gives every card a plate offset by a few pixels; a published page has fewer
+ * boxes to do that to, so here the second ink goes where a reader's eye
+ * already travels: under every link, along the colophon beneath each title,
+ * and around the pictures and the code.
+ *
+ * The display face is served by the instance at /static/press-display.woff2,
+ * the same file the web UI theme loads, so a reader who has been signed in
+ * already has it cached. Every rule names a fallback.
+ *
+ * The font is addressed absolutely rather than copied into the
+ * generated site, because the same binary serves both. A site rsynced to a
+ * separate web server loses the display face and falls back to the system
+ * stack, which every rule below is written to survive. Copy the file next to
+ * style.css and change the URL here if that ever stops being true. */
+
+@font-face {
+    font-family: 'Press Display';
+    src: url("/static/press-display.woff2") format("woff2");
+    font-weight: 400 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --bg: #e8eaee;
+    --surface: #f7f8fa;
+    --text: #14182b;
+    --text-soft: #2c3247;
+    --muted: #545b70;
+    --line: #c8ccd6;
+    --accent: #2438c8;
+    --accent-strong: #1b2aa0;
+    --max-width: 38rem;
+    --font-display: 'Press Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    /* The second ink, and the distance the plate misses the first one by. */
+    --second: #e11d63;
+    --plate: #f0b3c9;
+    --reg: 4px;
+    --halftone: rgba(20, 24, 43, .09);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0e0f14;
+        --surface: #171923;
+        --text: #eceef5;
+        --text-soft: #c9cedd;
+        --muted: #98a0b5;
+        --line: #2a2f3e;
+        --accent: #7c8cff;
+        --accent-strong: #a3aeff;
+        --second: #ff6e9c;
+        --plate: rgba(255, 110, 156, .45);
+        --halftone: rgba(236, 238, 245, .05);
+    }
+}
+
+/* The halftone lattice, small enough to read as tone rather than as dots. */
+body {
+    background-image: radial-gradient(circle at 1px 1px, var(--halftone) 1px, transparent 0);
+    background-size: 6px 6px;
+}
+
+/* Every link is printed twice: the word in the first ink, the rule under it in
+   the second. */
+a {
+    text-decoration-color: var(--second);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+/* ---------- Nameplate ---------- */
+.site-header {
+    padding-bottom: 1.1rem;
+    border-bottom: 2px solid var(--text);
+    box-shadow: 0 var(--reg) 0 var(--plate);
+    margin-bottom: var(--reg);
+}
+.site-brand a {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -.035em;
+    text-decoration: none;
+}
+.site-nav a {
+    font-family: var(--font-display);
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    text-decoration: none;
+}
+.site-nav a:hover, .site-nav a:focus { text-decoration: underline; }
+
+/* ---------- Titles and the colophon ---------- */
+.post-summary h2,
+article h1,
+.archive-year,
+.post-replies h2 {
+    font-family: var(--font-display);
+    letter-spacing: -.03em;
+}
+article h1 { font-size: 2.1rem; font-weight: 800; }
+.post-summary h2 { font-size: 1.4rem; font-weight: 750; }
+.post-summary h2 a { text-decoration: none; }
+
+/* The colophon: the line a printer sets under a title to say when and where.
+   Same ink as the links, same register as the labels in the web UI. */
+.post-meta {
+    font-family: var(--font-display);
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--accent-strong);
+}
+.post-meta a { color: var(--accent-strong); text-decoration-color: var(--plate); }
+
+.site-description { font-size: 1.05rem; }
+.post-summary { padding: 1.75rem 0; border-bottom: 1px solid var(--line); }
+.post-summary:last-child { border-bottom: 0; }
+
+/* ---------- Body ---------- */
+.post-body { font-size: 1.0625rem; line-height: 1.72; }
+.post-body h2, .post-body h3, .post-body h4 {
+    font-family: var(--font-display);
+    letter-spacing: -.02em;
+}
+.post-body blockquote {
+    border-left: 3px solid var(--second);
+    color: var(--text-soft);
+}
+/* Boxed things carry the plate, the way the cards do in the web UI. */
+.post-body pre,
+.post-media-item,
+.post-media-cw {
+    border-radius: 2px;
+    box-shadow: var(--reg) var(--reg) 0 var(--plate);
+}
+.post-body pre { border-color: var(--line); }
+.post-body img,
+.post-media-item img,
+.post-media-item video { border-radius: 0; }
+.post-media-item { border: 1px solid var(--line); }
+.post-media-item figcaption {
+    padding: .55rem .65rem;
+    font-style: italic;
+}
+
+/* ---------- Foot of the page ---------- */
+.post-replies { border-top: 2px solid var(--text); }
+.blog-reply header { font-family: var(--font-display); letter-spacing: .04em; }
+.post-pager { border-top: 2px solid var(--line); }
+.post-pager a,
+.back-link a,
+.fediverse-thread-link a {
+    font-family: var(--font-display);
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .055em;
+}
+.archive-year { border-bottom: 2px solid var(--line); }
+.archive-entry time { font-variant-numeric: tabular-nums; }
+.tag-count { font-variant-numeric: tabular-nums; }
+.site-footer { border-top: 1px solid var(--line); margin-top: 2rem; padding-top: 1.25rem; }
+.skip-link { border-radius: 0; }
+
+@media print {
+    body { background-image: none; }
+    .site-header { box-shadow: none; }
+    .post-body pre, .post-media-item, .post-media-cw { box-shadow: none; }
+}

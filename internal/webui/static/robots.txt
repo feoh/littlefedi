@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /api/
+Disallow: /oauth/
+Disallow: /auth/
+Disallow: /settings
+Disallow: /inbox
+Disallow: /partial/
+Disallow: /admin/
+Allow: /

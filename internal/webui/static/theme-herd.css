@@ -1,0 +1,312 @@
+/* Herd - the dense, panelled look people arriving from the fediverse's most
+   used web client already know: one continuous column on a contrasting ground,
+   square-cornered panels, blurple accent and a gold favourite. Loaded after
+   app.css, only when the account selects it.
+
+   Every rule is scoped to [data-theme="herd"]. Unlike Roost this theme keeps
+   littleFedi's sticky top bar and mobile bottom nav exactly where they are -
+   the single-column look it recreates has a header too, so there is no fixed
+   rail to build and no third column to place.
+
+   Token layering repeats app.css's four states, one specificity step higher so
+   a theme's dark tokens beat the base theme's dark tokens regardless of file
+   order. */
+
+/* ---------- Tokens: light ---------- */
+:root[data-theme="herd"]{
+    color-scheme:light;
+    --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
+    --font-features:normal;
+    /* The page ground is deliberately darker than the panel: the contrast
+       between the two is the first thing that reads as "this client". */
+    --bg:#d9e1e8;
+    --bg-grad:none;
+    --surface:#ffffff;
+    --surface-2:#f2f5f7;
+    --surface-3:#e6ebf0;
+    --text:#191b22;
+    --text-soft:#3a3f4b;
+    --muted:#5a637e;
+    --line:#c0cdd9;
+    --line-strong:#9baec8;
+    --accent:#6364ff;
+    /* #6364ff is 4.0:1 on white, below AA for text; links use the darker
+       --accent-strong at 6.6:1. Icons and fills keep the brighter accent. */
+    --accent-strong:#563acc;
+    --accent-soft:rgba(99,100,255,.10);
+    --accent-grad:#6364ff;
+    /* Favourites are a gold star and boosts share the accent - after the
+       ground colour these are the two strongest recognition cues. */
+    --like:#8a6200;
+    --like-soft:rgba(202,143,4,.14);
+    --boost:#563acc;
+    --boost-soft:rgba(99,100,255,.12);
+    --mention:#563acc;
+    --mention-soft:rgba(99,100,255,.10);
+    --danger:#b02234;
+    --shadow:none;
+    --shadow-md:0 2px 6px rgba(25,27,34,.12);
+    --shadow-lg:0 8px 24px rgba(25,27,34,.2);
+    --accent-shadow:transparent;
+    --radius:4px;
+    --radius-sm:4px;
+    --radius-lg:4px;
+    --feed-width:600px;
+    /* The panel carries this inset so any page template gets breathing room;
+       the rows meant to run edge to edge cancel it in the last block. */
+    --feed-inset:1rem;
+}
+
+/* ---------- Tokens: dark ---------- */
+@media(prefers-color-scheme:dark){
+    :root[data-theme="herd"][data-appearance="auto"],:root[data-theme="herd"]:not([data-appearance]){
+        color-scheme:dark;
+        --bg:#191b22;
+        --surface:#282c37;
+        --surface-2:#313543;
+        --surface-3:#393f4f;
+        --text:#ffffff;
+        --text-soft:#d9e1e8;
+        --muted:#9baec8;
+        --line:#393f4f;
+        --line-strong:#4a5266;
+        --accent:#6364ff;
+        --accent-strong:#858afa;
+        --accent-soft:rgba(99,100,255,.18);
+        --accent-grad:#6364ff;
+        --like:#ca8f04;
+        --like-soft:rgba(202,143,4,.18);
+        --boost:#858afa;
+        --boost-soft:rgba(99,100,255,.18);
+        --mention:#858afa;
+        --mention-soft:rgba(99,100,255,.14);
+        --danger:#df405a;
+        --shadow:none;
+        --shadow-md:0 2px 6px rgba(0,0,0,.4);
+        --shadow-lg:0 8px 24px rgba(0,0,0,.55);
+    }
+}
+/* Explicit dark: the same tokens with no media query. Vanilla CSS cannot reuse
+   an @media block from a plain selector and this project has no build step;
+   keep the two copies in sync rather than adding one. */
+:root[data-theme="herd"][data-appearance="dark"],:root[data-theme="herd"][data-appearance="black"]{
+    color-scheme:dark;
+    --bg:#191b22;
+    --surface:#282c37;
+    --surface-2:#313543;
+    --surface-3:#393f4f;
+    --text:#ffffff;
+    --text-soft:#d9e1e8;
+    --muted:#9baec8;
+    --line:#393f4f;
+    --line-strong:#4a5266;
+    --accent:#6364ff;
+    --accent-strong:#858afa;
+    --accent-soft:rgba(99,100,255,.18);
+    --accent-grad:#6364ff;
+    --like:#ca8f04;
+    --like-soft:rgba(202,143,4,.18);
+    --boost:#858afa;
+    --boost-soft:rgba(99,100,255,.18);
+    --mention:#858afa;
+    --mention-soft:rgba(99,100,255,.14);
+    --danger:#df405a;
+    --shadow:none;
+    --shadow-md:0 2px 6px rgba(0,0,0,.4);
+    --shadow-lg:0 8px 24px rgba(0,0,0,.55);
+}
+
+/* ---------- Tokens: true black ---------- */
+:root[data-theme="herd"][data-appearance="black"]{
+    --bg:#000000;
+    --surface:#0d0e12;
+    --surface-2:#16181f;
+    --surface-3:#1e2029;
+    --muted:#8494ad;
+    --line:#2a2e3a;
+    --line-strong:#3a3f4d;
+}
+
+/* ---------- Typography ---------- */
+[data-theme="herd"] body{line-height:1.45}
+[data-theme="herd"] .status-body a,[data-theme="herd"] .profile-bio a,[data-theme="herd"] .status-quote-body a{color:var(--accent-strong)}
+[data-theme="herd"] .status-body a:hover,[data-theme="herd"] .profile-bio a:hover{text-decoration:underline}
+
+/* ---------- Top bar ----------
+   Flat: no blur, no translucency, a single rule underneath. */
+[data-theme="herd"] .header{
+    background:var(--surface);
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+    border-bottom:1px solid var(--line);
+    box-shadow:none;
+}
+[data-theme="herd"] .logo-mark{border-radius:var(--radius);box-shadow:none}
+[data-theme="herd"] .nav-link{border-radius:var(--radius)}
+
+/* ---------- The panel ----------
+   One continuous surface on a visibly different ground, rather than a stack of
+   floating cards. Square-cornered on purpose: the full-bleed rows below break
+   out of the panel's padding, and a radius here would clip them at the corners
+   unless the panel took overflow:hidden, which would kill the sticky tab strip. */
+[data-theme="herd"] .container{
+    max-width:var(--feed-width);
+    margin:1rem auto 2rem;
+    padding:0 var(--feed-inset) 1.5rem;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:0;
+    min-height:60vh;
+}
+
+/* ---------- Feed rows ----------
+   A ruled list inside the panel: no gaps, no shadows, avatar in a gutter.
+   .status-main stops being display:contents so it is one block in column 2. */
+[data-theme="herd"] .status{
+    grid-template-columns:3.9rem minmax(0,1fr);
+    column-gap:0;
+    padding:.75rem 1rem;
+    margin-bottom:0;
+    background:var(--surface);
+    border:0;
+    border-bottom:1px solid var(--line);
+    border-radius:0;
+    box-shadow:none;
+    transition:background .12s;
+}
+[data-theme="herd"] .status:hover{background:var(--surface-2);border-color:var(--line);box-shadow:none;transform:none}
+[data-theme="herd"] .status-main{display:block;grid-column:2;min-width:0}
+/* Rounded-rect avatars, not circles: the fastest tell that this is not the
+   bird-site look. */
+[data-theme="herd"] .status>.status-avatar{grid-column:1;width:3rem;height:3rem;border-radius:var(--radius);box-shadow:none}
+[data-theme="herd"] .status>.status-avatar:hover{box-shadow:none;opacity:.85}
+[data-theme="herd"] .status>.status-boost,[data-theme="herd"] .status>.reply-context{padding-left:3.9rem}
+
+[data-theme="herd"] .status-header{display:flex;flex-wrap:wrap;align-items:baseline;gap:.3rem;margin-bottom:.15rem}
+[data-theme="herd"] .status-author{font-size:.9375rem;font-weight:600}
+[data-theme="herd"] .status-author:hover{color:var(--text);text-decoration:underline}
+[data-theme="herd"] .status-handle{font-size:.9375rem}
+[data-theme="herd"] .status-body{font-size:.9375rem;line-height:1.45}
+[data-theme="herd"] .status-body p{margin:.3rem 0}
+[data-theme="herd"] .status-body p+p{margin-top:.6em}
+[data-theme="herd"] .status-boost{color:var(--muted);font-size:.8125rem;font-weight:600}
+[data-theme="herd"] .status-boost .icon,[data-theme="herd"] .status-boost a{color:var(--muted)}
+[data-theme="herd"] .reply-context{background:none;padding:0;font-size:.875rem;margin-bottom:.25rem}
+[data-theme="herd"] .status-media-wrap{border-radius:var(--radius);overflow:hidden;border:1px solid var(--line)}
+[data-theme="herd"] .status-quote{border-radius:var(--radius);background:var(--surface-2)}
+
+/* ---------- Action bar ----------
+   Left-clustered with a fixed gap rather than spread across the row - the
+   opposite of the bird-site arrangement, and the layout this client uses. */
+[data-theme="herd"] .status-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem 1.4rem;justify-content:flex-start;margin-top:.5rem;padding-top:.5rem;border-top:0}
+[data-theme="herd"] .action-btn{padding:.3rem;gap:.3rem;font-size:.8125rem;border-radius:var(--radius);background:none;color:var(--muted)}
+[data-theme="herd"] .action-btn .icon{width:1.15rem;height:1.15rem}
+[data-theme="herd"] .action-btn:hover{background:var(--surface-3);color:var(--accent-strong)}
+[data-theme="herd"] .action-btn:hover .icon{transform:none}
+[data-theme="herd"] .action-btn.active{background:none;color:var(--accent-strong)}
+[data-theme="herd"] .action-btn.boost.active,[data-theme="herd"] .action-btn.boost:hover{color:var(--boost);background:none}
+[data-theme="herd"] .action-btn.like.active,[data-theme="herd"] .action-btn.like:hover{color:var(--like);background:none}
+[data-theme="herd"] .action-btn.danger:hover{background:none;color:var(--danger)}
+
+/* ---------- Thread ----------
+   The focused post is marked by an inset edge rather than the base theme's
+   ring: a floating outline reads as a card, and this panel has none. The
+   interactions bar under it becomes another ruled row, its text lined up with
+   the body above (row padding + avatar gutter) instead of the panel edge. */
+[data-theme="herd"] .thread-item.focus .status,
+[data-theme="herd"] .thread-item.focus .status-interactions{border-color:var(--line);box-shadow:inset 3px 0 0 var(--accent)}
+[data-theme="herd"] .status-interactions{
+    margin:0;padding:.6rem 1rem .6rem 4.9rem;
+    background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;
+    gap:.4rem 1.4rem;
+}
+[data-theme="herd"] .status-interactions summary{font-size:.8125rem;font-weight:600}
+[data-theme="herd"] .interaction-account{border-radius:var(--radius)}
+
+/* ---------- Buttons ---------- */
+[data-theme="herd"] .btn{font-weight:600;border-radius:var(--radius)}
+[data-theme="herd"] .btn-primary{background:var(--accent);color:#fff;box-shadow:none}
+[data-theme="herd"] .btn-primary:hover{background:var(--accent-strong);filter:none;box-shadow:none;transform:none}
+
+/* ---------- Composer ---------- */
+[data-theme="herd"] .composer{border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;margin-bottom:0;padding:.85rem 1rem}
+[data-theme="herd"] .composer:focus-within{border-color:var(--line);box-shadow:none}
+[data-theme="herd"] .composer textarea{font-size:1rem;line-height:1.5}
+[data-theme="herd"] .composer-settings{border-radius:var(--radius)}
+
+/* ---------- Feed tab strip ----------
+   The column header sits at the top of the panel; the template renders it
+   after the composer, so the column is reordered here rather than in markup.
+   Icons are dropped for the same measured reason as Roost: seven feeds with
+   icons do not fit 600px, and without them all seven do. */
+[data-theme="herd"] .timeline{display:flex;flex-direction:column}
+[data-theme="herd"] .timeline-nav{order:-1}
+[data-theme="herd"] .timeline-nav{
+    position:sticky;top:0;z-index:40;
+    display:flex;flex-wrap:nowrap;overflow-x:auto;
+    justify-content:flex-start;
+    gap:0;margin:0;padding:0;
+    background:var(--surface);
+    border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;
+    scrollbar-width:none;
+}
+[data-theme="herd"] .timeline-nav::-webkit-scrollbar{display:none}
+[data-theme="herd"] .timeline-nav a{flex:1 0 auto;justify-content:center;padding:.9rem .7rem;border-radius:0;font-size:.875rem;font-weight:600;white-space:nowrap;color:var(--muted)}
+[data-theme="herd"] .timeline-nav a .icon{display:none}
+[data-theme="herd"] .timeline-nav a:hover{background:var(--surface-2);color:var(--text)}
+[data-theme="herd"] .timeline-nav a.active{color:var(--text);background:var(--surface-2);box-shadow:none;border-bottom:3px solid var(--accent)}
+
+/* ---------- Load more / empty state ---------- */
+[data-theme="herd"] .load-more{max-width:none;margin:0;padding:.9rem;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;box-shadow:none;color:var(--accent-strong);font-weight:600}
+[data-theme="herd"] .load-more:hover{background:var(--surface-2);transform:none;border-color:var(--line);text-decoration:none}
+[data-theme="herd"] .empty-state .empty-icon{border-radius:var(--radius);background:var(--surface-2);color:var(--muted)}
+
+/* ---------- Profile ---------- */
+[data-theme="herd"] .profile-header{border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;margin-bottom:0}
+[data-theme="herd"] .profile-banner{height:160px;background:var(--surface-3)}
+[data-theme="herd"] .profile-banner::after{display:none}
+[data-theme="herd"] .profile-avatar{border-radius:var(--radius);box-shadow:none}
+[data-theme="herd"] .profile-tab{padding:.9rem .5rem;font-weight:600}
+[data-theme="herd"] .profile-tab.active{color:var(--text)}
+
+/* ---------- Notifications ---------- */
+[data-theme="herd"] .notification{border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;margin-bottom:0;padding:.85rem 1rem}
+/* border-left is gone with the border, so the unread and mention marks move to
+   an inset edge - same 3px cue, no box around the row. */
+[data-theme="herd"] .notification.unread{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+[data-theme="herd"] .notification:has(.nt-mention){box-shadow:inset 3px 0 0 var(--mention)}
+[data-theme="herd"] .notif-badge{background:var(--accent);color:#fff;border-radius:var(--radius)}
+[data-theme="herd"] .notif-tabs{gap:0;margin-bottom:0}
+[data-theme="herd"] .notif-tab{flex:1;margin-right:0;text-align:center;padding:.9rem .7rem;font-size:.875rem;font-weight:600}
+
+/* ---------- Settings and other cards ---------- */
+[data-theme="herd"] .settings-section,[data-theme="herd"] .auth-card{box-shadow:none;border-radius:var(--radius)}
+[data-theme="herd"] .auth-mark{border-radius:var(--radius);box-shadow:none}
+[data-theme="herd"] .page-title{padding-top:1rem}
+
+/* ---------- Panel inset ----------
+   The rows meant to run edge to edge cancel the panel's padding. Bounded list:
+   every entry is already restyled above. Keep this block last so it wins over
+   their own margin declarations. */
+[data-theme="herd"] .status,
+[data-theme="herd"] .status-interactions,
+[data-theme="herd"] .composer,
+[data-theme="herd"] .timeline-nav,
+[data-theme="herd"] .notif-tabs,
+[data-theme="herd"] .notification,
+[data-theme="herd"] .load-more,
+[data-theme="herd"] .profile-header,
+[data-theme="herd"] .back-link{
+    margin-left:calc(-1 * var(--feed-inset));
+    margin-right:calc(-1 * var(--feed-inset));
+    /* .status and .composer carry max-width:100%, which would otherwise clamp
+       them back to the padded width and leave the right edge short. */
+    max-width:none;
+}
+[data-theme="herd"] .back-link{margin-top:0;margin-bottom:0;padding:.75rem 1rem;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;font-weight:600}
+
+/* Edge to edge on phones: the ground has nowhere to show, so the panel becomes
+   the page and the existing bottom nav is left alone. */
+@media(max-width:640px){
+    [data-theme="herd"] .container{margin:0;border-left:0;border-right:0;border-top:0;padding-bottom:1rem}
+    [data-theme="herd"] .timeline-nav{display:none}
+}

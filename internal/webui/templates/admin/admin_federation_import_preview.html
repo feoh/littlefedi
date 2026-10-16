@@ -1,0 +1,15 @@
+<div>
+    <h1 class="page-title">Review federation import</h1>
+    <p style="color:var(--muted);">No changes have been made. Clear any row that should not be imported.</p>
+    <form action="/admin/domain_blocks/import" method="post">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        <input type="hidden" name="confirm" value="1">
+        <input type="hidden" name="kind" value="{{.Kind}}">
+        <table style="width:100%;border-collapse:collapse;">
+            <caption class="sr-only">Federation import preview</caption>
+            <thead><tr><th scope="col">Import</th><th scope="col">Domain</th><th scope="col">Severity</th></tr></thead>
+            <tbody>{{range .Rows}}<tr><td><input type="checkbox" name="rows" value="{{.Value}}" checked aria-label="Import {{.Domain}}"></td><td>{{.Domain}}</td><td>{{.Detail}}</td></tr>{{end}}</tbody>
+        </table>
+        <div style="display:flex;gap:0.5rem;margin-top:1rem;"><button class="btn btn-primary" type="submit">Confirm import</button><a class="btn" href="/admin/domain_blocks">Cancel</a></div>
+    </form>
+</div>

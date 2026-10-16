@@ -1,0 +1,120 @@
+<div class="profile-header">
+    <div class="profile-banner"{{if .Profile.Header}} style="background:url({{urlSafe (proxyMedia .Profile.Header)}}) center/cover no-repeat;background-color:var(--accent);"{{end}}>
+        {{if .Profile.Header}}
+        <a href="{{urlSafe (proxyMedia .Profile.Header)}}" class="profile-banner-click" hx-boost="false" title="{{T "profile.view_banner"}}" aria-label="{{T "profile.view_banner"}}" @click.prevent="$dispatch('open-lightbox', {src: $el.href, alt: $el.getAttribute('aria-label')})"></a>
+        {{end}}
+    </div>
+    <div class="profile-info">
+        <div class="profile-avatar">
+            {{if .Profile.Avatar}}
+            <a href="{{urlSafe (proxyMedia .Profile.Avatar)}}" hx-boost="false" title="{{T "profile.view_avatar"}}" aria-label="{{T "profile.view_avatar"}}" @click.prevent="$dispatch('open-lightbox', {src: $el.href, alt: $el.getAttribute('aria-label')})">
+                <img src="{{urlSafe (proxyMedia .Profile.Avatar)}}" alt="{{.Profile.Username}}">
+            </a>
+            {{end}}
+        </div>
+        {{if .Profile.MovedToURI}}
+        <div class="info-message" role="status">
+            {{T "profile.moved"}}
+            {{if .MovedToURL}}<a href="{{.MovedToURL}}" hx-boost="false" rel="nofollow">{{.MovedToLabel}}</a>{{end}}
+        </div>
+        {{end}}
+        <div class="profile-heading">
+            <div class="profile-identity">
+                {{/* On a remote profile the name links to the account's page on
+                     its own instance; hx-boost is off so the browser leaves the app. */}}
+                <h1 class="profile-name">{{if and .Profile.Domain .Profile.ActorURI}}<a href="{{urlSafe .Profile.ActorURI}}" class="profile-name-link" hx-boost="false" rel="noopener nofollow" title="{{T "profile.view_on_origin"}}">{{emojifyName .Profile.DisplayName .Profile.Emojis}}</a>{{else}}{{emojifyName .Profile.DisplayName .Profile.Emojis}}{{end}}</h1>
+                {{if .Profile.IsBot}}
+                <span class="relationship-badge" title="{{T "profile.bot"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-settings"/></svg>{{T "profile.bot"}}</span>
+                {{end}}
+            </div>
+			{{if and .Account (ne .Account.ID .Profile.ID)}}
+			<div class="profile-actions">
+				<a class="follow-btn" href="/direct?account={{urlquery .Profile.ID}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-mail"/></svg>{{T "profile.message"}}</a>
+				{{$rel := .Relationship}}
+				{{if index $rel "requestsFollow"}}
+				<form method="post" action="/follow_requests/{{.Profile.ID}}/authorize" style="display:inline-flex;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><button class="follow-btn follow" type="submit"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg>{{T "notif.follow_request.accept"}}</button></form>
+				<form method="post" action="/follow_requests/{{.Profile.ID}}/reject" style="display:inline-flex;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><button class="follow-btn following" type="submit">{{T "notif.follow_request.reject"}}</button></form>
+				{{end}}
+				{{if not (index $rel "blocking")}}
+					{{if index $rel "following"}}
+					<form method="post" action="/accounts/{{.Profile.ID}}/unfollow" data-confirm="{{T "follow_list.unfollow_confirm" .Profile.Username}}" style="display:inline-flex;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><button class="follow-btn following" type="submit"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-users"/></svg>{{T "followed_tags.following"}}</button></form>
+					<details class="profile-list-menu" data-app-menu><summary class="follow-btn"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-users"/></svg>{{T "profile.add_to_list"}}</summary><div class="mobile-menu-panel profile-list-menu-panel">{{range $.Lists}}<form method="post" action="/lists/{{.ID}}/accounts/add"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}"><input type="hidden" name="acct" value="{{$.Handle}}"><input type="hidden" name="from_profile" value="1"><button type="submit" aria-label="{{T "profile.add_to_named_list" .Title}}">{{.Title}}</button></form>{{else}}<a href="/lists">{{T "lists.create"}}</a>{{end}}</div></details>
+					{{if index $rel "notifying"}}
+					<form method="post" action="/accounts/{{.Profile.ID}}/notify" style="display:inline-flex;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><input type="hidden" name="notify" value="false"><button class="follow-btn following" type="submit" title="{{T "profile.stop_notify" .Profile.Username}}" aria-label="{{T "profile.notify_off_aria"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg></button></form>
+					{{else}}
+					<form method="post" action="/accounts/{{.Profile.ID}}/notify" style="display:inline-flex;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><input type="hidden" name="notify" value="true"><button class="follow-btn" type="submit" title="{{T "profile.start_notify" .Profile.Username}}" aria-label="{{T "profile.notify_on_aria"}}" style="background:var(--surface);color:var(--muted);"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg></button></form>
+					{{end}}
+					{{else if index $rel "followRequested"}}
+					<form method="post" action="/accounts/{{.Profile.ID}}/unfollow" data-confirm="{{T "follow_list.cancel_request_confirm" .Profile.Username}}" style="display:inline-flex;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><button class="follow-btn following" type="submit">{{T "profile.requested"}}</button></form>
+					{{else if .Profile.MovedToURI}}
+						{{if .MovedToURL}}<a class="follow-btn follow" href="{{.MovedToURL}}" hx-boost="false" rel="nofollow">{{T "profile.go_to_new_profile"}}</a>{{end}}
+					{{else}}
+						{{if index $rel "blockedBy"}}<button class="follow-btn follow" type="button" disabled><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg>{{T "follow_list.follow"}}</button>{{else}}<form method="post" action="/accounts/{{.Profile.ID}}/follow" data-confirm="{{T "follow_list.follow_confirm" .Profile.Username}}" style="display:inline-flex;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><button class="follow-btn follow" type="submit"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg>{{T "follow_list.follow"}}</button></form>{{end}}
+					{{end}}
+				{{end}}
+				{{if index $rel "blocking"}}<form method="post" action="/accounts/{{.Profile.ID}}/unblock" style="display:inline-flex;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><button class="follow-btn" type="submit">{{T "moderation.unblock"}}</button></form>{{else}}<form method="post" action="/accounts/{{.Profile.ID}}/block" data-confirm="{{T "profile.block_confirm" .Profile.Username}}" style="display:inline-flex;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><button class="follow-btn" type="submit">{{T "profile.block"}}</button></form>{{end}}
+				{{if index $rel "muting"}}<form method="post" action="/accounts/{{.Profile.ID}}/unmute" style="display:inline-flex;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><button class="follow-btn" type="submit">{{T "moderation.unmute"}}</button></form>{{else}}<form method="post" action="/accounts/{{.Profile.ID}}/mute" style="display:inline-flex;"><input type="hidden" name="csrf_token" value="{{.CSRFToken}}"><button class="follow-btn" type="submit">{{T "profile.mute"}}</button></form>{{end}}
+				<a class="follow-btn" href="/report?account={{urlquery .Profile.ID}}">{{T "profile.report"}}</a>
+			</div>
+			{{end}}
+        </div>
+
+        {{if .ListAdded}}<div class="info-message" role="status" style="margin-top:.75rem;margin-bottom:0;background:var(--surface-2);border-color:var(--line-strong);color:var(--text);">{{T "profile.added_to_list"}}</div>{{end}}
+
+        <div class="profile-meta">
+            <span class="profile-handle">@{{.Profile.Username}}{{if .Profile.Domain}}@{{.Profile.Domain}}{{end}}</span>
+            <span class="profile-created">{{T "profile.created"}}: <time datetime="{{.Profile.CreatedAt.Format "2006-01-02"}}">{{.Profile.CreatedAt.Format "2006-01-02"}}</time></span>
+            {{if and .Account (ne .Account.ID .Profile.ID)}}
+                {{$rel := .Relationship}}
+                {{if index $rel "followedBy"}}<span class="relationship-badge">{{T "profile.follows_you"}}</span>{{end}}
+                {{if index $rel "blockedBy"}}<span class="relationship-badge">{{T "profile.blocked_you"}}</span>{{end}}
+                {{if index $rel "blocking"}}<span class="relationship-badge">{{T "profile.blocked"}}</span>{{end}}
+                {{if index $rel "followRequested"}}<span class="relationship-badge">{{T "profile.requested"}}</span>{{end}}
+            {{end}}
+        </div>
+
+        {{if .Profile.Note}}
+        <div class="profile-bio">{{emojifyHTML .Profile.Note .Profile.Emojis}}</div>
+        {{end}}
+
+		{{if .BlogURL}}
+		<div style="margin-top:0.75rem;"><a class="btn btn-ghost" href="{{.BlogURL}}" hx-boost="false"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bookmark"/></svg>{{T "profile.visit_blog"}}</a></div>
+		{{end}}
+		{{if .RSSFeedURL}}<div style="margin-top:0.75rem;"><a class="btn btn-ghost" href="{{.RSSFeedURL}}" hx-boost="false">{{T "profile.rss"}}</a></div>{{end}}
+
+        <div class="profile-stats" id="profile-stats">
+            <div><strong>{{.StatusesCount}}</strong> <span>{{T "profile.posts"}}</span></div>
+            {{if .HideFollowers}}
+            <div><span style="color:var(--muted);font-size:0.9rem;">{{T "profile.hidden"}}</span> <span>{{T "follow_list.followers"}}</span></div>
+            {{else}}
+            <div><a href="/@{{.Profile.Username}}{{if .Profile.Domain}}@{{.Profile.Domain}}{{end}}/followers" style="color:inherit;text-decoration:none;">{{if not (and .Account .Account.HideFollowerCounts)}}<strong>{{.FollowersCount}}</strong> {{end}}<span>{{T "follow_list.followers"}}</span></a></div>
+            {{end}}
+            {{if .HideFollowing}}
+            <div><span style="color:var(--muted);font-size:0.9rem;">{{T "profile.hidden"}}</span> <span>{{T "follow_list.following"}}</span></div>
+            {{else}}
+            <div><a href="/@{{.Profile.Username}}{{if .Profile.Domain}}@{{.Profile.Domain}}{{end}}/following" style="color:inherit;text-decoration:none;"><strong>{{.FollowingCount}}</strong> <span>{{T "follow_list.following"}}</span></a></div>
+            {{end}}
+        </div>
+
+	</div>
+
+    <nav class="profile-tabs" aria-label="{{T "profile.tabs"}}">
+        {{$posts := and (not .OnlyMedia) (not .OnlyBlog)}}
+        <a href="/@{{.Handle}}" class="profile-tab{{if $posts}} active{{end}}"{{if $posts}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg>{{T "profile.tab_posts"}}</a>
+        <a href="/@{{.Handle}}?media=1" class="profile-tab{{if .OnlyMedia}} active{{end}}"{{if .OnlyMedia}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-image"/></svg>{{T "profile.tab_media"}}</a>
+        {{if .HasBlog}}
+        <a href="/@{{.Handle}}?blog=1" class="profile-tab{{if .OnlyBlog}} active{{end}}"{{if .OnlyBlog}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bookmark"/></svg>{{T "profile.tab_blog"}}</a>
+        {{end}}
+    </nav>
+
+    {{if $posts}}
+    <form class="profile-post-filters" method="get" aria-label="{{T "profile.post_filters"}}">
+        <input type="hidden" name="filters" value="1">
+        <label><input type="checkbox" name="replies" value="1"{{if .ShowReplies}} checked{{end}}> {{T "profile.show_replies"}}</label>
+        <label><input type="checkbox" name="boosts" value="1"{{if .ShowBoosts}} checked{{end}}> {{T "profile.show_boosts"}}</label>
+        <button class="btn btn-ghost" type="submit">{{T "profile.apply_filters"}}</button>
+    </form>
+    {{end}}
+</div>
+
+{{template "components/profile-live.html" .}}

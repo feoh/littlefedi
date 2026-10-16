@@ -1,0 +1,15 @@
+<div class="settings-page">
+	<h1>{{T "settings.data.delete_link"}}</h1>
+	<div class="error-message"><strong>{{T "settings.delete.irreversible"}}</strong> {{T "settings.delete.notice"}}</div>
+	<p><a href="/settings/export">{{T "settings.delete.export_first_link"}}</a>{{T "settings.delete.export_first_suffix"}}</p>
+	{{if .Error}}<div class="error-message">{{T "settings.delete.confirmation_error"}}</div>{{end}}
+	<form method="post" action="/settings/delete">
+		<input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+		<label>{{T "settings.delete.type_username_label"}} <strong>{{.Account.Username}}</strong><input type="text" name="confirm_username" required autocomplete="off"></label>
+		<label class="sr-only" for="settings-delete-current-password">{{T "password.current"}}</label>
+		<input id="settings-delete-current-password" type="password" name="current_password" placeholder="{{T "password.current"}}" required autocomplete="current-password">
+		{{if .Account.MFAEnabled}}<label class="sr-only" for="settings-delete-mfa-code">{{T "auth.mfa_or_recovery_code_placeholder"}}</label>
+<input id="settings-delete-mfa-code" type="text" name="mfa_code" placeholder="{{T "auth.mfa_or_recovery_code_placeholder"}}" required autocomplete="one-time-code">{{end}}
+		<button class="btn btn-primary" type="submit">{{T "settings.delete.submit"}}</button>
+	</form>
+</div>

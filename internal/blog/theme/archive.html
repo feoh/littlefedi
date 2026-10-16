@@ -1,0 +1,12 @@
+{{define "archive"}}{{template "header" .}}
+<h1>Archive</h1>
+{{if not .Years}}<p class="empty">No posts yet.</p>{{end}}
+{{range .Years}}<h2 class="archive-year">{{.Year}}</h2>
+<ul class="post-list archive-list">
+{{range .Posts}}<li class="post-summary archive-entry">
+<time datetime="{{.Date.UTC.Format "2006-01-02T15:04:05Z07:00"}}">{{.Date.UTC.Format "2006-01-02 15:04"}} UTC</time>
+<a href="{{.Permalink}}">{{.Title}}</a>
+</li>
+{{end}}</ul>
+{{end}}
+{{template "footer" .}}{{end}}

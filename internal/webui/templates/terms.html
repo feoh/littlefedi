@@ -1,0 +1,12 @@
+<div class="timeline">
+    <div class="profile-header" style="padding:1.1rem;">
+        <h1 class="profile-name" style="font-size:1.2rem;">{{T "about.terms_title"}}</h1>
+        <div class="profile-meta" style="color:var(--muted);font-size:0.85rem;">{{.InstanceName}}{{if not .UpdatedAt.IsZero}} - {{T "about.terms_updated"}} {{formatTime .UpdatedAt}}{{end}}</div>
+    </div>
+    <div class="status" style="padding:1.1rem;">
+        <div class="status-content">{{.Terms}}</div>
+    </div>
+    <div class="status" style="padding:1.1rem;">
+        <a href="/about">{{T "about.back_to_about"}}</a>
+    </div>
+</div>

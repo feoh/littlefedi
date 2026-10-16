@@ -1,0 +1,96 @@
+{{define "components/notification.html"}}
+{{/* Keep the original actor's profile separate from the action's destination.
+     Real links also work without JavaScript and in text-only browsers. */}}
+{{$profile := acctPath .Account}}
+{{$target := $profile}}
+{{if .Status}}{{$target = statusPath .Status}}{{else if eq .Type "admin.report"}}{{$target = "/admin/reports"}}{{else if eq .Type "admin.account_deleted"}}{{$target = "/admin/accounts"}}{{end}}
+{{if and .MovedToURL (or (eq .Type "move") (eq .Type "admin.account_moved"))}}{{$target = .MovedToURL}}{{end}}
+{{if .ImportURL}}{{$target = .ImportURL}}{{end}}
+<article class="notification {{if not .Read}}unread{{end}}" data-id="{{.ID}}">
+    <div class="notif-avatar nt-{{.Type}}" aria-hidden="true">
+        {{if and .Account.Avatar (ne .Type "admin.account_deleted")}}
+        <img src="{{proxyMedia .Account.Avatar}}" alt="" loading="lazy">
+        {{else}}
+        <span class="notif-avatar-fallback"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user"/></svg></span>
+        {{end}}
+        <span class="notif-type-badge">
+            {{if eq .Type "follow"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg>
+            {{else if eq .Type "favourite"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-heart"/></svg>
+            {{else if eq .Type "emoji_reaction"}}<span aria-hidden="true">{{emojifyReaction .Emoji .Emoji .ReactionEmoji}}</span>
+            {{else if eq .Type "reblog"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-boost"/></svg>
+            {{else if eq .Type "quote"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-quote"/></svg>
+            {{else if eq .Type "mention"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-at"/></svg>
+            {{else if eq .Type "follow_request"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg>
+            {{else if eq .Type "status"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg>
+            {{else if eq .Type "update"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg>
+            {{else if eq .Type "move"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-boost"/></svg>
+            {{else if eq .Type "unfollow"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>
+            {{else if eq .Type "block"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-alert"/></svg>
+            {{else if eq .Type "unblock"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg>
+            {{else if eq .Type "follow_accept"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg>
+            {{else if eq .Type "follow_reject"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>
+            {{else if eq .Type "admin.report"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-alert"/></svg>
+            {{else if eq .Type "admin.account_deleted"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>
+            {{else if eq .Type "admin.account_moved"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-boost"/></svg>
+            {{else}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg>{{end}}
+        </span>
+    </div>
+    <div class="notification-content">
+        <p class="notif-text">
+            {{/* Some admin notices intentionally omit an actor: report sources
+                 can be ambiguous, and a deleted account no longer has a profile. */}}
+            {{if and (not .ImportURL) (ne .Type "admin.report") (ne .Type "admin.account_deleted")}}
+            <a href="{{$profile}}" class="notif-actor">{{if .Account.DisplayName}}{{emojifyName .Account.DisplayName .Account.Emojis}}{{else}}{{.Account.Username}}{{end}}</a>
+            <span class="notif-handle">@{{.Account.Username}}{{if .Account.Domain}}@{{.Account.Domain}}{{end}}</span>
+            {{if .AdditionalCount}}<span class="notif-others">{{Tn .AdditionalCount "notif.and_others" .AdditionalCount}}</span>{{end}}
+            {{end}}
+            <a href="{{$target}}" class="notif-action notif-stretch" hx-boost="false">{{if eq .Type "follow"}}{{T "notif.type.follow"}}
+            {{else if eq .Type "favourite"}}{{T "notif.type.favourite"}}
+            {{else if eq .Type "emoji_reaction"}}{{emojifyReaction (T "notif.type.emoji_reaction" .Emoji) .Emoji .ReactionEmoji}}
+            {{else if eq .Type "reblog"}}{{T "notif.type.reblog"}}
+            {{else if eq .Type "quote"}}{{T "notif.type.quote"}}
+            {{else if eq .Type "mention"}}{{T "notif.type.mention"}}
+            {{else if eq .Type "follow_request"}}{{T "notif.type.follow_request"}}
+            {{else if eq .Type "status"}}{{T "notif.type.status"}}
+            {{else if eq .Type "update"}}{{T "notif.type.update"}}
+            {{else if eq .Type "move"}}{{if .MovedToURL}}{{T "notif.type.move_to"}} {{.MovedToLabel}}{{else}}{{T "notif.type.move"}}{{end}}
+            {{else if eq .Type "unfollow"}}{{T "notif.type.unfollow"}}
+            {{else if eq .Type "block"}}{{T "notif.type.block"}}
+            {{else if eq .Type "unblock"}}{{T "notif.type.unblock"}}
+            {{else if eq .Type "follow_accept"}}{{T "notif.type.follow_accept"}}
+            {{else if eq .Type "follow_reject"}}{{T "notif.type.follow_reject"}}
+            {{else if eq .Type "blog.rebuilt"}}{{if .Status}}{{T "notif.type.blog_rebuilt_discussion"}}{{else}}{{T "notif.type.blog_rebuilt"}}{{end}}
+            {{else if eq .Type "follow_import.complete"}}{{T "notif.type.follow_import_complete"}}
+            {{else if eq .Type "follow_import.failed"}}{{T "notif.type.follow_import_failed"}}
+            {{else if eq .Type "admin.report"}}{{T "notif.type.admin_report"}}
+            {{else if eq .Type "admin.account_deleted"}}{{T "notif.type.admin_account_deleted"}}
+            {{else if eq .Type "admin.account_moved"}}{{if .MovedToURL}}{{T "notif.type.move_to"}} {{.MovedToLabel}}{{else}}{{T "notif.type.admin_account_moved"}}{{end}}
+            {{else}}{{T "notif.type.default"}}{{end}}</a>
+        </p>
+        {{with .ImportResult}}{{with .FollowImport}}
+        <p class="notif-excerpt">{{T "settings.migration.csv_counts" $.ImportResult.Following.Imported $.ImportResult.Following.Skipped .Existing .Failed}}</p>
+        {{end}}{{end}}
+        {{if .Pending}}
+        <div class="notif-actions">
+            <form action="/follow_requests/{{.Account.ID}}/authorize" method="post">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <button type="submit" class="btn btn-primary">{{T "notif.follow_request.accept"}}</button>
+            </form>
+            <form action="/follow_requests/{{.Account.ID}}/reject" method="post">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <button type="submit" class="btn btn-ghost">{{T "notif.follow_request.reject"}}</button>
+            </form>
+        </div>
+        {{end}}
+        {{if .Status}}
+        {{if .Status.Summary}}
+        <p class="notif-excerpt">{{emojifyName .Status.Summary .Status.Emojis}}</p>
+        {{else}}
+        {{$body := excerpt .Status.ContentHTML 160}}
+        {{if $body}}<p class="notif-excerpt">{{$body}}</p>{{end}}
+        {{end}}
+        {{end}}
+        <time class="notif-time" datetime="{{formatTimeISO .CreatedAt}}" data-relative-time>{{formatTimeRelative .CreatedAt}}</time>
+    </div>
+</article>
+{{end}}

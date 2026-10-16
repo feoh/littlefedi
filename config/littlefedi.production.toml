@@ -1,0 +1,157 @@
+# Profile A starting point: one process, SQLite WAL, local owned media, and a
+# reverse proxy on the same host. Replace every example value before use.
+# Every option is described in littlefedi.toml.example.
+local_domain = "example.com"
+web_domain = "social.example.com"
+admins = ["instanceadmin"]
+contact_username = "instanceadmin"
+background_maintenance = true
+
+[db]
+dsn = "/var/lib/littlefedi/littlefedi.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(10000)&_pragma=foreign_keys(1)&_pragma=synchronous(FULL)&_pragma=temp_store(MEMORY)"
+max_open_conns = 4
+max_idle_conns = 4
+log_queries = false
+
+[streaming]
+backend = "local"
+
+[queue]
+workers = 4
+terminal_job_retention = "24h"
+stale_running_timeout = "15m"
+maintenance_interval = "1h"
+poll_interval = "2s"
+
+[http]
+listen = "127.0.0.1:8080"
+proxy_uri = "https://social.example.com"
+trusted_proxies = ["127.0.0.1/32", "::1/128"]
+gzip = true
+
+[media]
+backend = "local"
+path = "/var/lib/littlefedi/media"
+max_file_size = 41943040
+max_media = 4
+proxy_remote = true
+# Set a stable random value through LITTLEFEDI_MEDIA_PROXY_SECRET.
+proxy_secret = ""
+cache_remote = "off"
+rename_media = true
+strip_exif = true
+# Decoded-image bounds protect memory because a small compressed file can
+# expand to gigabytes. These values accept ordinary phone photos.
+max_image_pixels = 16000000
+max_image_dimension = 8192
+# Downscale stored JPEG/PNG uploads to this longest side before saving them, so
+# the media directory stays small (low_power preset: 1600). 0 keeps the upload
+# at its original resolution. Destructive: no full-resolution copy is kept.
+max_stored_dimension = 2560
+
+[instance]
+name = "Example Social"
+max_status_chars = 5000
+rules = [
+  "Treat people with respect.",
+  "No harassment, spam, or illegal content.",
+  "Follow moderator instructions."
+]
+# Instance profile, published on /about, /terms, and through the instance APIs.
+# These are the seed: /admin/instance overrides them in the database, per field,
+# and the console wins wherever it holds a value. `rules` are all-or-nothing -
+# one save there makes the stored list authoritative, empty included - and the
+# form opens pre-filled, so the first save copies this section into the
+# database. Maintain the profile here or in the console, not both. See the
+# annotated [instance] section of config/littlefedi.toml.example.
+short_description = "A small server for a small group of people."
+description = "Example Social is a community server, run by its members, federating with the wider Fediverse."
+contact_email = "moderation@example.com"
+# Markdown. Published in full on /about.
+extended_description = """
+## Who runs this server
+
+Example Social is operated by ... and funded by ...
+
+## How moderation works
+
+Reports are reviewed within ... hours by ...
+"""
+# Markdown. Published at /terms; leave empty to publish none (both /terms and
+# the API endpoint then return 404).
+terms_of_service = ""
+
+[federation]
+secure_mode = true
+commercial_bigtech_list_url = "https://littlefedi.org/lists/commercial-bigtech.csv"
+# sign_with_oip = true   # attach FEP-8b32 Object Integrity Proofs to outbound activities; keep off until OIP verification is validated against your peers
+
+[web]
+# Do not put the bootstrap password here. Set LITTLEFEDI_WEB_PASSWORD only for
+# initial migration, create per-user passwords, then remove that environment value.
+default_locale = "en"
+
+[auth]
+registrations = false
+invite_required = true
+require_approval = true
+require_email = true
+require_admin_mfa = true
+min_password_length = 15
+dev_mode = false
+# Set LITTLEFEDI_AUTH_MFA_ENCRYPTION_KEY to `openssl rand -base64 32` output.
+
+[rate_limits]
+api = 300
+inbox = 100
+
+[smtp]
+host = "smtp.example.com"
+port = 587
+username = "littlefedi@example.com"
+# Set LITTLEFEDI_SMTP_PASSWORD in the service environment/credential store.
+password = ""
+from = "littlefedi@example.com"
+database_alert_to = "admin@example.com"
+require_tls = true
+implicit_tls = false
+insecure_skip_verify = false # never enable for an untrusted/public SMTP path
+
+[observability]
+metrics_enabled = true
+log_level = "info"
+pprof_listen = ""
+access_log = true
+
+[housekeeping]
+prune_remote_statuses_after_days = 30
+prune_own_statuses_after_days = 0
+tombstone_retention_days = 90
+interval = "1h"
+max_delete_per_run = 500
+home_feed_retention = 800
+
+[backup]
+enabled = true
+path = "/var/lib/littlefedi/backups"
+interval = "24h"
+include_media = true
+retain = 7
+
+[migration]
+enabled = true
+max_follows_import = 5000
+import_rate = "1s"
+cooldown_after_move = "720h"
+require_target_alias = true
+
+# Optional static blog, off in this profile. It needs a binary built with
+# -tags blog, a writable output_dir, and disk for the generated site.
+# [blog]
+# enabled = true
+# output_dir = "/var/lib/littlefedi/blogs"
+# directory_enabled = true             # public /blogs directory; authors may opt out
+# slug_format = "{year}/{month}/{day}/{title}"
+# allow_user_slug_format = true
+# all_accounts = false                  # true grants blogging to every account
+                                        # instead of one at a time

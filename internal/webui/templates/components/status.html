@@ -1,0 +1,331 @@
+{{define "components/status.html"}}
+{{$s := .Status}}
+{{$viewer := .Account}}
+{{$isBoost := $s.BoostOfID}}
+{{$original := $s.BoostOf}}
+
+{{if $isBoost}}
+    {{$s = $original}}
+{{end}}
+
+{{if or (not $s) (not $s.Account)}}
+{{/* Orphaned boost or a status missing its author (purged/orphaned account): render nothing rather than panic on a nil Account. */}}
+{{else}}
+
+<div class="status" id="status-{{$s.ID}}" data-original-status-id="{{$s.ID}}" data-status-url="{{statusPath $s}}">
+    {{if $isBoost}}
+    <div class="status-boost">
+        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-boost"/></svg>
+        {{T "status.boosted_by"}}
+        {{if $.Status.BoostedBy}}
+            {{$first := index $.Status.BoostedBy 0}}
+            <a href="{{profilePath $first $viewer}}">{{if $first.DisplayName}}{{emojifyName $first.DisplayName $first.Emojis}}{{else}}{{$first.Username}}{{end}}</a>
+            {{$others := sub $s.ReblogsCount 1}}{{if and (not (and $viewer $viewer.HideBoostCounts)) (gt $others 0)}}<span class="notif-others">{{Tn $others "notif.and_others" $others}}</span>{{end}}
+        {{else}}
+            <a href="{{profilePath $.Status.Account $viewer}}">{{if $.Status.Account.DisplayName}}{{emojifyName $.Status.Account.DisplayName $.Status.Account.Emojis}}{{else}}{{$.Status.Account.Username}}{{end}}</a>
+        {{end}}
+    </div>
+    {{end}}
+    {{if and $s.InReplyTo $s.InReplyTo.Account}}
+    <div class="reply-context">
+        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-reply"/></svg>
+        {{T "status.replying_to"}}
+        <a href="{{profilePath $s.InReplyTo.Account $viewer}}">{{replyMention $s.InReplyTo}}</a>
+    </div>
+    {{else if $s.InReplyToURI}}
+    <div class="reply-context">
+        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-reply"/></svg>
+        {{T "status.reply_unavailable"}}
+    </div>
+    {{end}}
+
+    {{/* The avatar is a direct child of .status, and everything after it is
+         wrapped in .status-main, so a theme can put the avatar in a left
+         gutter with the body beside it (grid column 2) or leave the body at
+         full width beneath it (display:contents) without changing markup. */}}
+    {{/* The author link below goes to the same profile, so exposing this one
+         too would announce every post with a duplicate link. */}}
+    <a href="{{profilePath $s.Account $viewer}}" class="status-avatar" aria-hidden="true" tabindex="-1">
+        {{if $s.Account.Avatar}}
+        <img src="{{proxyMedia $s.Account.Avatar}}" alt="" loading="lazy">
+        {{end}}
+    </a>
+    <div class="status-main">
+    <div class="status-header">
+        <div class="status-author-wrap">
+            <a href="{{profilePath $s.Account $viewer}}" class="status-author">{{emojifyName $s.Account.DisplayName $s.Account.Emojis}}</a>
+            <div class="status-handle">
+                @{{$s.Account.Username}}
+                {{if $s.Account.Domain}}@{{$s.Account.Domain}}{{end}}
+            </div>
+        </div>
+        <div class="status-meta">
+            <a href="{{statusPath $s}}" hx-boost="false" title="{{formatTime $s.CreatedAt}}">
+                <time datetime="{{formatTimeISO $s.CreatedAt}}" data-relative-time>{{formatTime $s.CreatedAt}}</time>
+            </a>
+            <span class="visibility-pill">
+                {{if eq $s.Visibility "public"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe-sm"/></svg>{{else if eq $s.Visibility "direct"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-mail"/></svg>{{else if eq $s.Visibility "local"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg>{{else if eq $s.Visibility "local_unlisted"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg><svg class="icon" aria-hidden="true" style="margin-left:-.2rem"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>{{else if eq $s.Visibility "unlisted"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>{{else}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-lock"/></svg>{{end}}
+                {{visibilityLabel $s.Visibility}}
+            </span>
+            {{if $s.IsBlogPost}}{{$blogHref := blogPostPath $s}}{{if $blogHref}}<a href="{{$blogHref}}" class="lang-pill blog-post-pill" hx-boost="false" title="{{T "status.blog_post"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg> {{T "status.blog_post"}}</a>{{end}}{{end}}
+            {{if $s.Language}}<span class="lang-pill">{{$s.Language}}</span>{{end}}
+            {{if $s.EditedAt}}<span class="lang-pill" title="{{T "status.edited_title"}}">{{T "status.edited"}}</span>{{end}}
+            {{if $s.ExpiresAt}}<span class="lang-pill" title="{{T "status.expires_title" (formatTimePtr $s.ExpiresAt)}}" data-localtime-utc="{{formatTimeISOPtr $s.ExpiresAt}}" data-localtime-template="{{rawT "status.expires_pill"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-trash"/></svg> <span class="localtime-text">{{T "status.expires_pill" (formatTimePtr $s.ExpiresAt)}}</span></span>{{end}}
+        </div>
+    </div>
+
+    {{if $.Status.FilterMatches}}
+    <details class="status-filter-warning">
+        <summary>{{T "status.filtered"}}{{range $.Status.FilterMatches}}: {{.Filter.Title}}{{end}}</summary>
+        <div class="status-filter-content">
+    {{end}}
+    {{if $s.Summary}}
+    <details class="status-cw">
+        <summary>{{emojifyName $s.Summary $s.Emojis}}</summary>
+        {{template "components/status-media.html" dict "Media" $s.MediaAttachments "Sensitive" $s.Sensitive "DataSaver" (and $viewer $viewer.DataSaver)}}
+        {{template "components/status-body.html" $s}}
+        {{if and (not (and $viewer $viewer.DataSaver)) (not $s.QuoteOf) (previewURL $s.ContentHTML)}}<div class="status-preview-slot" hx-get="/partial/status/{{$s.ID}}/preview" hx-trigger="intersect once" hx-swap="outerHTML"></div>{{end}}
+    </details>
+    {{else}}
+    {{template "components/status-media.html" dict "Media" $s.MediaAttachments "Sensitive" $s.Sensitive "DataSaver" (and $viewer $viewer.DataSaver)}}
+    {{template "components/status-body.html" $s}}
+    {{if and (not (and $viewer $viewer.DataSaver)) (not $s.QuoteOf) (previewURL $s.ContentHTML)}}<div class="status-preview-slot" hx-get="/partial/status/{{$s.ID}}/preview" hx-trigger="intersect once" hx-swap="outerHTML"></div>{{end}}
+    {{end}}
+
+    {{if $s.QuoteOf}}
+    {{$q := $s.QuoteOf}}
+    <div class="status-quote" data-status-url="{{statusPath $q}}">
+        <a class="status-quote-header" href="{{statusPath $q}}" hx-boost="false">
+            {{if $q.Account.Avatar}}<img class="status-quote-avatar" src="{{proxyMedia $q.Account.Avatar}}" alt="" loading="lazy">{{end}}
+            <span class="status-quote-author">{{emojifyName $q.Account.DisplayName $q.Account.Emojis}}</span>
+            <span class="status-quote-handle">@{{$q.Account.Username}}{{if $q.Account.Domain}}@{{$q.Account.Domain}}{{end}}</span>
+        </a>
+        <div class="status-quote-body">{{emojifyHTML $q.ContentHTML $q.Emojis}}</div>
+        {{template "components/status-media.html" dict "Media" $q.MediaAttachments "Sensitive" $q.Sensitive "DataSaver" (and $viewer $viewer.DataSaver)}}
+    </div>
+    {{end}}
+
+    {{if $s.Poll}}
+    {{$poll := $s.Poll}}
+    {{$showResults := or (not $poll.HideTotals) $poll.Expired $poll.Voted}}
+    <form method="post" action="/polls/{{$poll.ID}}/vote" hx-post="/polls/{{$poll.ID}}/vote" hx-target="#status-{{$s.ID}}" hx-swap="outerHTML" class="status-poll">
+        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+        <fieldset{{if or $poll.Expired $poll.Voted (not $viewer)}} disabled{{end}}>
+            <legend class="sr-only">{{T "status.poll_options"}}</legend>
+            {{range $i,$option := $poll.Options}}
+            <label class="poll-option{{if containsInt $poll.OwnVotes $i}} selected{{end}}">
+                <span><input type="{{if $poll.Multiple}}checkbox{{else}}radio{{end}}" name="choices" value="{{$i}}"{{if containsInt $poll.OwnVotes $i}} checked{{end}}> {{$option.Title}}</span>
+                {{if $showResults}}<strong>{{Tn $option.VotesCount "status.poll_votes_count" $option.VotesCount}}</strong>{{end}}
+            </label>
+            {{end}}
+        </fieldset>
+        <div class="poll-footer">
+            {{if and (not $poll.Expired) (not $poll.Voted) $viewer}}<button type="submit" class="btn">{{T "status.poll_vote"}}</button>{{end}}
+            <small>{{if $showResults}}{{Tn $poll.VotesCount "status.poll_votes_count" $poll.VotesCount}}{{else}}{{T "status.poll_hidden"}}{{end}}{{if $poll.Expired}} - {{T "status.poll_final_results"}}{{else if $poll.Voted}} - {{T "status.poll_voted"}}{{end}}</small>
+        </div>
+    </form>
+	{{end}}
+	{{if $.Status.FilterMatches}}</div></details>{{end}}
+
+	{{if $s.EmojiReactions}}
+    <div class="status-reactions" aria-label="{{T "status.reactions"}}">
+        {{range $reaction := $s.EmojiReactions}}
+        {{if $viewer}}
+        <form method="post" action="/statuses/{{$s.ID}}/reactions" hx-post="/statuses/{{$s.ID}}/reactions" hx-target="#status-{{$s.ID}}" hx-swap="outerHTML">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <input type="hidden" name="emoji" value="{{$reaction.Name}}">
+            <button type="submit" class="reaction{{if $reaction.Me}} active{{end}}" aria-pressed="{{if $reaction.Me}}true{{else}}false{{end}}" aria-label="{{if $reaction.Me}}{{T "status.reaction.remove" $reaction.Name}}{{else}}{{T "status.reaction.add" $reaction.Name}}{{end}}">
+                {{if $reaction.Emoji}}<img src="{{proxyMedia $reaction.Emoji.URL}}" alt="{{$reaction.Name}}" loading="lazy">{{else}}<span>{{$reaction.Name}}</span>{{end}} <span>{{$reaction.Count}}</span>
+            </button>
+        </form>
+        {{else}}
+        <span class="reaction">{{if $reaction.Emoji}}<img src="{{proxyMedia $reaction.Emoji.URL}}" alt="{{$reaction.Name}}" loading="lazy">{{else}}<span>{{$reaction.Name}}</span>{{end}} <span>{{$reaction.Count}}</span></span>
+        {{end}}
+        {{end}}
+    </div>
+    {{end}}
+
+    <div class="status-actions">
+        {{if $viewer}}
+        <a href="{{replyPath $s}}" hx-get="/partial/status/{{$s.ID}}/reply" hx-target="closest .status" hx-swap="afterend" data-reply-composer="composer-reply-{{$s.ID}}" class="action-btn" title="{{T "status.action.reply"}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-reply"/></svg><span class="sr-only">{{T "status.action.reply"}}</span> <span class="count">{{if gt $s.RepliesCount 0}}{{$s.RepliesCount}}{{end}}</span>
+        </a>
+
+        {{if eq $s.Visibility "direct"}}
+        <button type="button" class="action-btn" title="{{visibilityLabel $s.Visibility}}" disabled>
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-mail"/></svg>
+            <span class="sr-only">{{visibilityLabel $s.Visibility}}</span>
+        </button>
+        {{else if or (eq $s.Visibility "public") (eq $s.Visibility "unlisted")}}
+        <form method="post" action="/statuses/{{$s.ID}}/reblog" class="action-btn boost {{if $s.Reblogged}}active{{end}}"
+              hx-post="/statuses/{{$s.ID}}/reblog"
+              hx-target="#status-{{$s.ID}}"
+              hx-swap="outerHTML">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            {{/* Both glyphs ship; CSS shows one per theme. Themes cannot
+                 branch in markup; see the note on statusCardKey. Both are
+                 aria-hidden, the submit input carries the accessible name. */}}
+            <svg class="icon glyph-boost" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-boost"/></svg>
+            <svg class="icon glyph-retweet" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-retweet"/></svg>
+            <input type="submit" class="action-submit" value="{{if $s.Reblogged}}{{T "status.action.undo_boost"}}{{else}}{{T "status.action.boost"}}{{end}}" title="{{T "status.action.boost"}}">
+            <span class="count" id="boost-count-{{$s.ID}}">{{if and (not $viewer.HideBoostCounts) (gt $s.ReblogsCount 0)}}{{$s.ReblogsCount}}{{end}}</span>
+        </form>
+        {{end}}
+
+        {{if ne $s.Visibility "direct"}}<a href="/?quote={{$s.ID}}" class="action-btn" title="{{T "status.action.quote"}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-quote"/></svg><span class="sr-only">{{T "status.action.quote"}}</span>
+        </a>{{end}}
+
+        <form method="post" action="/statuses/{{$s.ID}}/favourite" class="action-btn like {{if $s.Favourited}}active{{end}}"
+              hx-post="/statuses/{{$s.ID}}/favourite"
+              hx-target="#status-{{$s.ID}}"
+              hx-swap="outerHTML">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-heart"/></svg>
+            <input type="submit" class="action-submit" value="{{if $s.Favourited}}{{T "status.action.unfavourite"}}{{else}}{{T "status.action.favourite"}}{{end}}" title="{{T "status.action.favourite"}}">
+            <span class="count-slot" id="fav-count-{{$s.ID}}">{{if and (not $viewer.HideFavouriteCounts) (gt $s.FavouritesCount 0)}}<a class="count" href="{{statusInteractionsPath $s}}" hx-boost="false">{{$s.FavouritesCount}}</a>{{end}}</span>
+        </form>
+
+        <details class="reaction-picker" data-reaction-picker data-reaction-add-label="{{T "status.reaction.add" "__EMOJI__"}}" data-reaction-remove-label="{{T "status.reaction.remove" "__EMOJI__"}}">
+            <summary class="action-btn" title="{{T "status.reaction.choose"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-smile"/></svg><span class="sr-only">{{T "status.reaction.choose"}}</span></summary>
+            <div class="reaction-menu">
+                <div class="reaction-presets">
+                    {{range $emoji := list "👍" "❤️" "😂" "😮" "😢" "🎉"}}
+                    {{$mine := false}}{{range $reaction := $s.EmojiReactions}}{{if and $reaction.Me (eq $reaction.Name $emoji)}}{{$mine = true}}{{end}}{{end}}
+                    <form method="post" action="/statuses/{{$s.ID}}/reactions" hx-post="/statuses/{{$s.ID}}/reactions" hx-target="#status-{{$s.ID}}" hx-swap="outerHTML">
+                        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}"><button type="submit" name="emoji" value="{{$emoji}}" aria-pressed="{{if $mine}}true{{else}}false{{end}}" aria-label="{{if $mine}}{{T "status.reaction.remove" $emoji}}{{else}}{{T "status.reaction.add" $emoji}}{{end}}">{{$emoji}}</button>
+                    </form>
+                    {{end}}
+                </div>
+                <form method="post" action="/statuses/{{$s.ID}}/reactions" hx-post="/statuses/{{$s.ID}}/reactions" hx-target="#status-{{$s.ID}}" hx-swap="outerHTML" data-reaction-form>
+                    <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                    <label class="sr-only" for="reaction-{{$s.ID}}">{{T "status.reaction.label"}}</label>
+                    <div class="reaction-entry"><input id="reaction-{{$s.ID}}" name="emoji" required placeholder="{{T "status.reaction.placeholder"}}" autocomplete="off" data-reaction-input><button type="submit" class="btn btn-primary reaction-submit">{{T "status.reaction.submit"}}</button></div>
+                    <div class="reaction-grid" data-reaction-grid aria-label="{{T "status.reaction.more"}}"></div>
+                </form>
+            </div>
+        </details>
+
+        <form method="post" action="/statuses/{{$s.ID}}/bookmark" class="action-btn {{if $s.Bookmarked}}active{{end}}"
+              hx-post="/statuses/{{$s.ID}}/bookmark"
+              hx-target="#status-{{$s.ID}}"
+              hx-swap="outerHTML">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bookmark"/></svg>
+            <input type="submit" class="action-submit" value="{{if $s.Bookmarked}}{{T "status.action.remove_bookmark"}}{{else}}{{T "status.action.bookmark"}}{{end}}" title="{{T "status.action.bookmark"}}">
+        </form>
+
+        {{/* A link, not a button: copying to the clipboard needs JavaScript,
+             and the script cancels this navigation when it runs. Without it the
+             control still leads where it points, instead of being a dead
+             button in every browser that cannot copy. */}}
+		<a href="{{statusShareURL $s}}" class="action-btn copy-link-action" hx-boost="false" data-copy-url="{{statusShareURL $s}}" data-copied-label="{{T "status.action.link_copied"}}" data-copy-failed-label="{{T "status.action.copy_failed"}}" title="{{T "status.action.copy_link"}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-upload"/></svg><span class="sr-only">{{T "status.action.copy_link"}}</span>
+		</a>
+
+		{{if ne $s.AccountID $viewer.ID}}<a href="/report?account={{urlquery $s.AccountID}}&status={{urlquery $s.ID}}" class="action-btn" title="{{T "profile.report"}}">
+			<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-alert"/></svg><span class="sr-only">{{T "profile.report"}}</span>
+		</a>{{end}}
+
+        {{if and $viewer (eq $s.AccountID $viewer.ID)}}
+        {{if $isBoost}}
+        {{else}}
+        <form method="post" action="/statuses/{{$s.ID}}/pin" class="action-btn {{if $s.Pinned}}active{{end}}"
+              hx-post="/statuses/{{$s.ID}}/pin"
+              hx-target="#status-{{$.Status.ID}}"
+              hx-swap="outerHTML">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pin"/></svg>
+            <input type="submit" class="action-submit" value="{{if $s.Pinned}}{{T "status.action.unpin"}}{{else}}{{T "status.action.pin"}}{{end}}" title="{{if $s.Pinned}}{{T "status.action.unpin"}}{{else}}{{T "status.action.pin"}}{{end}}">
+        </form>
+
+        <a href="/statuses/{{$s.ID}}/edit" class="action-btn" title="{{T "status.action.edit"}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg><span class="sr-only">{{T "status.action.edit"}}</span>
+        </a>
+
+        <a href="/statuses/{{$s.ID}}/redraft" class="action-btn" data-confirm="{{T "status.action.redraft_confirm"}}" title="{{T "status.action.redraft"}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-undo"/></svg>
+            <span class="sr-only">{{T "status.action.redraft"}}</span>
+        </a>
+        {{end}}
+        <form method="post" action="/statuses/{{$s.ID}}/delete" class="action-btn danger"
+              hx-post="/statuses/{{$s.ID}}/delete"
+              hx-target="#status-{{$s.ID}}"
+              hx-swap="delete"
+              data-confirm="{{T "status.action.delete_confirm"}}">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-trash"/></svg>
+            <input type="submit" class="action-submit" value="{{T "status.action.delete"}}" title="{{T "status.action.delete"}}">
+        </form>
+        {{end}}
+        {{end}}
+    </div>
+    </div>
+</div>
+{{end}}
+{{end}}
+
+{{/* The post text. A long body is clamped to --status-clamp with a "show more"
+     control under it, rather than pushing the rest of the timeline off a phone
+     screen. The toggle is a label-wrapped checkbox read back by CSS :has(), so
+     it needs no JavaScript (it survives an htmx swap) and no id (the same
+     status can appear twice on one page, as a post and as someone's boost).
+     <details> would not do: a closed one hides its content outright instead of
+     clamping it. Whether a card is long comes from the content alone, so this
+     markup is safe in the shared card cache; whether a long card actually
+     collapses is left to CSS, which unclamps the focused post of a thread. */}}
+{{define "components/status-body.html"}}
+{{if isLongStatus .ContentHTML}}
+<div class="status-body-clamp">
+    <div class="status-body">{{emojifyStatusHTML .ContentHTML .Emojis .QuoteOf}}</div>
+    <label class="status-clamp-toggle"><input type="checkbox"><span class="clamp-more">{{T "status.show_more"}}</span><span class="clamp-less">{{T "status.show_less"}}</span></label>
+</div>
+{{else}}
+<div class="status-body">{{emojifyStatusHTML .ContentHTML .Emojis .QuoteOf}}</div>
+{{end}}
+{{end}}
+
+{{/* Every picture states the size it was measured at, so the browser reserves
+     the right box before the file arrives and the feed stops jumping under the
+     reader's thumb, and paints that box in the picture's own average tone
+     rather than black. A remote attachment nobody measured has neither, and
+     falls back to whatever the stylesheet gives it. */}}
+{{define "components/status-media.html"}}
+{{if .Media}}
+<div class="status-media-wrap {{if .Sensitive}}sensitive{{end}}" {{if .Sensitive}}data-sensitive-media{{end}}>
+    <div class="status-media {{if eq (len .Media) 1}}single{{else}}multiple{{end}}">
+        {{range .Media}}
+        {{$width := mediaWidth .}}{{$height := mediaHeight .}}{{$tone := blurhashColour .Blurhash}}
+        <figure class="status-media-item"{{if $tone}} style="--media-tone:{{$tone}}"{{end}}>
+            {{if eq .Type "image"}}
+            {{if $.DataSaver}}
+            <a class="status-media-load" href="{{proxyMedia (or .URL .RemoteURL)}}" data-load-image data-preview="{{proxyMedia (or .PreviewURL .URL .RemoteURL)}}" data-alt="{{.Description}}"{{if $width}} data-width="{{$width}}" data-height="{{$height}}" style="aspect-ratio:{{$width}}/{{$height}}"{{end}} target="_blank" rel="noopener">{{T "status.load_image"}}</a>
+            {{else}}
+            <a href="{{proxyMedia (or .URL .RemoteURL)}}" target="_blank" rel="noopener" @click.prevent="$dispatch('open-lightbox', {src: $el.href, alt: $el.querySelector('img').alt})">
+                <img src="{{proxyMedia (or .PreviewURL .URL .RemoteURL)}}" alt="{{.Description}}" loading="lazy"{{if $width}} width="{{$width}}" height="{{$height}}"{{end}}>
+            </a>
+            {{end}}
+            {{else if eq .Type "video"}}
+            <video controls preload="metadata" {{if .Description}}aria-label="{{.Description}}"{{end}} {{if .PreviewURL}}poster="{{proxyMedia .PreviewURL}}"{{end}}{{if $width}} width="{{$width}}" height="{{$height}}"{{end}}>
+                <source src="{{proxyMedia (or .URL .RemoteURL)}}" {{if .MIMEType}}type="{{.MIMEType}}"{{end}}>
+            </video>
+            {{else if eq .Type "audio"}}
+            <audio controls preload="metadata" {{if .Description}}aria-label="{{.Description}}"{{end}} src="{{proxyMedia (or .URL .RemoteURL)}}"></audio>
+            {{else}}
+            <a href="{{proxyMedia (or .URL .RemoteURL)}}" target="_blank" rel="noopener">
+                {{or .Description .Type}}
+            </a>
+            {{end}}
+            {{if .Description}}<figcaption class="status-media-alt">{{.Description}}</figcaption>{{end}}
+        </figure>
+        {{end}}
+    </div>
+    {{if .Sensitive}}
+    <button type="button" class="sensitive-media-toggle" aria-expanded="false">
+        <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>
+        <span>{{T "status.show_sensitive_media"}}</span>
+    </button>
+    {{end}}
+</div>
+{{end}}
+{{end}}

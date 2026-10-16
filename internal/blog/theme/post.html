@@ -1,0 +1,43 @@
+{{define "post"}}{{template "header" .}}
+<article>
+<h1>{{.Post.Title}}</h1>
+<p class="post-meta"><time datetime="{{.Post.Date.UTC.Format "2006-01-02T15:04:05Z07:00"}}">{{.Post.Date.UTC.Format "2006-01-02 15:04"}} UTC</time>{{if .Post.Tags}} · {{range $i, $t := .Post.Tags}}{{if $i}}, {{end}}<a href="{{$t.URL}}">#{{$t.Name}}</a>{{end}}{{end}}</p>
+{{if .Post.Media}}
+{{if .Post.Sensitive}}
+<details class="post-media-cw">
+<summary>Show sensitive media</summary>
+<div class="post-media">{{range .Post.Media}}{{template "media-item" .}}{{end}}</div>
+</details>
+{{else}}
+<div class="post-media">{{range .Post.Media}}{{template "media-item" .}}{{end}}</div>
+{{end}}
+{{end}}
+<div class="post-body">{{.Post.ContentHTML}}</div>
+</article>
+{{if .Post.ShowReplies}}<section class="post-replies" aria-labelledby="replies-heading">
+<h2 id="replies-heading">Replies</h2>
+{{if .Post.Replies}}<ol class="reply-list">{{range .Post.Replies}}{{template "blog-reply" .}}{{end}}</ol>{{else}}<p>No public replies are known to this instance.</p>{{end}}
+{{if .Post.RepliesTruncated}}<p><a href="{{.Post.ThreadURL}}">Continue reading the federated thread</a>.</p>{{end}}
+</section>{{end}}
+<p class="fediverse-thread-link"><a href="{{.Post.ThreadURL}}">View or reply in the Fediverse</a></p>
+{{if or .Prev .Next}}<nav class="post-pager" aria-label="Post navigation">
+{{if .Prev}}<a href="{{.Prev.Permalink}}" rel="prev"><span aria-hidden="true">←</span> {{.Prev.Title}}</a>{{end}}
+{{if .Next}}<a href="{{.Next.Permalink}}" rel="next">{{.Next.Title}} <span aria-hidden="true">→</span></a>{{end}}
+</nav>{{end}}
+<p class="back-link"><a href="{{.BlogRoot}}/"><span aria-hidden="true">←</span> Back to all posts</a></p>
+{{template "footer" .}}{{end}}
+
+{{define "media-item"}}<figure class="post-media-item">
+{{if eq .Type "video"}}<video controls preload="metadata" {{if .Width}}width="{{.Width}}"{{end}} {{if .Height}}height="{{.Height}}"{{end}}><source src="{{.URL}}">Your browser does not support video playback. <a href="{{.URL}}">Download the video</a>.</video>
+{{else if eq .Type "audio"}}<audio controls preload="metadata"><source src="{{.URL}}">Your browser does not support audio playback. <a href="{{.URL}}">Download the audio</a>.</audio>
+{{else}}<a href="{{.URL}}"><img src="{{.URL}}" alt="{{if .Alt}}{{.Alt}}{{else}}Attached image{{end}}" loading="lazy" {{if .Width}}width="{{.Width}}"{{end}} {{if .Height}}height="{{.Height}}"{{end}}></a>
+{{end}}
+{{if .Alt}}<figcaption>{{.Alt}}</figcaption>{{end}}
+</figure>
+{{end}}
+
+{{define "blog-reply"}}<li><article class="blog-reply">
+<header><strong>@{{.Handle}}</strong> · <a href="{{.Permalink}}"><time datetime="{{.Date.UTC.Format "2006-01-02T15:04:05Z07:00"}}">{{.Date.UTC.Format "2006-01-02 15:04"}} UTC</time></a></header>
+{{if .Summary}}<details><summary>Content warning: {{.Summary}}</summary><div>{{.ContentHTML}}</div></details>{{else}}<div>{{.ContentHTML}}</div>{{end}}
+{{range .Attachments}}<p><a href="{{.URL}}">Attachment: {{.Label}}</a></p>{{end}}
+</article>{{if .Children}}<ol class="reply-list">{{range .Children}}{{template "blog-reply" .}}{{end}}</ol>{{end}}</li>{{end}}

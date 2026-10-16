@@ -1,0 +1,67 @@
+<div>
+    <div class="admin-page-header">
+        <div><h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-settings"/></svg>Overview</h1><p class="admin-page-description">Operational health and work requiring administrator attention.</p></div>
+        <a href="/admin" class="btn btn-ghost" hx-boost="false">Refresh</a>
+    </div>
+
+    {{if .Unavailable}}<div class="admin-notice danger"><strong>Some data is unavailable.</strong> {{range $i, $name := .Unavailable}}{{if $i}}, {{end}}{{$name}}{{end}}. Values are not being replaced with zero.</div>{{end}}
+	{{if .BroadcastDone}}<div class="admin-notice"><strong>{{.BroadcastSent}} direct messages sent.</strong>{{if .BroadcastFailed}} {{.BroadcastFailed}} could not be sent.{{end}}</div>{{end}}
+	{{if .WelcomeResult}}<div class="admin-notice">Automatic welcome DM {{if eq .WelcomeResult "enabled"}}saved and enabled{{else}}disabled{{end}}.</div>{{end}}
+
+    <div class="admin-card" style="margin-bottom:.85rem;display:flex;align-items:center;gap:1rem;">
+        <span class="admin-badge {{if eq .Health "Operational"}}ok{{else if eq .Health "Degraded"}}warn{{else}}danger{{end}}">{{.Health}}</span>
+        <div><strong>{{.HealthDetail}}</strong><div class="admin-muted">Updated {{formatTimeRelative .GeneratedAt}} - {{.Metrics.Domain}} {{if .Metrics.Version}}- v{{.Metrics.Version}}{{end}}</div></div>
+    </div>
+
+	<div class="admin-grid">
+		<section class="admin-card admin-card-flex admin-span-6">
+			<h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-mail"/></svg>Message all local users</h2>
+			<p class="admin-muted">Each recipient gets a separate DM from your account and cannot see the others.</p>
+			<form action="/admin/broadcast" method="post">
+				<input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+				<div class="form-group"><label for="broadcast-message">Message</label><textarea id="broadcast-message" name="message" rows="4" maxlength="{{.MaxStatusChars}}" required></textarea></div>
+				<button type="submit" class="btn btn-primary">Send to all local users</button>
+			</form>
+		</section>
+		<section class="admin-card admin-card-flex admin-span-6">
+			<h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg>Automatic welcome DM {{if .WelcomeEnabled}}<span class="admin-badge ok">Enabled</span>{{end}}</h2>
+			<p class="admin-muted">Sent from your account whenever a local user is created through registration, an invite, or the CLI. Save an empty message to disable it.</p>
+			<form action="/admin/welcome-message" method="post">
+				<input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+				<div class="form-group"><label for="welcome-message">Message</label><textarea id="welcome-message" name="message" rows="4" maxlength="{{.MaxStatusChars}}">{{.WelcomeMessage}}</textarea></div>
+				<button type="submit" class="btn btn-primary">Save welcome DM</button>
+			</form>
+		</section>
+	</div>
+
+    {{if .Attention}}
+    <div class="admin-card" style="margin-bottom:.85rem;"><h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-alert"/></svg>Needs attention</h2><div class="admin-attention-list">
+        {{range .Attention}}<a class="admin-attention-item" href="{{.URL}}"><span class="admin-badge {{.Level}}">{{.Count}}</span><span class="admin-attention-copy"><strong>{{.Title}}</strong><span>{{.Detail}}</span></span><span aria-hidden="true">→</span></a>{{end}}
+    </div></div>
+    {{end}}
+
+    <div class="admin-grid">
+        <section class="admin-card admin-span-8"><h2><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-boost"/></svg>Queue health {{if .Queue}}<span class="admin-badge {{.QueueLevel}}">{{if eq .QueueLevel "danger"}}Action required{{else if eq .QueueLevel "warn"}}Monitor{{else}}Operational{{end}}</span>{{end}}<a href="/admin/queue" class="admin-muted" style="margin-left:auto;">View queue →</a></h2>
+            {{if .Queue}}<div class="admin-grid" style="margin:0;">
+                <div class="admin-span-3"><div class="admin-metric-value">{{.Queue.Ready}}</div><div class="admin-metric-label">Ready now</div></div>
+                <div class="admin-span-3"><div class="admin-metric-value">{{.Queue.Scheduled}}</div><div class="admin-metric-label">Scheduled</div></div>
+                <div class="admin-span-3"><div class="admin-metric-value">{{.Queue.Running}}</div><div class="admin-metric-label">Running</div></div>
+                <div class="admin-span-3"><div class="admin-metric-value">{{.Queue.Failed}}</div><div class="admin-metric-label">Retained failures</div></div>
+            </div>
+            <div class="admin-muted" style="margin-top:.8rem;">{{.QueueDetail}} {{.Metrics.ActiveWorkers}} of {{.Metrics.ConfiguredWorkers}} workers busy - {{.Queue.Retrying}} retrying{{if .Queue.OldestReadyAt}} - oldest ready {{formatTimeRelative .Queue.OldestReadyAt}}{{end}}</div>
+            {{else}}<p class="admin-muted">Queue health is unavailable.</p>{{end}}
+        </section>
+        <section class="admin-card admin-span-4"><h2>Federation since restart</h2><div class="admin-metric-value">{{.Metrics.DeliveriesSucceeded}}</div><div class="admin-metric-label">Deliveries succeeded</div><div class="admin-muted" style="margin-top:.7rem;">{{.Metrics.DeliveriesFailed}} failed - {{.Metrics.InboxProcessed}} inbox activities processed - {{.Metrics.InboxFailed}} inbox failures</div></section>
+    </div>
+
+    <div class="admin-grid">
+        <div class="admin-card admin-span-3"><div class="admin-metric-value">{{.LocalUserCount}}</div><div class="admin-metric-label">Local users</div></div>
+        <div class="admin-card admin-span-3"><div class="admin-metric-value">{{.StatusCount}}</div><div class="admin-metric-label">Stored posts</div></div>
+        <div class="admin-card admin-span-3"><div class="admin-metric-value">{{.DomainCount}}</div><div class="admin-metric-label">Known domains</div></div>
+        <div class="admin-card admin-span-3"><div class="admin-metric-value">{{formatDuration .Metrics.Uptime}}</div><div class="admin-metric-label">Uptime</div></div>
+    </div>
+
+    <section class="admin-card"><h2>Recent administrative activity <a href="/admin/audit" class="admin-muted" style="margin-left:auto;">Full audit log →</a></h2>
+        {{if .RecentAudit}}<div class="admin-table-wrap"><table class="admin-table"><caption class="sr-only">Recent administrative activity</caption><thead><tr><th scope="col">When</th><th scope="col">Admin</th><th scope="col">Action</th><th scope="col">Target</th></tr></thead><tbody>{{range .RecentAudit}}<tr><td>{{.CreatedAt}}</td><td>{{.AdminName}}</td><td>{{.Action}}</td><td>{{.TargetType}}: {{.TargetID}}</td></tr>{{end}}</tbody></table></div>{{else}}<p class="admin-muted">No administrative activity recorded yet.</p>{{end}}
+    </section>
+</div>

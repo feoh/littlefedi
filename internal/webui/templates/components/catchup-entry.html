@@ -1,0 +1,17 @@
+{{define "components/catchup-entry.html"}}
+<div class="catchup-entry">
+    <ul class="catchup-reasons">
+        {{range .Item.Reasons}}
+        <li class="catchup-reason">
+            {{if eq .Kind "boosted"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-boost"/></svg>{{Tn .Count "catchup.reason.boosted" .Count}}
+            {{else if eq .Kind "reactions"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-heart"/></svg>{{Tn .Count "catchup.reason.reactions" .Count}}
+            {{else if eq .Kind "author"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user"/></svg>{{T "catchup.reason.author"}}
+            {{else if eq .Kind "tag"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-search"/></svg>{{T "catchup.reason.tag" .Tag}}
+            {{else if eq .Kind "thread"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-reply"/></svg>{{T "catchup.reason.thread"}}
+            {{end}}
+        </li>
+        {{end}}
+    </ul>
+    {{statusCard .Item.Status .Account .CSRFToken}}
+</div>
+{{end}}

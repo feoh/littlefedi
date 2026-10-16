@@ -1,0 +1,9 @@
+{{with .ImportResult}}{{with .FollowImport}}
+<div class="info-message" role="status">
+	<strong>{{if eq $.Import.State "complete"}}{{T "settings.migration.csv_state.complete"}}{{else if eq $.Import.State "failed"}}{{T "settings.migration.csv_state.failed"}}{{else if eq $.Import.State "queued"}}{{T "settings.migration.csv_state.queued"}}{{else}}{{T "settings.migration.csv_state.running"}}{{end}}</strong>
+	<p>{{T "settings.migration.csv_progress" .Processed .Total}}</p>
+	<progress value="{{.Processed}}" max="{{.Total}}" aria-label="{{T "settings.migration.csv_heading"}}">{{.Processed}} / {{.Total}}</progress>
+	<p>{{T "settings.migration.csv_counts" $.ImportResult.Following.Imported $.ImportResult.Following.Skipped .Existing .Failed}}</p>
+	{{if or (eq $.Import.State "running") (eq $.Import.State "queued")}}<p>{{T "settings.migration.csv_resume"}}</p>{{end}}
+</div>
+{{end}}{{end}}

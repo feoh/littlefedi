@@ -1,0 +1,11 @@
+# HTTPS gateway, only if [lighthouse] gateway_listen is set.
+# Needs wildcard DNS and a Caddy build with your DNS provider's module
+# (xcaddy build --with github.com/caddy-dns/<provider>).
+
+*.mesh.faro.example {
+    tls {
+        dns <provider> {env.DNS_API_TOKEN}
+    }
+
+    reverse_proxy 127.0.0.1:8443
+}

@@ -1,0 +1,45 @@
+<div>
+    <div class="admin-page-header"><div><h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg>Instance profile</h1><p class="admin-page-description">What this server publishes about itself, on <a href="/about">/about</a> and through the instance APIs every Mastodon client reads. Saved here, applied immediately, no restart.</p></div></div>
+    {{if .Error}}<div class="admin-notice danger">{{.Error}}</div>{{end}}
+    {{if .Result}}<div class="admin-notice"><span class="admin-badge ok">Saved</span> {{.Result}}</div>{{end}}
+    {{if .Saved}}
+    <div class="admin-notice">Saved here, these values override the <code>[instance]</code> section of the config file. Clearing a field makes it fall back to the config file again, except the rules, which stay whatever this form last saved, so clearing them publishes none.</div>
+    {{else}}
+    <div class="admin-notice">These are the values from the <code>[instance]</code> section of the config file, and nothing has been saved here yet. Saving copies them into the database, after which this form wins for every field it holds a value for and the config file is only the fallback. The rules become all-or-nothing: whatever is saved here from then on is what gets published, empty included.</div>
+    {{end}}
+    <form action="/admin/instance" method="post">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        <div class="admin-grid">
+            <section class="admin-card admin-span-12">
+                <h2>Description</h2>
+                <p class="admin-muted">The instance name ({{.InstanceName}}) is still set by <code>[instance] name</code> in the config file, because it is baked into the app manifest at startup.</p>
+                <label for="short_description">Short description</label>
+                <input type="text" id="short_description" name="short_description" class="field" maxlength="200" value="{{.ShortDescription}}" placeholder="One line, shown in server directories">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="field" rows="3" maxlength="1000" placeholder="A paragraph shown at the top of the About page">{{.Description}}</textarea>
+                <label for="extended_description">Extended description</label>
+                <textarea id="extended_description" name="extended_description" class="field" rows="10" placeholder="Markdown. Who runs this server, who it is for, how it is moderated and funded.">{{.ExtendedDescription}}</textarea>
+                <p class="admin-muted">Markdown is supported. HTML is sanitized before it is published.</p>
+            </section>
+            <section class="admin-card admin-span-6">
+                <h2>Rules</h2>
+                <p class="admin-muted">One rule per line. Shown on the About page, on the registration form, and returned by <code>/api/v1/instance/rules</code>. Leave empty to publish no rules.</p>
+                <label class="sr-only" for="rules">Rules, one per line</label>
+                <textarea id="rules" name="rules" class="field" rows="10" placeholder="Treat people with respect.">{{.Rules}}</textarea>
+            </section>
+            <section class="admin-card admin-span-6">
+                <h2>Contact</h2>
+                <label for="contact_email">Moderation email address</label>
+                <input type="email" id="contact_email" name="contact_email" class="field" value="{{.ContactEmail}}" placeholder="moderation@example.com">
+                <p class="admin-muted">Published to clients and on the About page. The contact <em>account</em> is set by <code>contact_username</code> in the config file, and falls back to the first administrator.</p>
+            </section>
+            <section class="admin-card admin-span-12">
+                <h2>Terms of service</h2>
+                <p class="admin-muted">Markdown. Published at <a href="/terms">/terms</a> and through <code>/api/v1/instance/terms_of_service</code>. Empty means this server publishes no terms, and both return 404.</p>
+                <label class="sr-only" for="terms_of_service">Terms of service</label>
+                <textarea id="terms_of_service" name="terms_of_service" class="field" rows="12">{{.TermsOfService}}</textarea>
+            </section>
+        </div>
+        <button type="submit" class="btn btn-primary">Save instance profile</button>
+    </form>
+</div>

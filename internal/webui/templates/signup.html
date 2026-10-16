@@ -1,0 +1,54 @@
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-mark"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg></div>
+        <h1>little<span>fedi</span></h1>
+        {{if .RegistrationClosed}}
+            <p class="sub">{{T "auth.registrations_closed"}}</p>
+            <div class="info-message">
+                {{T "auth.registrations_closed_body"}}
+            </div>
+            <p class="sub" style="margin-top:1.2rem;margin-bottom:0;">
+                <a href="/auth/sign_in">{{T "auth.sign_in_button"}}</a> {{T "auth.have_account_suffix"}}
+            </p>
+        {{else}}
+            <p class="sub">{{T "auth.create_account_subtitle"}}</p>
+            {{if .Error}}
+            <div class="error-message" role="alert"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-alert"/></svg><span>{{.Error}}</span></div>
+            {{end}}
+            {{if .Info}}
+            <div class="info-message" role="status">{{.Info}}</div>
+            {{end}}
+            <form action="/auth/sign_up" method="post">
+                <label class="sr-only" for="signup-username">{{T "auth.username_placeholder"}}</label>
+                <input id="signup-username" type="text" name="username" class="field" placeholder="{{T "auth.username_placeholder"}}" value="{{.Username}}" required autocomplete="username" minlength="2" maxlength="30" pattern="[a-zA-Z0-9_]+">
+                {{if .RequireEmail}}
+                <label class="sr-only" for="signup-email">{{T "auth.email_placeholder"}}</label>
+                <input id="signup-email" type="email" name="email" class="field" placeholder="{{T "auth.email_placeholder"}}" value="{{.Email}}" required autocomplete="email">
+                {{else}}
+                <label class="sr-only" for="signup-email-2">{{T "auth.email_optional_placeholder"}}</label>
+                <input id="signup-email-2" type="email" name="email" class="field" placeholder="{{T "auth.email_optional_placeholder"}}" value="{{.Email}}" autocomplete="email">
+                {{end}}
+                <label class="sr-only" for="signup-password">{{T "auth.password_placeholder"}}</label>
+                <input id="signup-password" type="password" name="password" class="field" placeholder="{{T "auth.password_placeholder"}}" required autocomplete="new-password" minlength="{{.MinPasswordLength}}">
+                <p class="sub" style="margin:0 0 0.75rem;">{{T "password.hint" .MinPasswordLength}}</p>
+                <label class="sr-only" for="signup-password-confirm">{{T "auth.confirm_password_placeholder"}}</label>
+                <input id="signup-password-confirm" type="password" name="password_confirm" class="field" placeholder="{{T "auth.confirm_password_placeholder"}}" required autocomplete="new-password" minlength="{{.MinPasswordLength}}">
+                {{if .InviteRequired}}
+                <label class="sr-only" for="signup-invite-code">{{T "auth.invite_code_placeholder"}}</label>
+                <input id="signup-invite-code" type="text" name="invite_code" class="field" placeholder="{{T "auth.invite_code_placeholder"}}" value="{{.InviteCode}}">
+                {{end}}
+                <input type="submit" class="btn btn-primary" value="{{T "auth.create_account_button"}}">
+            </form>
+            <p class="sub" style="margin-top:1.2rem;margin-bottom:0;">
+                {{T "auth.already_have_account"}} <a href="/auth/sign_in">{{T "auth.sign_in_button"}}</a>
+            </p>
+        {{end}}
+		{{if .InstanceRules}}
+		<div class="info-message" style="margin-top:1.2rem;text-align:left;">
+			<strong>{{T "signup.instance_rules_heading"}}</strong>
+			<ol>{{range .InstanceRules}}<li>{{.}}</li>{{end}}</ol>
+		</div>
+		{{end}}
+		<p class="sub" style="margin-top:1.2rem;margin-bottom:0;"><a href="/about">{{T "about.title"}}</a></p>
+    </div>
+</div>

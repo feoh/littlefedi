@@ -1,0 +1,10 @@
+<div class="auth-wrap">
+    <div class="auth-card">
+        <h1>{{T "settings.mfa_recovery.heading"}}</h1>
+        <p>{{T "settings.mfa_recovery.intro"}}</p>
+        <ul style="list-style:none;padding:0;font-family:monospace;">
+            {{range .Codes}}<li><code>{{.}}</code></li>{{end}}
+        </ul>
+        <a class="btn btn-primary" href="/auth/sign_in">{{T "settings.mfa_recovery.sign_in_again"}}</a>
+    </div>
+</div>

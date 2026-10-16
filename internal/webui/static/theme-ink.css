@@ -1,0 +1,137 @@
+/* Ink - a quiet serif page for people who read more than they scroll.
+   littleFedi publishes long-form through its blog as well as short posts, and
+   this is the theme for an instance that does both. Loaded after app.css, only
+   when the account selects it.
+
+   A palette theme: tokens plus a handful of typographic selectors. It does not
+   touch the layout.
+
+   The ground is a cool grey rather than cream and the accent is ink blue
+   rather than terracotta - deliberately not the warm-paper-and-clay palette
+   every reading theme lands on by default.
+
+   Token layering repeats app.css's four states, one specificity step higher so
+   a theme's dark tokens beat the base theme's dark tokens regardless of file
+   order. */
+
+/* ---------- Tokens: light ---------- */
+:root[data-theme="ink"]{
+    color-scheme:light;
+    --font-body:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,'Times New Roman',serif;
+    --font-features:normal;
+    --bg:#f4f4f2;
+    --bg-grad:none;
+    --surface:#ffffff;
+    --surface-2:#ececea;
+    --surface-3:#e2e2df;
+    --text:#1a1a1a;
+    --text-soft:#333333;
+    --muted:#5f6360;
+    --line:#dedede;
+    --line-strong:#bbbbbb;
+    --accent:#2b4c7e;
+    --accent-strong:#1d3a63;
+    --accent-soft:rgba(43,76,126,.08);
+    --accent-grad:#2b4c7e;
+    --accent-shadow:transparent;
+    --like:#8c2f39;
+    --like-soft:rgba(140,47,57,.09);
+    --boost:#3a6b4f;
+    --boost-soft:rgba(58,107,79,.09);
+    --mention:#4a4a7a;
+    --mention-soft:rgba(74,74,122,.09);
+    --danger:#8c2f39;
+    --shadow:none;
+    --shadow-md:none;
+    --shadow-lg:0 6px 28px rgba(26,26,26,.12);
+    --radius:3px;
+    --radius-sm:3px;
+    --radius-lg:3px;
+}
+
+/* ---------- Tokens: dark ---------- */
+@media(prefers-color-scheme:dark){
+    :root[data-theme="ink"][data-appearance="auto"],:root[data-theme="ink"]:not([data-appearance]){
+        color-scheme:dark;
+        --bg:#17181a;
+        --surface:#1e1f22;
+        --surface-2:#26282c;
+        --surface-3:#2f3135;
+        --text:#e6e4df;
+        --text-soft:#d2d0cb;
+        --muted:#9a9a96;
+        --line:#2c2e32;
+        --line-strong:#3d4046;
+        --accent:#8fb0dd;
+        --accent-strong:#a9c4e8;
+        --accent-soft:rgba(143,176,221,.14);
+        --accent-grad:#8fb0dd;
+        --like:#d08c95;
+        --like-soft:rgba(208,140,149,.14);
+        --boost:#7fae92;
+        --boost-soft:rgba(127,174,146,.14);
+        --mention:#a8a8d8;
+        --mention-soft:rgba(168,168,216,.14);
+        --danger:#d08c95;
+        --shadow:none;
+        --shadow-md:none;
+        --shadow-lg:0 6px 28px rgba(0,0,0,.5);
+    }
+}
+/* Explicit dark: the same tokens with no media query. Vanilla CSS cannot reuse
+   an @media block from a plain selector and this project has no build step;
+   keep the two copies in sync rather than adding one. */
+:root[data-theme="ink"][data-appearance="dark"],:root[data-theme="ink"][data-appearance="black"]{
+    color-scheme:dark;
+    --bg:#17181a;
+    --surface:#1e1f22;
+    --surface-2:#26282c;
+    --surface-3:#2f3135;
+    --text:#e6e4df;
+    --text-soft:#d2d0cb;
+    --muted:#9a9a96;
+    --line:#2c2e32;
+    --line-strong:#3d4046;
+    --accent:#8fb0dd;
+    --accent-strong:#a9c4e8;
+    --accent-soft:rgba(143,176,221,.14);
+    --accent-grad:#8fb0dd;
+    --like:#d08c95;
+    --like-soft:rgba(208,140,149,.14);
+    --boost:#7fae92;
+    --boost-soft:rgba(127,174,146,.14);
+    --mention:#a8a8d8;
+    --mention-soft:rgba(168,168,216,.14);
+    --danger:#d08c95;
+    --shadow:none;
+    --shadow-md:none;
+    --shadow-lg:0 6px 28px rgba(0,0,0,.5);
+}
+
+/* ---------- Tokens: true black ---------- */
+:root[data-theme="ink"][data-appearance="black"]{
+    --bg:#000000;
+    --surface:#08090a;
+    --surface-2:#131416;
+    --surface-3:#1c1d20;
+    --muted:#8e8e8a;
+    --line:#1c1d1f;
+    --line-strong:#2b2c30;
+}
+
+/* ---------- The handful of selectors the palette implies ---------- */
+[data-theme="ink"] body{line-height:1.7}
+[data-theme="ink"] .status-body{font-size:1.0625rem;line-height:1.75}
+[data-theme="ink"] .status-body a,[data-theme="ink"] .profile-bio a,[data-theme="ink"] .status-quote-body a{color:var(--accent-strong)}
+[data-theme="ink"] .status-body a:hover,[data-theme="ink"] .profile-bio a:hover{text-decoration:underline}
+/* Signature: the byline. Handle, separator and timestamp set in small caps so
+   the meta line reads as printed matter rather than interface chrome - the
+   distinction is typographic here, not chromatic. */
+[data-theme="ink"] .status-handle,[data-theme="ink"] .status-meta,[data-theme="ink"] .status-boost{font-variant:small-caps;letter-spacing:.02em}
+/* The pills are already uppercase, where small caps only reach the stray
+   lowercase letter in a value like "2h" and make it the odd one out. */
+[data-theme="ink"] .visibility-pill,[data-theme="ink"] .lang-pill{font-variant:normal}
+[data-theme="ink"] .status-author{font-weight:600}
+[data-theme="ink"] .btn-primary{background:var(--accent);color:#fff;box-shadow:none}
+[data-theme="ink"] .btn-primary:hover{background:var(--accent-strong);filter:none;box-shadow:none;transform:none}
+[data-theme="ink"] .composer textarea{font-family:var(--font-body);font-size:1.0625rem;line-height:1.7}

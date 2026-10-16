@@ -1,0 +1,59 @@
+<div class="timeline">
+    <div class="profile-header" style="padding:1.1rem;">
+        <h1 class="profile-name" style="font-size:1.2rem;">{{.InstanceName}}</h1>
+        <div class="profile-meta" style="color:var(--muted);font-size:0.85rem;">{{.Domain}}{{if .ShortDescription}} - {{.ShortDescription}}{{end}}</div>
+    </div>
+
+    {{if .Description}}
+    <div class="status" style="padding:1.1rem;">
+        <p style="margin:0;">{{.Description}}</p>
+    </div>
+    {{end}}
+
+    <div class="status" style="padding:1.1rem;">
+        <h2 style="font-size:1rem;margin:0 0 0.6rem;">{{T "about.stats_heading"}}</h2>
+        <dl style="display:grid;grid-template-columns:auto 1fr;gap:0.3rem 0.9rem;margin:0;font-size:0.9rem;">
+            <dt style="color:var(--muted);">{{T "about.stats_users"}}</dt><dd style="margin:0;">{{.UserCount}}</dd>
+            <dt style="color:var(--muted);">{{T "about.stats_posts"}}</dt><dd style="margin:0;">{{.StatusCount}}</dd>
+            <dt style="color:var(--muted);">{{T "about.stats_posts_known"}}</dt><dd style="margin:0;">{{.KnownStatusCount}}</dd>
+            <dt style="color:var(--muted);">{{T "about.stats_instances"}}</dt><dd style="margin:0;">{{.DomainCount}}</dd>
+            <dt style="color:var(--muted);">{{T "about.registrations"}}</dt>
+            <dd style="margin:0;">
+                {{if .Registrations}}
+                    {{if .InviteRequired}}{{T "about.registrations_invite"}}
+                    {{else if .ApprovalRequired}}{{T "about.registrations_approval"}}
+                    {{else}}{{T "about.registrations_open"}}{{end}}
+                {{else}}{{T "about.registrations_closed"}}{{end}}
+            </dd>
+            <dt style="color:var(--muted);">{{T "about.software"}}</dt><dd style="margin:0;">littleFedi {{.Version}}</dd>
+        </dl>
+    </div>
+
+    {{if .Rules}}
+    <div class="status" style="padding:1.1rem;">
+        <h2 id="rules" style="font-size:1rem;margin:0 0 0.6rem;">{{T "about.rules_heading"}}</h2>
+        <ol style="margin:0;padding-left:1.2rem;display:grid;gap:0.4rem;">{{range .Rules}}<li>{{.}}</li>{{end}}</ol>
+    </div>
+    {{end}}
+
+    {{if .ExtendedDescription}}
+    <div class="status" style="padding:1.1rem;">
+        <h2 style="font-size:1rem;margin:0 0 0.6rem;">{{T "about.extended_heading"}}</h2>
+        <div class="status-content">{{.ExtendedDescription}}</div>
+    </div>
+    {{end}}
+
+    <div class="status" style="padding:1.1rem;">
+        <h2 style="font-size:1rem;margin:0 0 0.6rem;">{{T "about.contact_heading"}}</h2>
+        {{if .ContactAccount}}
+        <p style="margin:0 0 0.4rem;"><a href="/@{{.ContactAccount.Username}}">@{{.ContactAccount.Username}}</a></p>
+        {{end}}
+        {{if .ContactEmail}}
+        <p style="margin:0 0 0.4rem;"><a href="mailto:{{.ContactEmail}}">{{.ContactEmail}}</a></p>
+        {{end}}
+        {{if and (not .ContactAccount) (not .ContactEmail)}}
+        <p style="margin:0;color:var(--muted);">{{T "about.contact_none"}}</p>
+        {{end}}
+        {{if .HasTerms}}<p style="margin:0.6rem 0 0;"><a href="/terms">{{T "about.terms_link"}}</a></p>{{end}}
+    </div>
+</div>

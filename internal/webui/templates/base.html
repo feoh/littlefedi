@@ -1,0 +1,270 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="{{.Locale}}" data-theme="{{.Theme}}" data-appearance="{{.Appearance}}"{{if and .Account (catchupEnabled)}} data-catchup-enabled{{end}}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+    {{/* Browser chrome follows the chosen appearance. Only "auto" hands the
+         decision back to the OS, so only "auto" carries media queries. */}}
+    {{if eq .Appearance "light"}}<meta name="theme-color" content="{{.ThemeColorLight}}">
+    {{else if eq .Appearance "dark"}}<meta name="theme-color" content="{{.ThemeColorDark}}">
+    {{else if eq .Appearance "black"}}<meta name="theme-color" content="#000000">
+    {{else}}<meta name="theme-color" content="{{.ThemeColorLight}}" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="{{.ThemeColorDark}}" media="(prefers-color-scheme: dark)">{{end}}
+    <link rel="manifest" href="/static/manifest.webmanifest">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/static/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+	{{if .RSSFeedURL}}<link rel="alternate" type="application/rss+xml" title="RSS" href="{{.RSSFeedURL}}">{{end}}
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="{{if .InstanceName}}{{.InstanceName}}{{else}}littleFedi{{end}}">
+    <title>{{.Title}}{{if .Title}} - {{end}}{{if .InstanceName}}{{.InstanceName}}{{else}}littleFedi{{end}}</title>
+    <script src="/static/htmx.min.js"></script>
+    <script defer src="/static/alpine.min.js"></script>
+    <script defer src="{{assetURL "emoji_map.js"}}"></script>
+    <link rel="stylesheet" href="{{assetURL "app.css"}}">
+    {{if .ThemeCSS}}<link rel="stylesheet" href="{{assetURL .ThemeCSS}}">{{end}}
+    {{/* The viewer's own stylesheet, last so it needs no !important. Inlined
+         rather than served from a route: a per-account stylesheet has to be
+         hashed at render time to cache-bust anyway, so a route would only add
+         an authenticated request per page. */}}
+    {{if .CustomCSS}}<style nonce="{{.CSPNonce}}">{{.CustomCSS}}</style>{{end}}
+    <!-- Without JavaScript, Alpine never removes x-cloak, which would leave composer media
+         rows 2..N permanently hidden in graphical browsers. Scoped to the media rows only:
+         a blanket [x-cloak] reveal would expose the fullscreen lightbox backdrop. -->
+    <noscript><style nonce="{{.CSPNonce}}">.composer-media-row[x-cloak]{display:grid!important}.composer-blog-slug[x-cloak]{display:block!important}.composer-toggles[x-cloak],.composer-settings[x-cloak]{display:flex!important}</style></noscript>
+    <script src="{{assetURL "app.js"}}"></script>
+    <script defer src="{{assetURL "streaming.js"}}"></script>
+</head>
+<body hx-boost="true" hx-history="false"{{if .Account}} data-authenticated="true"{{if .Account.HideReplies}} data-hide-replies="true"{{end}}{{if .Account.HideBoosts}} data-hide-boosts="true"{{end}}{{end}} {{if .CSRFToken}}hx-headers='{"X-CSRF-Token":"{{.CSRFToken}}"}'{{end}}>
+    <a class="skip-link sr-only" href="#main">{{T "nav.skip_to_content"}}</a>
+    <div class="hx-loading-bar" aria-hidden="true"></div>
+    <div class="sr-only" role="status" aria-live="polite" id="hx-loading-status"></div>
+    <div id="hx-error-toast" class="hx-error-toast" role="alert" aria-live="assertive" hidden></div>
+    {{/* app.js announces and relabels things the server never re-renders, so the
+         strings it needs travel with the page rather than being baked in English. */}}
+    <div id="js-strings" hidden
+         data-loading="{{T "a11y.loading"}}"
+         data-request-failed="{{T "a11y.request_failed"}}"
+         data-network-error="{{T "a11y.network_error"}}"
+         data-post-deleted="{{T "a11y.post_deleted"}}"
+         data-new-posts="{{T "a11y.new_posts"}}"
+         data-new-notifications="{{T "a11y.new_notifications"}}"
+         data-notifications-read="{{T "notifications.all_read"}}"
+         data-show-sensitive="{{T "status.show_sensitive_media"}}"
+         data-hide-sensitive="{{T "status.hide_sensitive_media"}}"></div>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <span class="logo-mark"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-pencil"/></svg></span>
+				<span class="logo-wordmark">little<b>fedi</b></span>
+            </a>
+            {{if .Account}}
+			<nav class="desktop-nav" aria-label="{{T "nav.primary"}}">
+            <a href="/" class="nav-link nav-home-link" title="{{T "nav.home"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg><span class="icon-label">{{T "nav.home"}}</span></a>
+            <a href="/@{{.Account.Username}}" class="nav-link" title="{{T "nav.your_profile"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user"/></svg><span class="icon-label">{{T "nav.profile"}}</span></a>
+            <a href="/notifications" class="nav-link" title="{{T "nav.notifications"}}" data-notifications-read="{{.CSRFToken}}" data-read-hint="{{T "notifications.hold_to_mark_read"}}">
+              <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg>
+              <span class="icon-label">{{T "nav.notifications"}}</span>
+              {{/* Empty at zero, not "0": the badge is only hidden by an
+                   attribute a text browser ignores, so a count written into it
+                   reads as part of the link name. */}}
+              <span data-notification-badge class="notif-badge"{{if not .NotificationCount}} hidden{{end}}>{{if .NotificationCount}}{{if gt .NotificationCount 99}}99+{{else}}{{.NotificationCount}}{{end}}{{end}}</span>
+            </a>
+            <a href="/lists" class="nav-link" title="{{T "nav.lists"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-users"/></svg><span class="icon-label">{{T "nav.lists"}}</span></a>
+            <a href="/tags" class="nav-link" title="{{T "nav.hashtags"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-hashtag"/></svg><span class="icon-label">{{T "nav.hashtags"}}</span></a>
+            <a href="/favourites" class="nav-link" title="{{T "mobile.favourites"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-heart"/></svg><span class="icon-label">{{T "mobile.favourites"}}</span></a>
+            <a href="/scheduled" class="nav-link" title="{{T "nav.scheduled_title"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-clock"/></svg><span class="icon-label">{{T "nav.scheduled"}}</span></a>
+            {{if .Account.IsAdmin}}<a href="/admin" class="nav-link {{if .IsAdmin}}active{{end}}" title="{{T "nav.admin_title"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-star"/></svg><span class="icon-label">{{T "nav.admin"}}</span></a>{{end}}
+            <a href="/settings" class="nav-link" title="{{T "nav.settings"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-settings"/></svg><span class="icon-label">{{T "nav.settings"}}</span></a>
+            <a href="/search" class="nav-link nav-search-link" title="{{T "nav.search"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-search"/></svg><span class="sr-only">{{T "nav.search"}}</span></a>
+            <form action="/search" method="get" class="nav-search-form" style="display:inline-flex;align-items:center;margin-left:0.5rem;"
+                  x-data="{query:'',loading:false}"
+                  @submit="loading=true"
+                  @htmx:after-request="loading=false">
+                <input type="text" name="q"
+                       aria-label="{{T "nav.search_aria"}}"
+                       placeholder="{{T "nav.search_placeholder"}}"
+                       x-model="query"
+                       class="nav-search-input"
+                       style="padding:0.35rem 0.55rem;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:0.8125rem;background:var(--surface);color:var(--text);"
+                       @focus="$el.select()">
+                <span class="nav-link" title="{{T "nav.search"}}" style="position:relative;padding:0.35rem 0.5rem;">
+                    <svg class="icon" aria-hidden="true" x-show="!loading"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-search"/></svg>
+                    <svg class="icon" aria-hidden="true" x-show="loading" style="animation:spin 0.8s linear infinite;"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-spinner"/></svg>
+                    <input type="submit" class="action-submit" value="{{T "nav.search"}}">
+                </span>
+            </form>
+            <form action="/auth/sign_out" method="post" style="display:inline-flex">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <span class="nav-link" title="{{T "nav.sign_out"}}" style="position:relative">
+                    <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-logout"/></svg>
+                    <span class="icon-label">{{T "nav.sign_out"}}</span>
+                    <input type="submit" class="action-submit" value="{{T "nav.sign_out"}}" aria-label="{{T "nav.sign_out"}}">
+                </span>
+            </form>
+            {{/* Jumps to the composer that already sits at the top of the
+                 home timeline. Hidden by the default theme, which reaches it
+                 through the floating compose button instead. */}}
+            <a href="/#composer" class="nav-post">{{T "composer.post"}}</a>
+			</nav>
+			<details class="mobile-header-menu" data-app-menu>
+				<summary class="mobile-menu-trigger" aria-label="{{T "mobile.open_account_menu"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-more"/></svg></summary>
+				<nav class="mobile-menu-panel" aria-label="{{T "mobile.open_account_menu"}}">
+					<a href="/@{{.Account.Username}}"{{if eq .CurrentPath (printf "/@%s" .Account.Username)}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user"/></svg>{{T "nav.profile"}}</a>
+					<a href="/lists"{{if eq .CurrentPath "/lists"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-users"/></svg>{{T "nav.lists"}}</a>
+					<a href="/tags"{{if eq .CurrentPath "/tags"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-hashtag"/></svg>{{T "nav.hashtags"}}</a>
+					<a href="/scheduled"{{if eq .CurrentPath "/scheduled"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-clock"/></svg>{{T "nav.scheduled"}}</a>
+					<a href="/settings"{{if eq .CurrentPath "/settings"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-settings"/></svg>{{T "nav.settings"}}</a>
+					{{if .Account.IsAdmin}}<a href="/admin"{{if .IsAdmin}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-star"/></svg>{{T "nav.admin"}}</a>{{end}}
+					<form action="/auth/sign_out" method="post">
+						<input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+						<button type="submit"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-logout"/></svg>{{T "nav.sign_out"}}</button>
+					</form>
+				</nav>
+			</details>
+            {{else}}
+            {{/* A visitor without an account still needs the pages that help
+                 them decide whether to make one, so they sit beside sign in
+                 rather than only in the footer. */}}
+            <nav class="guest-nav" aria-label="{{T "nav.primary"}}">
+            {{if publicLocalTimelineEnabled}}<a href="/public/local" class="nav-link"{{if eq .CurrentPath "/public/local"}} aria-current="page"{{end}}>{{T "mobile.local"}}</a>{{end}}
+			{{if and blogDirectoryEnabled publicBlogDirectoryEnabled}}<a href="/blogs" class="nav-link"{{if eq .CurrentPath "/blogs"}} aria-current="page"{{end}}>{{T "blogs.title"}}</a>{{end}}
+            <a href="/about" class="nav-link"{{if eq .CurrentPath "/about"}} aria-current="page"{{end}}>{{T "about.title"}}</a>
+            <a href="/auth/sign_in" class="nav-link" title="{{T "nav.sign_in"}}">{{T "nav.sign_in"}}</a>
+            </nav>
+            {{end}}
+        </div>
+    </header>
+	{{if .Account}}
+	<nav class="mobile-bottom-nav" aria-label="{{T "nav.primary"}}">
+		<details class="mobile-timeline-picker" data-app-menu>
+			<summary class="mobile-timeline-trigger" aria-label="{{T "mobile.choose_timeline"}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg><span>{{T "mobile.timeline"}}</span></summary>
+			<div class="mobile-timeline-panel">
+				<a href="/"{{if eq .CurrentPath "/"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg>{{T "nav.home"}}</a>
+				<a href="/public"{{if eq .CurrentPath "/public"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg>{{T "mobile.federated"}}</a>
+				<a href="/public/local"{{if eq .CurrentPath "/public/local"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-users"/></svg>{{T "mobile.local"}}</a>
+				<a href="/public/bubble"{{if eq .CurrentPath "/public/bubble"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bubbles"/></svg>{{T "mobile.bubble"}}</a>
+				<a href="/bookmarks"{{if eq .CurrentPath "/bookmarks"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bookmark"/></svg>{{T "mobile.bookmarks"}}</a>
+				<a href="/favourites"{{if eq .CurrentPath "/favourites"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-heart"/></svg>{{T "mobile.favourites"}}</a>
+				<a href="/direct"{{if eq .CurrentPath "/direct"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-mail"/></svg>{{T "mobile.direct"}}</a>
+				{{if catchupEnabled}}<a href="/catchup"{{if eq .CurrentPath "/catchup"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-vhs"/></svg>{{T "nav.catchup"}}</a>{{end}}
+			</div>
+		</details>
+		<a href="/notifications" data-notifications-read="{{.CSRFToken}}" data-read-hint="{{T "notifications.hold_to_mark_read"}}"{{if eq .CurrentPath "/notifications"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bell"/></svg><span>{{T "nav.notifications"}}</span><span data-notification-badge class="notif-badge"{{if not .NotificationCount}} hidden{{end}}>{{if .NotificationCount}}{{if gt .NotificationCount 99}}99+{{else}}{{.NotificationCount}}{{end}}{{end}}</span></a>
+		<a href="/search"{{if eq .CurrentPath "/search"}} aria-current="page"{{end}}><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-search"/></svg><span>{{T "nav.search"}}</span></a>
+	</nav>
+	{{end}}
+    {{/* Page padding lives in .container, not an inline style, so a theme can
+         change it: an inline style would beat every stylesheet rule. */}}
+    <main id="main" x-data="{}" class="{{if .IsAdmin}}admin-container{{else}}container{{end}}">
+        {{if .IsAdmin}}
+        <details class="admin-mobile-nav">
+            <summary>Admin navigation</summary>
+            <div class="admin-mobile-links">
+                <a class="admin-nav-link" href="/admin">Overview</a><a class="admin-nav-link" href="/admin/reports">Reports</a>
+                <a class="admin-nav-link" href="/admin/accounts">Accounts</a><a class="admin-nav-link" href="/admin/instances">Instances</a>
+                <a class="admin-nav-link" href="/admin/queue">Queue</a><a class="admin-nav-link" href="/admin/backup">Backup</a>
+                <a class="admin-nav-link" href="/admin/instance">Instance profile</a><a class="admin-nav-link" href="/admin/settings">Configuration</a>
+            </div>
+        </details>
+        <div class="admin-shell">
+        <aside class="admin-sidebar" aria-label="{{T "nav.admin_navigation"}}">
+            <div class="admin-nav-title">Admin console</div>
+            <nav>
+                <div class="admin-nav-group"><a class="admin-nav-link {{if eq .AdminSection "overview"}}active{{end}}" href="/admin"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-home"/></svg>Overview</a></div>
+                <div class="admin-nav-group"><span class="admin-nav-label">Moderation</span>
+                    <a class="admin-nav-link {{if eq .AdminSection "reports"}}active{{end}}" href="/admin/reports"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-alert"/></svg>Reports{{if .AdminReports}}<span class="admin-nav-count">{{.AdminReports}}</span>{{end}}</a>
+                    <a class="admin-nav-link {{if eq .AdminSection "domain-blocks"}}active{{end}}" href="/admin/domain_blocks"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg>Federation policy</a>
+                    <a class="admin-nav-link {{if eq .AdminSection "audit"}}active{{end}}" href="/admin/audit"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-search"/></svg>Audit log</a>
+                </div>
+                <div class="admin-nav-group"><span class="admin-nav-label">People &amp; access</span>
+                    <a class="admin-nav-link {{if eq .AdminSection "accounts"}}active{{end}}" href="/admin/accounts"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-users"/></svg>Accounts</a>
+                    <a class="admin-nav-link {{if eq .AdminSection "pending"}}active{{end}}" href="/admin/pending"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg>Pending approvals{{if .AdminPending}}<span class="admin-nav-count">{{.AdminPending}}</span>{{end}}</a>
+                    <a class="admin-nav-link {{if eq .AdminSection "invites"}}active{{end}}" href="/admin/invites"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-mail"/></svg>Invites</a>
+                </div>
+                <div class="admin-nav-group"><span class="admin-nav-label">Federation</span>
+                    <a class="admin-nav-link {{if eq .AdminSection "instances"}}active{{end}}" href="/admin/instances"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg>Instances{{if .AdminInstances}}<span class="admin-nav-count">{{.AdminInstances}}</span>{{end}}</a>
+                    <a class="admin-nav-link {{if eq .AdminSection "bubbles"}}active{{end}}" href="/admin/bubbles"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bubbles"/></svg>Bubbles</a>
+                </div>
+                <div class="admin-nav-group"><span class="admin-nav-label">Operations</span>
+                    <a class="admin-nav-link {{if eq .AdminSection "queue"}}active{{end}}" href="/admin/queue"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-boost"/></svg>Queue{{if .AdminQueueProblems}}<span class="admin-nav-count">{{.AdminQueueProblems}}</span>{{end}}</a>
+                    <a class="admin-nav-link {{if eq .AdminSection "housekeeping"}}active{{end}}" href="/admin/housekeeping"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-trash"/></svg>Housekeeping</a>
+                    <a class="admin-nav-link {{if eq .AdminSection "backup"}}active{{end}}" href="/admin/backup"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-download"/></svg>Backup</a>
+                </div>
+                <div class="admin-nav-group"><span class="admin-nav-label">Configuration</span>
+                    <a class="admin-nav-link {{if eq .AdminSection "instance-profile"}}active{{end}}" href="/admin/instance"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg>Instance profile</a>
+                    <a class="admin-nav-link {{if eq .AdminSection "configuration"}}active{{end}}" href="/admin/settings"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-settings"/></svg>Effective configuration</a>
+                </div>
+            </nav>
+        </aside><section class="admin-content">
+        {{end}}
+        {{if and .Account .BackURL (not .IsAdmin)}}
+        <!-- Back control: JS browsers get true history.back(); text/no-JS browsers
+             follow the same-origin href. -->
+        <a href="{{.BackURL}}" class="back-link" hx-boost="false">
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-arrow-left"/></svg>
+            <span>{{T "back.label"}}</span>
+        </a>
+        {{end}}
+        {{trustedTemplateHTML .ContentHTML}}
+        {{if .IsAdmin}}</section></div>{{end}}
+    </main>
+
+    {{/* Reachable from every page, signed in or not: /about is what someone
+         reads while deciding whether this is a server they want an account on,
+         so it must not be buried behind the authenticated navigation. */}}
+    {{if not .IsAdmin}}
+    <footer class="site-footer">
+        <a href="/about">{{T "about.title"}}</a>
+        {{if or .Account publicLocalTimelineEnabled}}<a href="/public/local">{{T "mobile.local"}}</a>{{end}}
+		{{if and blogDirectoryEnabled (or .Account publicBlogDirectoryEnabled)}}<a href="/blogs">{{T "blogs.title"}}</a>{{end}}
+        <a href="https://littlefedi.org" rel="noopener">littleFedi</a>
+    </footer>
+    {{end}}
+
+    {{if and .Account (not .IsAdmin)}}
+    {{/* Side rail. Hidden by the default theme; Roost pins it to the right of
+         the feed. Everything here already exists elsewhere in the page, so no
+         theme is missing functionality when it chooses not to show it. */}}
+    <aside class="rail-right" aria-label="{{T "nav.discover"}}">
+        <form action="/search" method="get" class="rail-search" role="search">
+            <label class="sr-only" for="rail-search-input">{{T "nav.search_aria"}}</label>
+            <svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-search"/></svg>
+            <input id="rail-search-input" type="search" name="q" placeholder="{{T "nav.search_placeholder"}}">
+        </form>
+        <nav class="rail-card" aria-label="{{T "mobile.timeline"}}">
+            <h2 class="rail-card-title">{{if .InstanceName}}{{.InstanceName}}{{else}}littleFedi{{end}}</h2>
+            <a href="/public/local"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-users"/></svg>{{T "mobile.local"}}</a>
+            <a href="/public"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg>{{T "mobile.federated"}}</a>
+            <a href="/bookmarks"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-bookmark"/></svg>{{T "mobile.bookmarks"}}</a>
+            {{if .RSSFeedURL}}<a href="{{.RSSFeedURL}}" hx-boost="false"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe-sm"/></svg>RSS</a>{{end}}
+        </nav>
+    </aside>
+    {{end}}
+
+    <div x-data="lightbox"
+         x-show="shown"
+         x-transition.opacity.duration.200ms
+         x-cloak
+         @open-lightbox.window="open($event.detail)"
+         @keydown.escape.window="close()"
+         @keydown.tab.prevent="cycle()"
+         class="lightbox-backdrop"
+         role="dialog"
+         aria-modal="true"
+         :aria-label="alt || '{{T "lightbox.image"}}'"
+         @click.self="close()">
+        {{/* The lightbox is opened by script and hidden by stylesheet, so a
+             browser with neither shows whatever is written here. Its close
+             glyph comes from CSS and the image starts with an empty alt, which
+             leaves a text browser one named button and nothing else. */}}
+        <button class="lightbox-close" x-ref="closeButton" @click="close()"><span class="sr-only">{{T "lightbox.close"}}</span></button>
+        <img alt="" :src="src" :alt="alt" @click.stop>
+    </div>
+
+
+</body>
+</html>
+{{end}}

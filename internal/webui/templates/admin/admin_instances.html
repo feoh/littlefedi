@@ -1,0 +1,76 @@
+<div>
+    <div class="admin-page-header"><div><h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-globe"/></svg>Instance health</h1><p class="admin-page-description">Known remote instances and their federation reachability.</p></div></div>
+    <form method="get" class="admin-card" style="display:flex;gap:.6rem;margin-bottom:.85rem;align-items:end;"><div class="form-group" style="margin:0;flex:1;"><label for="instance-search">Search</label><input id="instance-search" name="q" value="{{.Query}}" placeholder="Domain or software"></div><div class="form-group" style="margin:0;"><label for="instance-state">State</label><select id="instance-state" name="state"><option value="">All</option><option value="healthy" {{if eq .State "healthy"}}selected{{end}}>Healthy</option><option value="degraded" {{if eq .State "degraded"}}selected{{end}}>Failing</option><option value="unreachable" {{if eq .State "unreachable"}}selected{{end}}>Offline</option><option value="suspended" {{if eq .State "suspended"}}selected{{end}}>Suspended</option></select></div><button class="btn btn-primary">Filter</button></form>
+
+    {{if .Instances}}
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;"><caption class="sr-only">Known remote instances</caption>
+        <thead>
+            <tr style="text-align:left;font-size:0.8125rem;color:var(--muted);border-bottom:1px solid var(--line);">
+                <th scope="col" style="padding:0.5rem;">Domain</th>
+                <th scope="col" style="padding:0.5rem;">Software</th>
+                <th scope="col" style="padding:0.5rem;">Status</th>
+                <th scope="col" style="padding:0.5rem;">Following</th>
+                <th scope="col" style="padding:0.5rem;">Followers</th>
+                <th scope="col" style="padding:0.5rem;">Last Success</th>
+                <th scope="col" style="padding:0.5rem;">Last Failure</th>
+                <th scope="col" style="padding:0.5rem;">Failures</th>
+                <th scope="col" style="padding:0.5rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Instances}}
+            <tr style="border-bottom:1px solid var(--line);font-size:0.875rem;">
+                <td style="padding:0.5rem;font-weight:600;">{{.Domain}}</td>
+                <td style="padding:0.5rem;color:var(--muted);font-size:0.8125rem;">
+                    {{if .Software}}{{.Software}}{{if .Version}} {{.Version}}{{end}}{{else}}<span style="color:var(--muted);">unknown</span>{{end}}
+                </td>
+                <td style="padding:0.5rem;">
+                    {{if .Suspended}}
+                        <span style="color:var(--danger);font-weight:600;">🔴 Suspended</span>
+                    {{else if .Offline}}
+                        <span style="color:var(--muted);font-weight:600;" title="Continuously unreachable for over 14 days; delivery paused until it federates with us again. No action needed.">⚫ Offline</span>
+                    {{else if .UnreachableSince}}
+                        <span style="color:#b8860b;font-weight:600;" title="Recent delivery failures, still retrying.">🟡 Failing</span>
+                    {{else}}
+                        <span style="color:var(--success, #1a7f37);font-weight:600;">🟢 Reachable</span>
+                    {{end}}
+                </td>
+                <td style="padding:0.5rem;text-align:center;font-size:0.875rem;">
+                    {{if gt .FollowersFromUs 0}}<span title="Our local accounts following this instance">{{.FollowersFromUs}}</span>{{else}}<span style="color:var(--muted);">0</span>{{end}}
+                </td>
+                <td style="padding:0.5rem;text-align:center;font-size:0.875rem;">
+                    {{if gt .FollowingToUs 0}}<span title="Remote accounts from this instance following us">{{.FollowingToUs}}</span>{{else}}<span style="color:var(--muted);">0</span>{{end}}
+                </td>
+                <td style="padding:0.5rem;color:var(--muted);font-size:0.8125rem;">
+                    {{if .LastSuccess}}{{formatTime .LastSuccess}}{{else}}-{{end}}
+                </td>
+                <td style="padding:0.5rem;color:var(--muted);font-size:0.8125rem;">
+                    {{if .LastFailure}}{{formatTime .LastFailure}}{{else}}-{{end}}
+                </td>
+                <td style="padding:0.5rem;text-align:center;">{{.BackoffCount}}</td>
+                <td style="padding:0.5rem;display:flex;gap:0.25rem;flex-wrap:wrap;">
+                    {{if .UnreachableSince}}
+                    <form action="/admin/instances/{{.ID}}/reset" method="post" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                        <button type="submit" class="btn" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:var(--line);">Reset</button>
+                    </form>
+                    {{end}}
+                    <form action="/admin/instances/{{.ID}}/suspend" method="post" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                        <button type="submit" class="btn" style="padding:0.25rem 0.5rem;font-size:0.75rem;{{if .Suspended}}border-color:var(--success, #1a7f37);color:var(--success, #1a7f37){{else}}border-color:var(--danger);color:var(--danger){{end}};">
+                            {{if .Suspended}}Unsuspend{{else}}Suspend{{end}}
+                        </button>
+                    </form>
+                    <a href="/admin/instances/{{.ID}}/purge" class="btn" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:#d32f2f;color:#d32f2f;" title="Review removal of all data from this instance">Purge…</a>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    </div>
+    {{template "admin-pagination" .Pagination}}
+    {{else}}
+    <p style="color:var(--muted);font-size:0.875rem;text-align:center;padding:2rem;">No remote instances known yet.</p>
+    {{end}}
+</div>

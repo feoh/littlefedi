@@ -1,0 +1,393 @@
+/* Burrow - littleFedi as a GTK application.
+
+   A navigation sidebar beside a content pane, a flat headerbar, roomy 12px
+   corners, and the pattern that pulls the whole desktop together: the boxed
+   list. The feed stops being a stack of floating cards and becomes one rounded
+   container with hairlines between its rows, which is how this desktop shows a
+   list of anything.
+
+   Blue is reserved. It marks the suggested action and nothing else: selected
+   sidebar rows and the current feed are a neutral wash, exactly as they are in
+   a GTK application, which is what keeps this theme from reading as the Plasma
+   one with different corners.
+
+   A layout theme: it reflows the shell above 1050px and repaints every control,
+   so every template is in scope.
+
+   Token layering repeats app.css's four states, one specificity step higher so
+   a theme's dark tokens beat the base theme's dark tokens regardless of file
+   order. */
+
+/* ---------- Tokens: light ---------- */
+:root[data-theme="burrow"]{
+    color-scheme:light;
+    --font-body:'Adwaita Sans','Cantarell','Source Sans 3','Source Sans Pro','Noto Sans',sans-serif;
+    --font-features:normal;
+    --font-mono:'Adwaita Mono','Source Code Pro','DejaVu Sans Mono',ui-monospace,monospace;
+    --bg:#fafafb;
+    --bg-grad:none;
+    --surface:#ffffff;
+    --surface-2:#f0f0f2;
+    --surface-3:#e4e4e7;
+    --text:#202020;
+    --text-soft:#2e2e2e;
+    --muted:#6b6b70;
+    --line:#e0e0e2;
+    --line-strong:#cfcfd2;
+    --accent:#3584e4;
+    --accent-strong:#1a5fb4;
+    --accent-soft:rgba(53,132,228,.12);
+    --accent-grad:#1c71d8;
+    --accent-shadow:transparent;
+    --like:#c01c28;
+    --like-soft:rgba(192,28,40,.10);
+    --boost:#26734d;
+    --boost-soft:rgba(38,115,77,.11);
+    --mention:#613583;
+    --mention-soft:rgba(97,53,131,.11);
+    --danger:#c01c28;
+    --shadow:none;
+    --shadow-md:0 2px 6px rgba(0,0,0,.08);
+    --shadow-lg:0 12px 32px rgba(0,0,0,.16);
+    --radius:12px;
+    --radius-sm:6px;
+    --radius-lg:16px;
+    --header-height:47px;
+    /* Theme-private. Flat controls are a wash of the foreground colour, not a
+       colour of their own, so one value covers light and dark. */
+    --flat-fill:rgba(0,0,0,.08);
+    --flat-fill-hover:rgba(0,0,0,.13);
+    --sidebar:#ebebed;
+    --rail-width:252px;
+    --aside-width:300px;
+    --pane-width:680px;
+}
+
+/* ---------- Tokens: dark ---------- */
+@media(prefers-color-scheme:dark){
+    :root[data-theme="burrow"][data-appearance="auto"],:root[data-theme="burrow"]:not([data-appearance]){
+        color-scheme:dark;
+        --bg:#242424;
+        --surface:#303030;
+        --surface-2:#3a3a3a;
+        --surface-3:#454545;
+        --text:#ffffff;
+        --text-soft:#eeeeee;
+        --muted:#b0b0b0;
+        --line:#3d3d3d;
+        --line-strong:#555555;
+        --accent:#78aeed;
+        --accent-strong:#99c1f1;
+        --accent-soft:rgba(120,174,237,.16);
+        --accent-grad:#1c71d8;
+        --like:#ff7b63;
+        --like-soft:rgba(255,123,99,.16);
+        --boost:#57e389;
+        --boost-soft:rgba(87,227,137,.16);
+        --mention:#c061cb;
+        --mention-soft:rgba(192,97,203,.16);
+        --danger:#ff7b63;
+        --shadow:none;
+        --shadow-md:0 2px 8px rgba(0,0,0,.40);
+        --shadow-lg:0 14px 36px rgba(0,0,0,.55);
+        --flat-fill:rgba(255,255,255,.10);
+        --flat-fill-hover:rgba(255,255,255,.15);
+        --sidebar:#303030;
+    }
+}
+/* Explicit dark: the same tokens with no media query. Vanilla CSS cannot reuse
+   an @media block from a plain selector and this project has no build step;
+   keep the two copies in sync rather than adding one. */
+:root[data-theme="burrow"][data-appearance="dark"],:root[data-theme="burrow"][data-appearance="black"]{
+    color-scheme:dark;
+    --bg:#242424;
+    --surface:#303030;
+    --surface-2:#3a3a3a;
+    --surface-3:#454545;
+    --text:#ffffff;
+    --text-soft:#eeeeee;
+    --muted:#b0b0b0;
+    --line:#3d3d3d;
+    --line-strong:#555555;
+    --accent:#78aeed;
+    --accent-strong:#99c1f1;
+    --accent-soft:rgba(120,174,237,.16);
+    --accent-grad:#1c71d8;
+    --like:#ff7b63;
+    --like-soft:rgba(255,123,99,.16);
+    --boost:#57e389;
+    --boost-soft:rgba(87,227,137,.16);
+    --mention:#c061cb;
+    --mention-soft:rgba(192,97,203,.16);
+    --danger:#ff7b63;
+    --shadow:none;
+    --shadow-md:0 2px 8px rgba(0,0,0,.40);
+    --shadow-lg:0 14px 36px rgba(0,0,0,.55);
+    --flat-fill:rgba(255,255,255,.10);
+    --flat-fill-hover:rgba(255,255,255,.15);
+    --sidebar:#303030;
+}
+
+/* ---------- Tokens: true black ---------- */
+:root[data-theme="burrow"][data-appearance="black"]{
+    --bg:#000000;
+    --surface:#0b0b0c;
+    --surface-2:#161618;
+    --surface-3:#1f1f22;
+    --text:#ededf0;
+    --muted:#96969c;
+    --line:#232326;
+    --line-strong:#37373b;
+    --sidebar:#0b0b0c;
+}
+
+/* ---------- Type ---------- */
+[data-theme="burrow"] body{font-size:.9375rem;line-height:1.5}
+[data-theme="burrow"] .status-body a,[data-theme="burrow"] .profile-bio a,[data-theme="burrow"] .status-quote-body a{color:var(--accent-strong);text-decoration:underline}
+[data-theme="burrow"] .page-title,[data-theme="burrow"] .profile-name{font-weight:700;letter-spacing:0}
+[data-theme="burrow"] .settings-section h2,[data-theme="burrow"] .admin-card h2{font-weight:700;letter-spacing:0}
+
+/* ---------- The boxed list ----------
+   The signature. Timeline, profile posts and notifications become one rounded
+   container of hairline-separated rows instead of a stack of cards. */
+[data-theme="burrow"] #timeline,[data-theme="burrow"] #notifications{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+}
+[data-theme="burrow"] #timeline>.status,[data-theme="burrow"] #notifications>.notification{
+    margin-bottom:0;
+    border:0;
+    border-top:1px solid var(--line);
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+}
+[data-theme="burrow"] #timeline>.status:first-child,[data-theme="burrow"] #notifications>.notification:first-child{border-top:0}
+[data-theme="burrow"] #timeline>.status:hover,[data-theme="burrow"] #notifications>.notification:hover{
+    background:var(--surface-2);
+    border-color:var(--line);
+    box-shadow:none;
+    transform:none;
+}
+[data-theme="burrow"] #notifications>.notification.unread{background:var(--accent-soft)}
+[data-theme="burrow"] #timeline>.empty-state,[data-theme="burrow"] #notifications>.empty-state{padding:3rem 1rem}
+/* The rows the boxed list does not swallow (threads, interaction panels) stay
+   cards, because they are not a flat list of peers. */
+[data-theme="burrow"] .status,[data-theme="burrow"] .composer,[data-theme="burrow"] .settings-section,[data-theme="burrow"] .admin-card,[data-theme="burrow"] .stat-card,[data-theme="burrow"] .profile-header,[data-theme="burrow"] .auth-card{
+    box-shadow:none;
+}
+[data-theme="burrow"] .status:hover{border-color:var(--line-strong);box-shadow:none;transform:none}
+[data-theme="burrow"] .stat-card:hover{transform:none;box-shadow:none}
+[data-theme="burrow"] .thread-item.focus .status{border-color:var(--accent);box-shadow:none}
+[data-theme="burrow"] .profile-banner{background:var(--surface-3)}
+[data-theme="burrow"] .profile-banner::after{display:none}
+[data-theme="burrow"] .profile-avatar{box-shadow:none}
+[data-theme="burrow"] .logo-mark{border-radius:9px;box-shadow:none}
+[data-theme="burrow"] .auth-mark{border-radius:18px;box-shadow:none}
+[data-theme="burrow"] .empty-state .empty-icon{border-radius:var(--radius);background:var(--flat-fill);color:var(--muted)}
+
+/* ---------- Flat controls ----------
+   A button is a wash of the text colour with a 6px corner. The suggested action
+   is the only thing on the page allowed to be blue. */
+[data-theme="burrow"] .btn{border-radius:var(--radius-sm);padding:.5rem 1.05rem;font-size:.875rem;font-weight:700;letter-spacing:0}
+[data-theme="burrow"] .btn-primary{background:var(--accent-grad);color:#fff;box-shadow:none}
+[data-theme="burrow"] .btn-primary:hover{filter:brightness(1.08);box-shadow:none;transform:none}
+[data-theme="burrow"] .btn-ghost,[data-theme="burrow"] .tool-btn,[data-theme="burrow"] .filter-btn,[data-theme="burrow"] .load-more,[data-theme="burrow"] .back-link,[data-theme="burrow"] .relationship-badge,[data-theme="burrow"] .catchup-reason{
+    background:var(--flat-fill);
+    border:0;
+    border-radius:var(--radius-sm);
+    box-shadow:none;
+    color:var(--text);
+}
+[data-theme="burrow"] .btn-ghost:hover,[data-theme="burrow"] .tool-btn:hover,[data-theme="burrow"] .filter-btn:hover,[data-theme="burrow"] .load-more:hover,[data-theme="burrow"] .back-link:hover{
+    background:var(--flat-fill-hover);
+    color:var(--text);
+    transform:none;
+}
+[data-theme="burrow"] .load-more{max-width:none;margin:.75rem auto;border-radius:999px;font-weight:700}
+[data-theme="burrow"] .back-link{border-radius:999px}
+[data-theme="burrow"] .follow-btn{border-radius:var(--radius-sm);border:0;box-shadow:none;font-weight:700}
+[data-theme="burrow"] .follow-btn.follow{background:var(--accent-grad);color:#fff}
+[data-theme="burrow"] .follow-btn.following{background:var(--flat-fill);color:var(--text)}
+[data-theme="burrow"] .btn-icon-post{background:var(--accent-grad);padding-left:1.05rem}
+/* Circular icon buttons, the way a GTK action row ends. */
+[data-theme="burrow"] .action-btn{border-radius:999px;padding:.35rem .6rem;font-weight:700}
+[data-theme="burrow"] .action-btn:hover{background:var(--flat-fill)}
+[data-theme="burrow"] .action-btn:hover .icon{transform:none}
+[data-theme="burrow"] .timeline-floating-action{border:0;background:var(--surface);box-shadow:var(--shadow-md)}
+[data-theme="burrow"] :focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px;border-radius:var(--radius-sm)}
+
+/* ---------- View switcher ----------
+   An inline view switcher: one flat track, the current view a neutral fill. */
+[data-theme="burrow"] .timeline-nav{
+    justify-content:stretch;
+    gap:.15rem;padding:.2rem;
+    background:var(--flat-fill);
+    border:0;
+    border-radius:999px;
+    box-shadow:none;
+}
+[data-theme="burrow"] .timeline-nav a{
+    flex:1 1 0;
+    justify-content:center;
+    padding:.42rem .6rem;
+    border-radius:999px;
+    font-size:.8125rem;font-weight:700;
+    color:var(--text-soft);
+}
+[data-theme="burrow"] .timeline-nav a .icon{display:none}
+[data-theme="burrow"] .timeline-nav a:hover{background:var(--flat-fill);color:var(--text)}
+[data-theme="burrow"] .timeline-nav a.active{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.10)}
+[data-theme="burrow"] .profile-tab.active,[data-theme="burrow"] .notif-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+[data-theme="burrow"] .profile-tab:hover{background:var(--flat-fill);color:var(--text)}
+
+/* ---------- Fields ---------- */
+[data-theme="burrow"] .field,[data-theme="burrow"] .form-group input,[data-theme="burrow"] .form-group textarea,[data-theme="burrow"] .form-group select,[data-theme="burrow"] .lang-select,[data-theme="burrow"] .composer-cw{
+    background:var(--surface-2);
+    border:1px solid transparent;
+    border-radius:var(--radius-sm);
+}
+[data-theme="burrow"] .field:focus,[data-theme="burrow"] .form-group input:focus,[data-theme="burrow"] .form-group textarea:focus,[data-theme="burrow"] .form-group select:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 2px var(--accent-soft);
+}
+[data-theme="burrow"] .composer:focus-within{border-color:var(--line-strong);box-shadow:none}
+
+/* ---------- Thin overlay scrollbars ---------- */
+[data-theme="burrow"] *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--text) 28%,transparent) transparent}
+[data-theme="burrow"] ::-webkit-scrollbar{width:12px;height:12px}
+[data-theme="burrow"] ::-webkit-scrollbar-track{background:transparent}
+[data-theme="burrow"] ::-webkit-scrollbar-thumb{
+    background:color-mix(in srgb,var(--text) 28%,transparent);
+    border:4px solid transparent;
+    background-clip:content-box;
+    border-radius:999px;
+}
+[data-theme="burrow"] ::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--text) 45%,transparent);background-clip:content-box}
+
+/* ---------- Split view ----------
+   Above 1050px: navigation sidebar, content pane, a second sidebar on the
+   right. Flat headerbar, no shadows, no translucency. */
+@media(min-width:1051px){
+    [data-theme="burrow"] .header{
+        position:fixed;top:0;bottom:0;left:0;
+        width:var(--rail-width);height:100dvh;
+        display:flex;flex-direction:column;
+        background:var(--sidebar);
+        backdrop-filter:none;-webkit-backdrop-filter:none;
+        border-bottom:0;
+        border-right:1px solid var(--line);
+    }
+    [data-theme="burrow"] .header-inner{
+        flex:1;min-height:0;overflow-y:auto;
+        flex-direction:column;align-items:stretch;justify-content:flex-start;
+        max-width:none;height:auto;
+        padding:.55rem .6rem 1.25rem;gap:.12rem;
+    }
+    [data-theme="burrow"] .logo{
+        margin-right:0;
+        padding:.5rem .6rem 1rem;
+        font-size:1rem;font-weight:700;letter-spacing:0;
+    }
+    [data-theme="burrow"] .desktop-nav{flex-direction:column;align-items:stretch;gap:.12rem}
+    [data-theme="burrow"] .nav-link{
+        align-self:stretch;justify-content:flex-start;
+        gap:.75rem;padding:.5rem .7rem;
+        border-radius:var(--radius-sm);
+        font-size:.875rem;font-weight:600;
+        color:var(--text);
+    }
+    [data-theme="burrow"] .nav-link .icon{width:1.05rem;height:1.05rem;color:var(--text-soft)}
+    [data-theme="burrow"] .nav-link .icon-label{display:inline}
+    [data-theme="burrow"] .nav-link:hover{background:var(--flat-fill);color:var(--text)}
+    /* Selection is neutral here. Blue means "this is the suggested action". */
+    [data-theme="burrow"] .nav-link.active{background:var(--flat-fill-hover);color:var(--text);font-weight:700}
+    [data-theme="burrow"] .nav-search-form,[data-theme="burrow"] .nav-search-link{display:none!important}
+    [data-theme="burrow"] .desktop-nav>form:not(.nav-search-form){display:flex!important}
+    [data-theme="burrow"] .desktop-nav>form>.nav-link{width:100%}
+    [data-theme="burrow"] .desktop-nav>form .icon-label{display:inline}
+    /* The one pill button on the page, and the one blue thing in the sidebar. */
+    [data-theme="burrow"] .nav-post{
+        display:block;order:99;margin:1rem .35rem 0;
+        padding:.6rem 1rem;
+        background:var(--accent-grad);color:#fff;
+        border-radius:999px;
+        font-size:.875rem;font-weight:700;text-align:center;
+    }
+    [data-theme="burrow"] .nav-post:hover{filter:brightness(1.08);color:#fff;text-decoration:none}
+
+    [data-theme="burrow"] .container{
+        max-width:none;
+        margin-left:var(--rail-width);
+        margin-right:var(--aside-width);
+        padding:1.5rem clamp(1rem,calc((100% - var(--pane-width)) / 2),5rem) 4rem;
+        min-height:100dvh;
+    }
+    [data-theme="burrow"] .admin-container{margin-left:var(--rail-width);margin-right:0;max-width:none;padding:1.6rem 1.6rem 4rem}
+
+    [data-theme="burrow"] .rail-right{
+        display:block;position:fixed;top:0;right:0;
+        width:var(--aside-width);height:100dvh;overflow-y:auto;
+        padding:.8rem .9rem 2rem;
+        background:var(--sidebar);
+        border-left:1px solid var(--line);
+    }
+    [data-theme="burrow"] .rail-search{
+        display:flex;align-items:center;gap:.55rem;
+        padding:.45rem .75rem;margin-bottom:1rem;
+        background:var(--surface-2);
+        border:1px solid transparent;
+        border-radius:999px;
+    }
+    [data-theme="burrow"] .rail-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+    [data-theme="burrow"] .rail-search .icon{color:var(--muted);width:1.05rem;height:1.05rem}
+    [data-theme="burrow"] .rail-search input{flex:1;min-width:0;border:0;background:none;outline:none;font:inherit;font-size:.875rem;color:var(--text)}
+    [data-theme="burrow"] .rail-search input:focus-visible{outline:none;box-shadow:none}
+    /* The rail is a boxed list too - same pattern, same corners. */
+    [data-theme="burrow"] .rail-card{
+        display:grid;gap:0;
+        margin-bottom:1rem;padding:0;
+        background:var(--surface);
+        border:1px solid var(--line);
+        border-radius:var(--radius);
+        overflow:hidden;
+    }
+    [data-theme="burrow"] .rail-card-title{
+        padding:.6rem .85rem;
+        font-size:.8125rem;font-weight:700;
+        letter-spacing:0;color:var(--text);
+    }
+    [data-theme="burrow"] .rail-card a{
+        display:flex;align-items:center;gap:.65rem;
+        padding:.65rem .85rem;
+        border-top:1px solid var(--line);
+        font-size:.875rem;font-weight:600;color:var(--text);
+    }
+    [data-theme="burrow"] .rail-card a:hover{background:var(--surface-2);text-decoration:none}
+    [data-theme="burrow"] .rail-card .icon{color:var(--muted);width:1.05rem;height:1.05rem}
+}
+
+/* Between 1051px and the full three-column width the second sidebar would
+   crowd the content pane, so it stands down. */
+@media(min-width:1051px) and (max-width:1300px){
+    /* The rail carries the search field, and the rail is not here, so the
+       compact search link comes back to the top bar for this band. */
+    [data-theme="burrow"] .nav-search-link{display:inline-flex!important}
+    /* Its label is markup for screen readers only, because in the top bar it
+       sits among icons. Here it sits among words, so let it be one. */
+    [data-theme="burrow"] .nav-search-link .sr-only{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:nowrap}
+
+    [data-theme="burrow"]{--aside-width:0px}
+    [data-theme="burrow"] .rail-right{display:none}
+}
+
+@media(max-width:640px){
+    /* The boxed list goes full-bleed on a phone, the way an adaptive GTK
+       application drops its side margins. */
+    [data-theme="burrow"] #timeline,[data-theme="burrow"] #notifications{
+        border-left:0;border-right:0;border-radius:0;
+        margin-left:-.7rem;margin-right:-.7rem;
+    }
+}

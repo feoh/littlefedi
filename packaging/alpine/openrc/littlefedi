@@ -1,0 +1,43 @@
+#!/sbin/openrc-run
+#
+# Settings in /etc/conf.d/littlefedi:
+#   littlefedi_user, littlefedi_config, littlefedi_envfile, littlefedi_chdir
+
+name="littlefedi"
+description="littleFedi ActivityPub server"
+
+: ${littlefedi_user:="littlefedi"}
+: ${littlefedi_config:="/etc/littlefedi/littlefedi.toml"}
+: ${littlefedi_envfile:="/etc/littlefedi/littlefedi.env"}
+: ${littlefedi_chdir:="/var/lib/littlefedi"}
+
+command="/usr/local/bin/littlefedi"
+command_args="--config ${littlefedi_config}"
+# user only, "user:group" breaks on some OpenRC versions
+command_user="${littlefedi_user}"
+directory="${littlefedi_chdir}"
+pidfile="/run/${RC_SVCNAME}.pid"
+output_log="/var/log/littlefedi/littlefedi.log"
+error_log="/var/log/littlefedi/littlefedi.log"
+
+supervisor="supervise-daemon"
+respawn_delay=5
+respawn_max=0
+
+: ${rc_ulimit:="-n 65536"}
+
+depend() {
+	need net
+	after firewall
+}
+
+start_pre() {
+	# the log is opened after the privilege drop
+	checkpath -d -m 0750 -o "${littlefedi_user}:${littlefedi_user}" /var/log/littlefedi
+	if [ -r "${littlefedi_envfile}" ]; then
+		set -a
+		. "${littlefedi_envfile}"
+		set +a
+	fi
+	umask 0077
+}

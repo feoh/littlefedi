@@ -1,0 +1,23 @@
+<div class="timeline">
+    <div class="profile-header" style="padding:1.1rem;">
+        <h1 class="profile-name" style="font-size:1.2rem;">{{T "blogs.title"}}</h1>
+        <p class="profile-meta" style="margin:0.35rem 0 0;">{{T "blogs.intro"}}</p>
+    </div>
+    {{if .Accounts}}
+    {{range .Accounts}}
+    <div class="status" style="display:flex;align-items:center;gap:0.85rem;padding:0.85rem 1.1rem;">
+        <div class="status-avatar" style="width:2.6rem;height:2.6rem;flex-shrink:0;">
+            {{if .Avatar}}<img src="{{urlSafe (proxyMedia .Avatar)}}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+            {{else}}<div style="width:100%;height:100%;border-radius:50%;background:var(--surface-3);"></div>{{end}}
+        </div>
+        <div style="flex:1;min-width:0;">
+            <a href="/@{{.Username}}/blog" hx-boost="false" class="status-author" style="font-weight:700;font-size:0.95rem;color:var(--text);">{{if .DisplayName}}{{emojifyName .DisplayName .Emojis}}{{else}}@{{.Username}}{{end}}</a>
+            <div class="status-handle" style="font-size:0.76rem;color:var(--muted);">@{{.Username}}</div>
+        </div>
+        <a class="btn" href="/@{{.Username}}/blog" hx-boost="false">{{T "blogs.open"}}</a>
+    </div>
+    {{end}}
+    {{else}}
+    <div class="empty-state"><h2>{{T "blogs.empty"}}</h2></div>
+    {{end}}
+</div>

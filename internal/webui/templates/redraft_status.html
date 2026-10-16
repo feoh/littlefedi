@@ -1,0 +1,7 @@
+<div class="timeline">
+    <h1 class="sr-only">{{T "status.action.redraft"}}</h1>
+    <nav class="timeline-nav">
+        <a href="/@{{.Account.Username}}/{{.RedraftStatusID}}"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-arrow-left"/></svg>{{T "composer.cancel"}}</a>
+    </nav>
+    {{template "components/composer.html" dict "Account" .Account "CSRFToken" .CSRFToken "RedraftStatusID" .RedraftStatusID "RedraftReplyURI" .RedraftReplyURI "ReplyTo" .ReplyTo "DraftContent" .DraftContent "DraftHTML" .DraftHTML "DraftMarkdown" .DraftMarkdown "DraftMarkdownSet" .DraftMarkdownSet "DraftSummary" .DraftSummary "DraftSensitive" .DraftSensitive "DraftVisibility" .DraftVisibility "DraftLanguage" .DraftLanguage "DraftIsBlogPost" .DraftIsBlogPost "DraftBlogSlug" .DraftBlogSlug}}
+</div>

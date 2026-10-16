@@ -1,0 +1,56 @@
+<div>
+    <h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-mail"/></svg>Invites</h1>
+    <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1rem;">Create and manage invitation codes.</p>
+
+    <div class="settings-section">
+        <h2>Create new invite</h2>
+        <form action="/admin/invites" method="post" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:end;">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group" style="flex:1;min-width:140px;">
+                <label for="invite-code">Code (leave blank for random)</label>
+                <input type="text" id="invite-code" name="code" placeholder="e.g. summer2026">
+            </div>
+            <div class="form-group" style="width:100px;">
+                <label for="invite-max-uses">Max uses</label>
+                <input type="number" id="invite-max-uses" name="max_uses" value="1" min="0" style="width:100%;">
+            </div>
+            <div class="form-group" style="width:140px;">
+                <label for="invite-expires">Expires (date)</label>
+                <input type="date" id="invite-expires" name="expires_at" style="width:100%;">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-bottom:1rem;">Create invite</button>
+        </form>
+    </div>
+
+    {{if .Invites}}
+    <table style="width:100%;border-collapse:collapse;"><caption class="sr-only">Invites</caption>
+        <thead>
+            <tr style="text-align:left;font-size:0.8125rem;color:var(--muted);border-bottom:1px solid var(--line);">
+                <th scope="col" style="padding:0.5rem;">Code</th>
+                <th scope="col" style="padding:0.5rem;">Created</th>
+                <th scope="col" style="padding:0.5rem;">Expires</th>
+                <th scope="col" style="padding:0.5rem;">Uses</th>
+                <th scope="col" style="padding:0.5rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Invites}}
+            <tr style="border-bottom:1px solid var(--line);font-size:0.875rem;">
+                <td style="padding:0.5rem;font-family:monospace;font-weight:600;">{{.Code}}</td>
+                <td style="padding:0.5rem;color:var(--muted);">{{formatTime .CreatedAt}}</td>
+                <td style="padding:0.5rem;color:var(--muted);">{{if .ExpiresAt}}{{formatTime .ExpiresAt}}{{else}}Never{{end}}</td>
+                <td style="padding:0.5rem;">{{.UseCount}}/{{if .MaxUses}}{{.MaxUses}}{{else}}∞{{end}}</td>
+                <td style="padding:0.5rem;">
+                    <form action="/admin/invites/{{.ID}}/revoke" method="post" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                        <button type="submit" class="btn" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-color:var(--danger);color:var(--danger);">Revoke</button>
+                    </form>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <p style="color:var(--muted);font-size:0.875rem;text-align:center;padding:2rem;">No invites yet.</p>
+    {{end}}
+</div>

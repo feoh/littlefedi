@@ -1,0 +1,528 @@
+# littleFedi Configuration
+# Copy to littlefedi.toml and customize
+
+# Account handles are @user@local_domain. All web, API, media, and
+# ActivityPub URLs are served from web_domain.
+local_domain = "example.com"           # REQUIRED: stable fediverse handle domain
+web_domain = "social.example.com"      # optional; defaults to local_domain
+# Legacy single-domain configurations may continue to use:
+# domain = "social.example.com"
+
+# Permanently decommission this instance: makes HTTP writes return 410 and
+# delivers Delete(Person) for every local identity to known remote inboxes.
+# Back up first, then run `littlefedi admin self-destruct`, set this to true,
+# restart, and review failed deliveries before destroying data or the host.
+# self_destruct = false
+
+# Keep true for a single process. In a PostgreSQL cluster, exactly one process
+# should run housekeeping, eager cache sweeps, and periodic backups.
+# background_maintenance = true
+
+# Low-power preset
+#
+# One switch that retunes every default for Raspberry-Pi-Zero-class hardware
+# (single core, <=512 MB RAM, SD storage): 1 queue worker with lazier idle
+# polling, in-RAM cache capped at 24 MB with fewer warmed viewers, smaller
+# image-decode limits, shorter federation fetch budgets, smaller home-feed
+# retention (400 rows - shortens home/list scrollback), lower API rate limit,
+# dynamic gzip off, ~4 MB SQLite page cache, and a 256 MiB Go memory limit.
+# Any value you set explicitly in this file or via env still wins.
+# Env: LITTLEFEDI_LOW_POWER=1 (env decides even over this file).
+# low_power = true
+
+# User mode
+#
+# Single-user mode (simple, original behaviour):
+single_user = "you"                    # local account handle (without domain)
+# Uncomment below for multi-user mode (instead of single_user):
+# admins = ["alice"]                   # list of admin usernames
+# contact_username = "alice"           # instance contact (defaults to first admin)
+
+[db]
+# SQLite (default). Pragmas use the _pragma=name(value) form (both the native
+# and NetBSD/WASM builds understand it).
+#
+# synchronous - durability vs. speed of every write:
+#   NORMAL  fsyncs only at WAL checkpoints, not on every commit. Under WAL this
+#           is still corruption-proof; the only risk is that an OS crash or a
+#           sudden power loss can drop the last few committed transactions.
+#           Much less disk I/O - the right default for a Pi / SD card / eMMC.
+#   FULL    SQLite's built-in default: fsync on every commit, so not even the
+#           last transaction is lost on power loss, at the cost of far more
+#           writes. Prefer it only on reliable power (UPS) where losing the very
+#           last post/like matters more than speed.
+# temp_store(MEMORY) keeps sort / GROUP BY scratch in RAM instead of on disk.
+#
+# littleFedi auto-injects synchronous(NORMAL) (only when WAL is on) and
+# temp_store(MEMORY) if your dsn omits them, so an older dsn still gets the
+# speed-up. It never overrides a value you set yourself.
+# dsn = "littlefedi.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(10000)&_pragma=foreign_keys(1)&_pragma=synchronous(NORMAL)&_pragma=temp_store(MEMORY)"
+# PostgreSQL (requires the binary built with -tags postgres):
+# dsn = "postgres://user:pass@localhost:5432/littlefedi?sslmode=disable"
+# max_open_conns = 4                   # default: min(8, GOMAXPROCS); low_power preset uses 1
+# max_idle_conns = 4                   # default: min(8, GOMAXPROCS); low_power preset uses 1
+# If SQLITE_BUSY persists after fixing slow writes, set both to 1. Otherwise
+# keep at least 2 when frontend latency matters: WAL lets a reader run while a
+# write is in flight, so a page request no longer waits out whatever background
+# job reached the database first. With a single connection that wait is the
+# largest part of what the slow-statement log reports, and no amount of queue
+# tuning removes it. Background jobs are held to one fewer connection than the
+# pool has, so one always remains for interactive work.
+#
+# Builds that fall back to the WASM SQLite driver (platforms with no native one)
+# cap the pool at 2, and at 1 on illumos, where the driver's 256 MB
+# per-connection reservation is charged against max-swap instead of being plain
+# address space. The startup log names the effective value when it differs from
+# what you configured.
+log_queries = false
+
+[streaming]
+# "local" is the zero-dependency single-process default. Use "postgres" when
+# multiple littleFedi processes share a PostgreSQL database.
+backend = "local"
+
+[queue]
+# workers = 4                          # default: min(8, GOMAXPROCS); low_power uses 1 unless set here
+terminal_job_retention = "24h"        # delete completed/failed jobs after this age
+stale_running_timeout = "15m"         # recover jobs abandoned by a crashed process
+maintenance_interval = "1h"
+# Local enqueues and retry scheduling wake an idle worker instantly; the poll
+# below is only a safety net (crash recovery, cross-process enqueues in
+# postgres mode).
+# poll_interval = "2s"                # base poll cadence
+# poll_backoff_max = "0s"             # idle backoff cap; 0 = auto (5m single-process, 60s postgres)
+# light_workers = 0                   # dedicated pool for delivery/delivery_fanout/push_notification/
+                                       # send_email; 0 disables it (all four run on the main pool, i.e.
+                                       # every "workers" worker handles everything, including outbound
+                                       # delivery). Setting light_workers > 0 is a strict either/or, not
+                                       # extra capacity: those four kinds then run ONLY on this pool - the
+                                       # main pool's workers stop touching them, even when idle, and there
+                                       # is no overflow between the two. workers=8 + light_workers=2 gives
+                                       # outbound federation exactly 2 workers, not 10 - size it for your
+                                       # real outbound throughput. Useful on a low_power box: keep workers=1
+                                       # for inbox/media_cache and enable light_workers=1 so outbound
+                                       # delivery, push and email keep flowing even while the main worker
+                                       # blocks on a slow inbox job. Under uninterrupted frontend traffic
+                                       # one worker per pool may still take a single job, after 3 seconds
+                                       # for this pool and 10 for the main one, and only one of them runs
+                                       # at a time; every other worker keeps yielding so the interface
+                                       # retains priority.
+
+[http]
+listen = ":8080"                       # address:port to listen on
+# proxy_uri = "https://social.example.com" # exact public HTTPS origin behind a reverse proxy
+# trusted_proxies = ["127.0.0.1/32", "::1/128"] # only the addresses of your reverse proxy
+# gzip = true                          # compress dynamic HTML/JSON (default on; the
+                                       # low_power preset turns it off - CPU vs bandwidth)
+
+[media]
+backend = "local"                      # "local" or "s3" (S3 requires a binary built with -tags s3)
+# cache_backend = ""                   # empty inherits backend; cache objects are never migrated
+# public_base_url = "https://media.example.com" # public bucket or CDN origin for S3 objects
+path = "media"                         # local filesystem path for uploads
+max_file_size = 41943040               # 40 MB
+max_media = 4                          # maximum attachments allowed on one status
+proxy_remote = true                    # stream remote media through this instance so local users never connect to the remote server (privacy); default enabled
+# proxy_secret = ""                    # HMAC secret for signing proxy URLs; auto-generated per-process if blank. Set a stable value to keep signed URLs valid across restarts or behind a shared cache/CDN.
+cache_remote = "off"                   # remote media caching (incl. avatars/headers): "off" (proxy only), "eager" (store all received media, like Mastodon), or "lazy" (cache on first access); switching to "off" discards queued cache jobs
+cache_max_age = "720h"                 # prune cached remote status media older than this; accepts hours or days, e.g. "720h" or "30d". Empty/"0" = keep forever
+cache_max_size_mb = 0                  # cap the cache directory, in MB (e.g. 5120 for 5 GB); ignored while cache_remote is
+                                       # "off", since nothing is stored to bound. 0 = no size cap, cache_max_age alone
+                                       # decides. Cached media attachments are trimmed on every housekeeping run; once a day the
+                                       # whole directory is measured and the oldest of anything is evicted, which is what covers
+                                       # cached avatars, emoji and preview images (they record no size to sum more often than that).
+                                       # Only the cache is counted and evicted: your users' own uploads are never touched.
+# cache_path = ""                      # directory for cached remote media; empty defaults to "<path>/cache". May point at a separate disk/volume.
+rename_media = true                   # rename uploaded files to generic names (strips original filename)
+
+# [media.s3]
+# bucket = "littlefedi"
+# private_bucket = "littlefedi-private" # required for account archives; disable all public access on this bucket
+# region = "us-east-1"
+# endpoint = "https://s3.example.com" # SeaweedFS/MinIO/Ceph/B2/etc.; omit for AWS
+# prefix = ""
+# path_style = true                    # commonly required by SeaweedFS and MinIO
+# use_default_credentials = true       # AWS environment/shared config/instance role chain
+# access_key = ""                     # prefer environment variables over secrets in TOML
+# secret_key = ""
+# session_token = ""
+# insecure = false
+strip_exif = true                     # strip EXIF metadata from uploaded images (preserves orientation)
+max_image_pixels = 13000000           # accepts ordinary 12 MP phone photos; low_power uses the same bound
+max_image_dimension = 0               # no per-side limit; the total pixel bound controls memory
+# processing_concurrency = 2           # maximum simultaneous image decoders; defaults to half the cores (max 4), low_power preset forces 1
+# resample_filter = "lanczos"          # thumbnail resampling: lanczos (best) | catmullrom | linear | box (fastest); low_power preset uses linear
+
+[instance]
+# Block unfollow, block, unblock and rejected-follow notifications for everyone,
+# including accounts that opted in. Hides the user setting. Restart to apply.
+block_sensitive_relationship_notifications = false
+name = "littleFedi"                  # public instance and installed-PWA name
+max_status_chars = 5000               # status length (in characters) advertised to Mastodon clients
+
+# --- Instance profile -------------------------------------------------------
+# What this server publishes about itself: on /about, on /terms, on the signup
+# form, and through the Mastodon instance APIs every client reads.
+#
+# WHICH VALUE WINS. The fields below are the seed; /admin/instance is the
+# override, and it writes to the database, not back to this file.
+#   - A field saved in the admin console wins over the value here. A field left
+#     empty there falls back to this file, so the two can be mixed.
+#   - `rules` are all-or-nothing: saving the profile even once makes the stored
+#     rules authoritative, the empty list included, so that an administrator
+#     can deliberately publish no rules. After that first save, editing `rules`
+#     here has no effect.
+#   - The admin form opens pre-filled with whatever is currently in effect, so
+#     the first save copies these values into the database. Decide where you
+#     want to maintain the profile (this file or the console) and stay there.
+# Changes made in the console apply immediately; changes made here need a
+# restart. `name` above is the exception to all of this: it is read only from
+# this file, because it is baked into the web app manifest at startup.
+# ----------------------------------------------------------------------------
+# The same ordered rules appear in both instance APIs, on /about, and on the
+# signup page.
+rules = [
+  "Treat people with respect.",
+  "No spam, harassment, or illegal content."
+]
+short_description = ""                # one line, shown in server directories and NodeInfo
+description = ""                      # a paragraph, shown at the top of /about
+contact_email = ""                    # moderation address published to clients; empty publishes none
+# Markdown, published in full on /about: who runs this server, who it is for,
+# how it is moderated and funded.
+extended_description = ""
+# Markdown, published at /terms. Empty means this server publishes no terms,
+# and both /terms and /api/v1/instance/terms_of_service return 404.
+terms_of_service = ""
+
+[federation]
+secure_mode = false                    # authorized fetch: require a valid HTTP Signature on GET requests to actor/outbox/followers/following/object endpoints, rejecting unsigned scrapers
+commercial_bigtech_list_url = "https://littlefedi.org/lists/commercial-bigtech.csv" # HTTPS-only; override here or by environment, never from the admin UI
+sign_with_oip = false                  # attach an FEP-8b32 Object Integrity Proof (Ed25519/eddsa-jcs-2022) to outbound activities in addition to the HTTP Signature; enable only after validating OIP verification against your peers
+# user_agent = "littleFedi/26.07.17 (+https://social.example.com)"  # default: "littleFedi/<build version> (+https://<web_domain>)"
+# Private ActivityPub keys can be sealed in the database with an
+# environment-only AES-256 key. Generate it with `openssl rand -base64 32`, set
+# LITTLEFEDI_FEDERATION_KEY_ENCRYPTION_KEY in the service manager, then run
+# `littlefedi admin keys encrypt`. Store the key away from the database backup:
+# without it the sealed accounts can no longer sign anything.
+# Delivery retries use a fixed capped-exponential backoff + jitter (16 attempts
+# over ~26h); not configurable. See the README's "Delivery retries & backoff".
+actor_refresh_interval = "10m"        # dispatcher cadence; first run is after this delay (0 disables)
+actor_stale_age = "168h"              # refresh success interval before deterministic jitter
+actor_refresh_on_demand_stale_age = "24h" # cached profile/API reads queue SWR after this age
+# actor_refresh_batch_size = 10        # maximum low-priority jobs queued per tick; low_power uses 5
+actor_refresh_lease = "15m"            # recovers claims after process crashes
+# actor_refresh_queue_high_watermark = 100 # pause dispatch when user-facing queue work is busy; low_power uses 50
+actor_refresh_concurrency = 1           # compatibility setting; queue workers bound execution
+thread_fetch_enabled = true            # complete stale remote threads when opened
+thread_fetch_stale_after = "15m"       # minimum interval between attempts per status
+# thread_fetch_timeout = "3s"          # total synchronous refresh deadline; low_power uses 2s (hard cap: 10s)
+# thread_fetch_max_replies = 5          # replies accepted per refresh; low_power uses 3 (hard cap: 20)
+thread_fetch_max_ancestor_depth = 20    # missing parent links followed (hard cap: 100)
+thread_fetch_max_pages = 1              # pages read per replies collection (hard cap: 5)
+thread_fetch_background_enabled = true
+thread_fetch_background_timeout = "30s"
+# thread_fetch_background_max_replies = 200 # low_power uses 100
+# thread_fetch_background_max_pages = 20    # low_power uses 10
+thread_fetch_background_concurrency = 1 # global cap, not one worker per opened thread
+# http_max_idle_conns = 64              # outbound connection pool; idle conns avoid TLS re-handshakes on delivery bursts
+# http_max_idle_conns_per_host = 8      # per big shared inbox host; low_power preset uses 20/4
+
+# littleMesh: federate without a public IP address, DNS name, or inbound port.
+# The instance is named by an Ed25519 key pair it generates on first run, and
+# its domain becomes "<node-id>.mesh.<lighthouse-host>". Leave local_domain and
+# web_domain unset for a mesh-only instance: the domain comes from the key.
+# An instance that already has a public domain keeps it and gains only the
+# ability to reach mesh peers. Full guide: docs/littlemesh.md
+[mesh]
+# enabled = false
+# lighthouses = ["faro.example:7842@<node-id>"] # relays to register with; @node-id pins the relay's identity
+# suffix = "mesh.faro.example"          # normally derived from the first lighthouse
+# exposure = "federation"               # federation = ActivityPub/public media only; full = whole instance;
+#                                       # allowlist = federation for all, whole instance only for source node IDs below
+# full_access = ["<node-id>"]            # source peers receiving full access when exposure = "allowlist"
+# discover_lighthouses = false           # opt in to deriving and contacting unconfigured relays for foreign mesh suffixes
+# direct_listen = "0.0.0.0:7842"        # accept unrelayed connections, if this host is reachable
+# direct_advertise = ["203.0.113.10:7842"] # what peers should try; a concrete direct_listen advertises itself
+# allow_private_direct = false          # true ONLY for a mesh confined to one LAN: it relaxes the guard that
+#                                       # stops a remote peer steering connections into your own network
+# max_circuits = 64                     # concurrent circuits in both directions (low_power preset: 16)
+# dial_timeout = "30s"
+# directory_url = "https://directory.mesh.example.com"
+# directory_state = "/var/lib/littlefedi/mesh-directory-client.db"
+# alias = "red-house.mesh.example.com" # readable handle domain; actor URLs still use <node-id>.<suffix>
+# record_ttl = "24h"
+# publish_interval = "12h"              # refresh signed locators before expiry
+# Append backup lighthouses without reordering the first. Failover requires
+# caller and target to share a backup. Pin each public relay with @node-id;
+# pins also let nodes trust gateway client-IP forwarding.
+
+# Read only by `littlefedi lighthouse`, which runs a relay for nodes behind
+# NAT. A relay sees ciphertext and node IDs, never message content. Set a byte
+# quota on any relay open to the public. A relay serves no ActivityPub
+# identity, so its config needs no local_domain - setting `listen` is what
+# marks a configuration as a relay. `littlefedi init` can create this config.
+# Guide: docs/littlemesh.md
+[lighthouse]
+# Keep relay, quota, and gateway settings in this section. TOML keys belong to
+# the most recent [section] header.
+# listen = ":7842"                      # required to run a relay
+#                                       # publish it with the relay's identity so nodes can pin it:
+#                                       #   littlefedi --config lighthouse.toml lighthouse --print-id
+#                                       #   faro.example:7842@<node-id>
+# allowlist = []                        # empty = open; otherwise only these node ids may register or open circuits
+# max_bytes_per_node_per_hour = 0       # 0 = unlimited, appropriate only for a private relay
+# max_circuits_per_node = 64
+# max_connections = 4096                # global cap including handshakes, controls, and half-open circuits
+# max_connections_per_ip = 128           # pre-TLS cap; prevents rotating node keys from bypassing connection limits
+# gateway_listen = "127.0.0.1:8443"     # optional HTTPS front door making relayed nodes visible to the ordinary
+#                                       # fediverse. Needs wildcard DNS and a wildcard certificate on the reverse
+#                                       # proxy in front of it, and REQUIRES mesh.suffix. Must stay on loopback.
+#                                       # The gateway terminates TLS, so its operator can read and tamper with
+#                                       # non-mesh traffic.
+# gateway_mode = "federation"           # federation = ActivityPub/public media only; full = whole instance;
+#                                       # allowlist = federation for all, whole instance only for node IDs below.
+#                                       # Omitted defaults safely to federation.
+# exposure = "federation"               # accepted compatibility alias for gateway_mode; do not set both
+# gateway_full_access = ["<node-id>"]    # used only when gateway_mode = "allowlist"
+
+# Read only by `littlefedi directory`. Put this listener behind an HTTPS reverse
+# proxy. SQLite WAL persists one row per accepted signed update.
+[directory]
+# listen = "127.0.0.1:7850"
+# state_file = "/var/lib/littlefedi-directory/directory.db"
+# open_registration = false            # safe default: reserve aliases for node IDs with the directory CLI
+# max_records = 100000                  # hard cap against unbounded storage growth
+
+[web]
+password = ""                          # set LITTLEFEDI_WEB_PASSWORD before the first login;
+                                        # remove it after the password is hashed. Deprecated for
+                                        # multi-user installations; use per-user passwords there.
+default_locale = "en"                  # fallback UI/email/push language when no account
+                                        # preference, locale cookie, or Accept-Language match
+                                        # (supported: en, it, de, fr, es, pt)
+# default_theme = "default"             # web UI skin for signed-out visitors and accounts that
+                                        # never picked one. "default" is littleFedi's own look;
+                                        # "roost" is a familiar timeline for people arriving from
+                                        # classic microblogging apps (left navigation rail, ruled
+                                        # feed, blue accent). Each account can override it in
+                                        # Settings > Appearance.
+# default_appearance = "auto"           # "auto" follows the visitor's system light/dark setting;
+                                        # "light", "dark", or "black" (true black, for OLED) pin it.
+                                        # An unknown value here falls back to the built-in default
+                                        # rather than failing startup.
+# catchup = true                        # offer the /catchup view (default true); false removes
+                                        # the page and its navigation entries. Never affects
+                                        # the chronological timelines either way.
+# public_local_timeline = true          # let signed-out visitors browse the local timeline;
+                                        # false hides its links and requires login at "/",
+                                        # "/public/local", and its pagination endpoint
+# public_blog_directory = true          # let signed-out visitors browse "/blogs" and its
+                                        # sitemap index; false requires login for both.
+                                        # Individual blogs and their sitemaps remain public.
+# redirect_guests_to_about = false      # send signed-out visitors from "/" to "/about";
+                                        # takes precedence over public_local_timeline at "/"
+
+[auth]
+registrations = false                  # open registration (set to true to allow sign-ups)
+# invite_required = false              # require invite token to register
+# min_password_length = 15             # minimum password length (default 15; max 72 for bcrypt)
+# require_approval = false             # admin must approve new accounts
+# require_email = false                # email mandatory for multi-user registration; defaults false - set true to require it
+# require_admin_mfa = false            # require every administrator to have TOTP enrolled
+# MFA seeds require an environment-only AES-256 key. Generate it with
+# `openssl rand -base64 32` and set LITTLEFEDI_AUTH_MFA_ENCRYPTION_KEY in the
+# service manager. Enroll admins before changing require_admin_mfa to true.
+# enforce_oauth_scopes = true          # deprecated compatibility key; OAuth scopes are always enforced
+# dev_mode = false                     # DANGER: accepts any non-empty password for localhost logins; local dev only, never in production
+
+[rate_limits]
+# api = 300                            # requests/minute for API; low_power uses 120
+inbox = 100                            # requests/minute for inbox
+
+[housekeeping]
+# Automatic status pruning (0 = disabled)
+prune_remote_statuses_after_days = 30  # bound federated status storage; 0 disables
+prune_own_statuses_after_days = 0      # delete your own low-interaction statuses after N days
+prune_own_statuses_min_likes = 3       # only delete own statuses with fewer than N likes (default 0 = no threshold; shown here as a sane starter value)
+prune_own_statuses_min_boosts = 1      # only delete own statuses with fewer than N boosts (default 0 = no threshold; shown here as a sane starter value)
+# tombstone_retention_days = 90         # how long deleted-status tombstones are kept before hard removal
+interval = "1h"                        # how often to run housekeeping (e.g. "1h", "24h")
+# max_delete_per_run = 500             # with hourly runs, daily capacity is this value x 24; low_power uses 200.
+                                       # 0 is unlimited.
+                                       # Relay-fed instances should set it above sustained
+                                       # daily ingest, with headroom. Shorter retention reduces
+                                       # the stored window but does not increase throughput.
+                                       # Orphaned remote accounts are swept separately,
+                                       # at most 500 per day.
+                                       # On 32-bit hosts (e.g. armv6/armv7 NetBSD/OpenBSD,
+                                       # which use the ncruces/go-sqlite3 WASM fallback
+                                       # driver instead of a native driver), 0 lets the
+                                       # cached-media/status-preview pruning query run an
+                                       # unbounded ORDER BY sort that can exceed that
+                                       # driver's fixed 32MB memory arena and crash the
+                                       # process. Keep a positive value on such hosts.
+# home_feed_retention = 800            # materialized home_feed rows kept per user;
+                                       # bounds home/list scrollback depth (min 100)
+
+[backup]
+enabled = false                         # enable periodic server-side backups
+path = "backups"                        # output directory for backups
+interval = "24h"                        # how often to run backups, e.g. "24h" or "7d"
+include_media = false                   # include owned media (cache is always excluded)
+retain = 7                              # number of backups to keep (0 = unlimited)
+
+[cache]
+# In-RAM cache that speeds up timeline/profile navigation - the Redis-free
+# equivalent of Mastodon's timeline caches. Fully transparent and **enabled by
+# default** (set enabled = false to opt out). It keeps a byte-bounded LRU of
+# the hottest reads in memory: viewer-neutral entities, exact timeline
+# status-ID windows shared by the web UI and Mastodon API, rendered
+# pages/cards, and serialized public ActivityPub objects requested by
+# federated servers.
+enabled = true                          # on by default; set false to disable
+# max_memory_mb = 32                    # default 32; low_power uses 24
+# This budget is live memory, so it is counted in the soft memory limit the
+# process derives at startup on the portable SQLite builds and under low_power.
+# A value the host cannot hold is reduced at startup and the reduction logged.
+# Standard split: 40% entities, 25% timelines, 20% pages/cards, 15% federation.
+# Low-power split: 25% entities, 10% timelines, 20% pages/cards, 45% federation.
+entity_ttl = "1h"                       # backstop TTL for cached statuses/accounts (writes invalidate immediately)
+page_ttl = "5m"                         # rendered page snapshots; new posts are detected by generation validation regardless
+component_ttl = "1h"                    # per-viewer enriched statuses; dependency-invalidated, TTL only bounds count staleness
+card_ttl = "1h"                         # rendered status-card HTML; dependency-invalidated like components
+serve_stale = true                      # serve a just-outdated page instantly and refresh it in the background
+timeline_ttl = "2h"                     # hard recovery bound; new posts incrementally refresh hot head windows
+timeline_max_entries = 200              # normal web/API pages are only 20 to 40 posts
+federation_ttl = "10m"                  # public ActivityPub objects/collections and safe outbound GETs
+discovery_ttl = "1h"                    # WebFinger, NodeInfo, host-meta and actor discovery
+negative_ttl = "30s"                    # definitive remote 404/410 responses only; transient failures are never cached
+max_federation_object_kb = 512           # reject/cache-bypass oversized remote documents
+warm_timelines = true                   # proactively refresh active viewers' caches when new posts/notifications arrive
+active_viewer_ttl = "15m"               # how long after their last request a viewer keeps being warmed
+# warm_max_viewers = 4                  # default: min(8, GOMAXPROCS); low_power uses 1
+warm_debounce = "2s"                    # coalesce federation bursts into one warm pass
+
+[migration]
+enabled = true                          # allow ActivityPub Move and follow import/export
+max_follows_import = 5000               # max follows to import when moving in (0 = unlimited)
+import_rate = "1s"                      # delay between imported Follow activities
+cooldown_after_move = "720h"            # minimum time before moving the same account again
+require_target_alias = false            # require destination alsoKnownAs before moving out
+
+[blog]
+# Optional static per-account blog site. Requires building the binary with
+# -tags blog (`make build-blog`, or release builds which include it by
+# default); this section is silently ignored on a plain build - no route or
+# job handler exists without the tag.
+enabled = false                        # opt in; which posts appear is still per-post/per-account
+output_dir = "blogs"                   # generated site root, defaults to "blogs"
+# Public /blogs directory. Authors can remove themselves from it in Settings
+# without making their blog private or changing its direct URL.
+# false removes the directory for everyone; [web] public_blog_directory
+# controls whether signed-out visitors can browse it when enabled.
+directory_enabled = true
+# Who may publish a blog. false: nobody until an administrator grants it per
+# account, from Admin > Accounts or `admin blog allow`. true: every local
+# account, and the per-account permission is ignored while it is on - the
+# admin button and `admin blog allow` decline rather than pretend, and turning
+# this back off restores whatever each account was granted individually.
+all_accounts = false
+# Permalink template for new posts. Placeholders: {year} {month} {day}
+# {title} {id} {shortid}; it must contain {title}, {id} or {shortid}. A slug
+# is rendered once, when the post is first published, and then stored: editing
+# a post never moves its URL, and changing this setting only affects new posts.
+slug_format = "{year}/{month}/{day}/{title}"
+# Let each author override slug_format in Settings > Blog. Set false to impose
+# one permalink style on the whole instance (authors keep the per-post
+# "Custom URL" field either way).
+allow_user_slug_format = true
+
+[observability]
+log_level = "info"                     # debug, info, warn, error
+metrics_enabled = false
+# access_log = true                    # per-request log lines; static/media/health always log at debug only
+# pprof_listen = "127.0.0.1:6060"      # Go pprof profiler on its own port; unauthenticated, keep it on localhost
+
+[smtp]
+# Optional: for email notifications, password reset, and direct critical database alerts to admins
+# host = "mail.example.com"
+# port = 587
+# username = "littlefedi@example.com"
+# password = "secret"
+# from = "littleFedi <littlefedi@example.com>"
+# Used if the database fails before admin addresses can be read.
+# database_alert_to = "admin@example.com"
+# require_tls = true                    # default: fail if STARTTLS is unavailable
+# implicit_tls = false                  # set true for SMTPS, commonly port 465
+# insecure_skip_verify = false          # for private/self-signed servers; disables chain and hostname verification
+
+[push]
+# Optional: VAPID keys for push notifications (Web Push).
+# Generate with: openssl ecparam -genkey -name prime256v1 -noout -out vapid.pem && openssl ec -in vapid.pem -pubout -out vapid.pub
+# Or let the server generate them on first run (they'll be logged).
+# vapid_public_key = "BD..."
+# vapid_private_key = "BE..."
+
+# Raspberry Pi Zero / Zero W class devices (≤512 MB RAM, single core)
+# Start with `low_power = true` at the top of this file - it applies all the
+# essential tuning in one switch. The overrides below are for going further by
+# hand (or understanding what the preset does). These are edits to the sections
+# already defined above, not extra copies - a TOML table may appear only once,
+# so merge each value into its existing [section] rather than pasting this
+# block wholesale. Benchmark on the target device before setting memory or
+# latency expectations.
+#
+# [db]
+# # synchronous(NORMAL): no per-commit fsync (crash-safe under WAL) - the single
+# # biggest win on an SD card. cache_size(-4000) caps the page cache at ~4 MB
+# # (the built-in default on the native SQLite driver is cache_size(-8000) plus
+# # mmap_size(64MB); any pragma you set in the DSN wins over those defaults).
+# dsn = "littlefedi.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(30000)&_pragma=foreign_keys(1)&_pragma=synchronous(NORMAL)&_pragma=temp_store(MEMORY)&_pragma=cache_size(-4000)"
+# max_open_conns = 1        # single core; raise to 2 for a little more read concurrency
+# max_idle_conns = 1
+#
+# [queue]
+# workers = 1               # one background worker is plenty
+# light_workers = 1         # optional: dedicates 1 worker to delivery/push/email, taken away from the
+                             # main pool's kinds, not added on top - see [queue] comment above
+#
+# [media]
+# max_file_size = 10485760  # 10 MB
+# max_image_pixels = 4000000  # 4 MP: caps decoded working memory at roughly 22 MB
+# max_image_dimension = 4096
+# processing_concurrency = 1
+# cache_remote = "off"      # proxy remote media; never decode/store it on this device
+#
+# [federation]
+# actor_refresh_interval = "15m"
+# actor_refresh_batch_size = 5
+# actor_refresh_queue_high_watermark = 25
+# thread_fetch_timeout = "2s"
+# thread_fetch_max_replies = 3
+#
+# [housekeeping]
+# interval = "6h"
+# max_delete_per_run = 100
+# prune_remote_statuses_after_days = 14
+#
+# [cache]
+# # A small cache dramatically cuts per-page SQLite queries on an SD card. 32 MB
+# # is comfortable even on a 512 MB Pi Zero; raise it if you have RAM to spare.
+# enabled = true
+# max_memory_mb = 32
+# entity_ttl = "1h"
+# page_ttl = "5m"
+# component_ttl = "1h"        # long-lived: sparse visits still find warm enrichment
+# card_ttl = "1h"
+# serve_stale = true          # first page open after new posts never waits on a rebuild
+# timeline_ttl = "2h"
+# timeline_max_entries = 200  # ample for normal 20 to 40 item pages; lowers retained ID memory
+# federation_ttl = "10m"
+# discovery_ttl = "1h"
+# negative_ttl = "30s"
+# max_federation_object_kb = 512
+# warm_timelines = true       # first page open after new posts arrive is already a cache hit
+# active_viewer_ttl = "15m"
+# warm_max_viewers = 1        # keep small on a single core
+# warm_debounce = "2s"

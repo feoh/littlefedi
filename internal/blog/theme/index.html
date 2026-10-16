@@ -1,0 +1,14 @@
+{{define "index"}}{{template "header" .}}
+{{/* The site name is the front page's heading. Every other page prints its
+     own h1, so without this the index would be the one page with none. */}}
+<h1 class="visually-hidden">{{.SiteTitle}}</h1>
+{{if .SiteDescription}}<p class="site-description">{{.SiteDescription}}</p>{{end}}
+{{if not .Posts}}<p class="empty">No posts yet.</p>{{end}}
+<ul class="post-list">
+{{range .Posts}}<li class="post-summary">
+<h2><a href="{{.Permalink}}">{{.Title}}</a></h2>
+<p class="post-meta"><time datetime="{{.Date.UTC.Format "2006-01-02T15:04:05Z07:00"}}">{{.Date.UTC.Format "2006-01-02 15:04"}} UTC</time>{{if .Tags}} · {{range $i, $t := .Tags}}{{if $i}}, {{end}}<a href="{{$t.URL}}">#{{$t.Name}}</a>{{end}}{{end}}</p>
+<p class="post-excerpt">{{.Excerpt}}</p>
+</li>
+{{end}}</ul>
+{{template "footer" .}}{{end}}

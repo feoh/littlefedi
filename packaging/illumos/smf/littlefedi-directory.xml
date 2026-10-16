@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
+<service_bundle type="manifest" name="littlefedi-directory">
+  <service name="site/littlefedi-directory" type="service" version="1">
+
+    <create_default_instance enabled="false"/>
+    <single_instance/>
+
+    <dependency name="network" grouping="require_all" restart_on="error"
+        type="service">
+      <service_fmri value="svc:/milestone/network:default"/>
+    </dependency>
+
+    <dependency name="filesystem-local" grouping="require_all"
+        restart_on="none" type="service">
+      <service_fmri value="svc:/system/filesystem/local:default"/>
+    </dependency>
+
+    <exec_method type="method" name="start" timeout_seconds="60"
+        exec='/bin/sh -c "umask 077; exec /usr/local/bin/littlefedi --config /etc/littlefedi/directory.toml directory"'>
+      <method_context working_directory="/var/littlefedi-directory"
+          project="littlefedi">
+        <method_credential user="littlefedi-directory"
+            group="littlefedi-directory"
+            privileges="basic,!proc_info,!proc_session,!file_link_any"/>
+      </method_context>
+    </exec_method>
+
+    <exec_method type="method" name="stop" timeout_seconds="20"
+        exec=":kill"/>
+
+    <property_group name="startd" type="framework">
+      <propval name="duration" type="astring" value="child"/>
+      <propval name="ignore_error" type="astring" value="core,signal"/>
+    </property_group>
+
+    <stability value="Evolving"/>
+
+    <template>
+      <common_name>
+        <loctext xml:lang="C">littleMesh directory</loctext>
+      </common_name>
+      <documentation>
+        <doc_link name="littlefedi"
+            uri="https://brew.bsd.cafe/littlecomputerpeople/littlefedi"/>
+      </documentation>
+    </template>
+
+  </service>
+</service_bundle>

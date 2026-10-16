@@ -1,0 +1,113 @@
+/* Kiosk - short posts, notes and link blogs.
+ *
+ * Posts that came from the fediverse are usually a couple of sentences, so the
+ * title carries the page and the excerpt follows it quietly. A full-bleed
+ * colour band replaces the ruled header, and tags become pills, because on a
+ * feed of short items the tag is how a reader picks.
+ *
+ * The band is painted with a background colour, not an image: with images
+ * blocked the page loses nothing. */
+
+:root {
+    --bg: #faf7f5;
+    --surface: #ffffff;
+    --text: #1a1418;
+    --text-soft: #40343b;
+    --muted: #665760;
+    --line: #e7dfe2;
+    --accent: #0f7a4e;
+    --accent-strong: #0b5f3c;
+    --band: #5b1e4e;
+    --band-text: #fbf1f7;
+    --band-muted: #e2bed6;
+    --max-width: 38rem;
+    --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #161016;
+        --surface: #1e161e;
+        --text: #f0e7ec;
+        --text-soft: #d2c4cc;
+        --muted: #a3939c;
+        --line: #2c222c;
+        --accent: #5fd6a0;
+        --accent-strong: #86e5ba;
+        --band: #3d1234;
+        --band-text: #f6e6f0;
+        --band-muted: #d0a6c2;
+    }
+}
+
+body { font-family: var(--font-ui); }
+
+/* The band runs edge to edge; its contents stay on the same centred measure
+   as the rest of the page, computed rather than wrapped in a container the
+   generator does not emit. */
+.site-header {
+    max-width: none;
+    background: var(--band);
+    color: var(--band-text);
+    border-bottom: none;
+    padding: 1.75rem max(1.25rem, calc((100% - var(--max-width)) / 2)) 1.5rem;
+}
+.site-brand a { color: var(--band-text); font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; }
+.site-nav a { color: var(--band-muted); font-weight: 600; font-size: .875rem; }
+.site-nav a:hover, .site-nav a:focus { color: var(--band-text); text-decoration: underline; }
+.site-header :focus-visible { outline-color: var(--band-text); }
+
+.skip-link { border-radius: 0; }
+
+.site-description { font-size: 1.0625rem; color: var(--text-soft); }
+
+.post-summary { padding: 1.4rem 0; }
+.post-summary h2 { font-size: 1.5rem; font-weight: 800; line-height: 1.25; letter-spacing: -.02em; }
+.post-excerpt { color: var(--text-soft); }
+
+/* Tags read as pills; the timestamp beside them stays plain text so the two
+   never look like the same control. The separators the generator prints
+   between them ("," and "·") are punctuation for a sentence, not for a row of
+   pills, so the flex row zeroes the loose text nodes and the gap does that
+   job instead. Screen readers still announce them. */
+.post-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: 0; }
+.post-meta time, .post-meta a { font-size: .8125rem; }
+.post-meta a {
+    border: 1px solid var(--muted);
+    border-radius: 999px;
+    padding: .1rem .55rem;
+    text-decoration: none;
+    color: var(--accent-strong);
+    background: var(--surface);
+}
+.post-meta a:hover, .post-meta a:focus { border-color: var(--accent-strong); }
+
+article h1 { font-size: 2rem; font-weight: 800; letter-spacing: -.025em; line-height: 1.15; }
+
+.post-body a { text-decoration-thickness: 2px; }
+.post-body blockquote { border-left-color: var(--accent); }
+
+.archive-year { font-weight: 800; font-size: 1.25rem; border-bottom: 2px solid var(--text); }
+.archive-entry a { font-weight: 600; }
+
+.tag-list li { border-bottom: none; padding: .25rem 0; }
+.tag-list a {
+    border: 1px solid var(--muted);
+    border-radius: 999px;
+    padding: .25rem .75rem;
+    font-weight: 600;
+    background: var(--surface);
+}
+.tag-list a:hover, .tag-list a:focus { border-color: var(--accent-strong); }
+.tag-count { font-weight: 600; }
+
+.post-pager { font-weight: 600; }
+.post-pager a:hover, .post-pager a:focus { text-decoration: underline; }
+.back-link a { font-weight: 600; }
+
+.site-footer { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: 1.25rem; }
+
+@media print {
+    .site-header { background: none; color: #000; padding: 0 0 1rem; }
+    .site-brand a { color: #000; }
+}

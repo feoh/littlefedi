@@ -1,0 +1,31 @@
+#!/sbin/openrc-run
+
+name="littlefedi-directory"
+description="littleMesh directory"
+
+: ${littlefedi_directory_user:="littlefedi-directory"}
+: ${littlefedi_directory_config:="/etc/littlefedi/directory.toml"}
+: ${littlefedi_directory_chdir:="/var/lib/littlefedi-directory"}
+
+command="/usr/local/bin/littlefedi"
+command_args="--config ${littlefedi_directory_config} directory"
+command_user="${littlefedi_directory_user}"
+directory="${littlefedi_directory_chdir}"
+pidfile="/run/${RC_SVCNAME}.pid"
+output_log="/var/log/littlefedi-directory/littlefedi-directory.log"
+error_log="/var/log/littlefedi-directory/littlefedi-directory.log"
+
+supervisor="supervise-daemon"
+respawn_delay=5
+respawn_max=0
+
+depend() {
+	need net
+	after firewall
+}
+
+start_pre() {
+	checkpath -d -m 0750 -o "${littlefedi_directory_user}:${littlefedi_directory_user}" \
+		/var/log/littlefedi-directory
+	umask 0077
+}

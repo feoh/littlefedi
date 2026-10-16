@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# PROVIDE: littlefedi
+# REQUIRE: DAEMON NETWORKING
+# KEYWORD: shutdown
+#
+# There is no supervisor here: if the process dies, it stays down.
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="littlefedi"
+rcvar=$name
+command="/usr/local/bin/littlefedi"
+start_cmd="littlefedi_start"
+
+load_rc_config $name
+
+: ${littlefedi_user:="littlefedi"}
+: ${littlefedi_config:="/usr/local/etc/littlefedi/littlefedi.toml"}
+: ${littlefedi_envfile:="/usr/local/etc/littlefedi/littlefedi.env"}
+: ${littlefedi_chdir:="/var/db/littlefedi"}
+
+required_files="${littlefedi_config}"
+pidfile="/var/run/${name}.pid"
+
+littlefedi_start()
+{
+	echo "Starting ${name}."
+	umask 0077
+	if [ -r "${littlefedi_envfile}" ]; then
+		set -a
+		. "${littlefedi_envfile}"
+		set +a
+	fi
+	cd "${littlefedi_chdir}" || return 1
+	# written by the service itself; the three scripts share one binary
+	: > "${pidfile}" && chown "${littlefedi_user}" "${pidfile}" || return 1
+	# redirect everything, or "service littlefedi start" over ssh never returns
+	{
+		/usr/bin/su -m "${littlefedi_user}" -c \
+			"echo \$\$ > ${pidfile}; exec ${command} --config ${littlefedi_config}" 2>&1 |
+			/usr/bin/logger -t "${name}" -p daemon.info
+	} </dev/null >/dev/null 2>&1 &
+}
+
+run_rc_command "$1"

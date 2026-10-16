@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# PROVIDE: littlefedi_directory
+# REQUIRE: LOGIN NETWORKING
+# KEYWORD: shutdown
+#
+# Add the following line to /etc/rc.conf to enable it:
+#
+# littlefedi_directory_enable="YES"
+
+. /etc/rc.subr
+
+name="littlefedi_directory"
+rcvar="littlefedi_directory_enable"
+desc="littleMesh directory"
+
+load_rc_config $name
+
+: ${littlefedi_directory_enable:="NO"}
+: ${littlefedi_directory_run_user:="littlefedi-directory"}
+: ${littlefedi_directory_config:="/usr/local/etc/littlefedi/directory.toml"}
+: ${littlefedi_directory_chdir:="/var/db/littlefedi-directory"}
+
+littlefedi_directory_bin="/usr/local/bin/littlefedi"
+
+pidfile="/var/run/littlefedi-directory.supervisor.pid"
+child_pidfile="/var/run/littlefedi-directory.pid"
+procname="/usr/sbin/daemon"
+command="/usr/sbin/daemon"
+command_args="-f -T littlefedi-directory -R 5 -P ${pidfile} -p ${child_pidfile} \
+	-u ${littlefedi_directory_run_user} \
+	${littlefedi_directory_bin} \
+	--config ${littlefedi_directory_config} directory"
+
+start_precmd="littlefedi_directory_precmd"
+
+littlefedi_directory_precmd()
+{
+	umask 0077
+}
+
+run_rc_command "$1"

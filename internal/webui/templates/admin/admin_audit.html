@@ -1,0 +1,33 @@
+<div>
+    <div class="admin-page-header"><div><h1 class="page-title"><svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-search"/></svg>Audit log</h1><p class="admin-page-description">Administrative and moderation actions recorded on this server.</p></div></div>
+    <form method="get" class="admin-card" style="display:flex;gap:.6rem;margin-bottom:.85rem;align-items:end;"><div class="form-group" style="margin:0;flex:1;"><label for="audit-search">Filter log</label><input id="audit-search" name="q" value="{{.Query}}" placeholder="Action, target, or note"></div><button class="btn btn-primary">Filter</button></form>
+
+    {{if .Entries}}
+    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;"><caption class="sr-only">Audit log</caption>
+        <thead>
+            <tr style="text-align:left;border-bottom:1px solid var(--line);">
+                <th scope="col" style="padding:0.5rem;">When</th>
+                <th scope="col" style="padding:0.5rem;">Admin</th>
+                <th scope="col" style="padding:0.5rem;">Target</th>
+                <th scope="col" style="padding:0.5rem;">Action</th>
+                <th scope="col" style="padding:0.5rem;">Note</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Entries}}
+            <tr style="border-bottom:1px solid var(--line);">
+                <td style="padding:0.5rem;color:var(--muted);white-space:nowrap;">{{.CreatedAt}}</td>
+                <td style="padding:0.5rem;">{{.AdminName}}</td>
+                <td style="padding:0.5rem;color:var(--muted);">{{.TargetType}}: {{.TargetID}}</td>
+                <td style="padding:0.5rem;">{{.Action}}</td>
+                <td style="padding:0.5rem;color:var(--muted);">{{.Note}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{template "admin-pagination" .Pagination}}
+    {{else}}
+    <div class="empty-state" style="padding:1.5rem 1rem;"><p>No moderation actions recorded yet.</p></div>
+    {{end}}
+
+</div>
