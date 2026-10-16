@@ -138,6 +138,8 @@
   "notif.type.follow_reject": "a refusé votre demande d'abonnement",
   "notif.type.blog_rebuilt": "a régénéré votre blog",
   "notif.type.blog_rebuilt_discussion": "a régénéré votre blog après une activité dans cette discussion",
+  "notif.type.poll": "a publié un sondage désormais terminé",
+  "notif.type.admin_sign_up": "s’est inscrit·e",
   "notif.type.admin_report": "Nouveau signalement de modération",
   "notif.type.admin_account_deleted": "Un utilisateur a supprimé son compte",
   "notif.type.admin_account_moved": "a déplacé son compte ailleurs",

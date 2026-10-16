@@ -187,3 +187,31 @@ func finalizeAccountDeletion(ctx context.Context, store storage.Storage, mediaSt
 	}
 	return nil
 }
+
+// NotifyAdminsSignUp sends Mastodon's "admin.sign_up" notification to every
+// administrator when someone registers. Administrators are already emailed
+// about new accounts, so this adds the in-app notification only.
+func (s *Service) NotifyAdminsSignUp(ctx context.Context, account *models.Account) {
+	if account == nil {
+		return
+	}
+	admins, err := s.store.GetAdmins(ctx)
+	if err != nil {
+		slog.Warn("app: failed to list admins for sign-up", "error", err)
+		return
+	}
+	for _, admin := range admins {
+		if admin.ID == account.ID {
+			continue
+		}
+		notif := &models.Notification{Type: "admin.sign_up", AccountID: admin.ID, FromAccountID: account.ID}
+		created, err := s.store.CreateNotificationOnce(ctx, notif, nil)
+		if err != nil {
+			slog.Warn("app: failed to create sign-up notification", "admin", admin.ID, "error", err)
+			continue
+		}
+		if created {
+			s.streamNotification(ctx, notif)
+		}
+	}
+}

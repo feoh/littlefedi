@@ -138,6 +138,8 @@
   "notif.type.follow_reject": "hat deine Follow-Anfrage abgelehnt",
   "notif.type.blog_rebuilt": "hat dein Blog neu erstellt",
   "notif.type.blog_rebuilt_discussion": "hat dein Blog nach Aktivität in dieser Diskussion neu erstellt",
+  "notif.type.poll": "hat eine Umfrage gestartet, die jetzt beendet ist",
+  "notif.type.admin_sign_up": "hat sich registriert",
   "notif.type.admin_report": "Neue Moderationsmeldung",
   "notif.type.admin_account_deleted": "Ein Benutzer hat das eigene Konto gelöscht",
   "notif.type.admin_account_moved": "ist mit dem Konto umgezogen",

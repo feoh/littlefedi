@@ -1476,6 +1476,7 @@ func (s *Service) VotePoll(ctx context.Context, account *models.Account, pollID 
 	s.InvalidateViewerStatus(account.ID, status.ID)
 	author, err := s.store.GetAccount(ctx, status.AccountID)
 	if err == nil && author.Domain != nil {
+		s.scheduleRemotePollClose(ctx, poll)
 		for _, choice := range choices {
 			activityID := "https://" + s.domain + "/poll-votes/" + uuid.NewString()
 			s.deliverToAccount(ctx, account, author, map[string]any{
@@ -3699,4 +3700,79 @@ func emojisToValues(emojis []*models.CustomEmoji) []models.CustomEmoji {
 		}
 	}
 	return vals
+}
+
+// ClosePollAndNotify closes an expired poll and sends Mastodon's "poll"
+// notification ("a poll you created or voted in has ended") to its local
+// author and every local voter. It is the poll_close job: a poll whose end
+// was moved later is rescheduled, and running it again sends nothing new,
+// because notifications are deduplicated per recipient, author, type and
+// status.
+func (s *Service) ClosePollAndNotify(ctx context.Context, pollID string) (rescheduleAt *time.Time, err error) {
+	poll, err := s.store.GetPoll(ctx, pollID, "")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil // the poll was deleted with its status
+		}
+		return nil, err
+	}
+	if poll.ExpiresAt != nil && time.Now().Before(*poll.ExpiresAt) {
+		return poll.ExpiresAt, nil
+	}
+	if err := s.store.ClosePoll(ctx, pollID); err != nil {
+		return nil, err
+	}
+	status, err := s.store.GetStatus(ctx, poll.StatusID)
+	if err != nil {
+		return nil, nil
+	}
+	author, err := s.store.GetAccount(ctx, status.AccountID)
+	if err != nil {
+		return nil, nil
+	}
+	recipients, err := s.store.ListLocalPollVoterIDs(ctx, pollID)
+	if err != nil {
+		return nil, err
+	}
+	if author.Domain == nil && !author.IsServiceActor {
+		recipients = append(recipients, author.ID)
+	}
+	seen := map[string]bool{}
+	for _, recipient := range recipients {
+		if seen[recipient] {
+			continue
+		}
+		seen[recipient] = true
+		notif := &models.Notification{Type: "poll", AccountID: recipient, FromAccountID: author.ID, StatusID: &status.ID}
+		jobs, err := push.NotificationJobs(ctx, s.store, notif)
+		if err != nil {
+			slog.Warn("app: poll notification push jobs", "poll_id", pollID, "error", err)
+			jobs = nil
+		}
+		if emailJob, err := mail.NotificationJob(ctx, s.store, s.domain, notif); err == nil && emailJob != nil {
+			jobs = append(jobs, emailJob)
+		}
+		created, err := s.store.CreateNotificationOnce(ctx, notif, jobs)
+		if err != nil {
+			slog.Warn("app: poll notification", "poll_id", pollID, "recipient", recipient, "error", err)
+			continue
+		}
+		if created {
+			s.streamNotification(ctx, notif)
+		}
+	}
+	return nil, nil
+}
+
+// scheduleRemotePollClose queues the poll_close job for a remote poll a
+// local account voted in, so the voter hears when it ends. Local polls get
+// theirs when they are created.
+func (s *Service) scheduleRemotePollClose(ctx context.Context, poll *models.Poll) {
+	if poll == nil || poll.ExpiresAt == nil || poll.Expired {
+		return
+	}
+	payload, _ := json.Marshal(map[string]string{"poll_id": poll.ID})
+	if err := s.store.EnqueueJob(ctx, &models.Job{Kind: "poll_close", Payload: string(payload), RunAt: *poll.ExpiresAt, MaxAttempts: 3, State: "queued"}); err != nil {
+		slog.Warn("app: schedule remote poll close", "poll_id", poll.ID, "error", err)
+	}
 }

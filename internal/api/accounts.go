@@ -122,6 +122,7 @@ func (h *Handler) AccountCreate(w http.ResponseWriter, r *http.Request) {
 	if h.mailer != nil {
 		mail.NotifyAccountCreated(r.Context(), h.store, h.domain, account, req.InviteCode)
 	}
+	h.app.NotifyAdminsSignUp(r.Context(), account)
 
 	result := h.accountToMastodon(account, nil, false)
 	writeAPIJSON(w, http.StatusOK, result)

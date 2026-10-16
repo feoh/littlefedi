@@ -85,3 +85,43 @@ func TestNotificationListsKeepToMastodonTypes(t *testing.T) {
 		t.Errorf("grouped types = %v", kinds)
 	}
 }
+
+// The two Mastodon types littleFedi now creates come out in Mastodon's shape:
+// a poll result carries its status and poll, a sign-up its account.
+func TestPollAndSignUpNotificationsSerialize(t *testing.T) {
+	ctx := context.Background()
+	f := newFixture(t)
+	var status map[string]interface{}
+	f.call(t, "alice", http.MethodPost, "/api/v1/statuses", map[string]interface{}{
+		"status": "Vote!", "poll": map[string]interface{}{"options": []string{"a", "b"}, "expires_in": 3600},
+	}, &status)
+	statusID := status["id"].(string)
+	for _, n := range []*models.Notification{
+		{Type: "poll", AccountID: f.ids["alice"], FromAccountID: f.ids["alice"], StatusID: &statusID, CreatedAt: time.Now()},
+		{Type: "admin.sign_up", AccountID: f.ids["alice"], FromAccountID: f.ids["bob"], CreatedAt: time.Now().Add(time.Second)},
+	} {
+		if err := f.store.CreateNotification(ctx, n); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var list []map[string]interface{}
+	f.call(t, "alice", http.MethodGet, "/api/v1/notifications", nil, &list)
+	byType := map[string]map[string]interface{}{}
+	for _, n := range list {
+		byType[n["type"].(string)] = n
+	}
+	poll, ok := byType["poll"]
+	if !ok {
+		t.Fatalf("no poll notification in %v", list)
+	}
+	if s, _ := poll["status"].(map[string]interface{}); s == nil || s["id"] != statusID || s["poll"] == nil {
+		t.Errorf("poll notification status = %v", poll["status"])
+	}
+	signUp, ok := byType["admin.sign_up"]
+	if !ok {
+		t.Fatalf("no admin.sign_up notification in %v", list)
+	}
+	if a, _ := signUp["account"].(map[string]interface{}); a == nil || a["username"] != "bob" {
+		t.Errorf("admin.sign_up account = %v", signUp["account"])
+	}
+}

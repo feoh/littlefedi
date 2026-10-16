@@ -179,6 +179,8 @@ type Storage interface {
 	SyncPoll(ctx context.Context, poll *models.Poll) error
 	VotePoll(ctx context.Context, pollID, accountID string, choices []int) (*models.Poll, error)
 	ClosePoll(ctx context.Context, pollID string) error
+	// ListLocalPollVoterIDs returns the local accounts that voted in a poll.
+	ListLocalPollVoterIDs(ctx context.Context, pollID string) ([]string, error)
 
 	// Filters v2
 	CreateFilter(ctx context.Context, filter *models.Filter) error

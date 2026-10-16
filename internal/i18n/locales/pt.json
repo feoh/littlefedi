@@ -138,6 +138,8 @@
   "notif.type.follow_reject": "rejeitou seu pedido de seguir",
   "notif.type.blog_rebuilt": "regenerou seu blog",
   "notif.type.blog_rebuilt_discussion": "regenerou seu blog após atividade nesta conversa",
+  "notif.type.poll": "publicou uma enquete que já terminou",
+  "notif.type.admin_sign_up": "se cadastrou",
   "notif.type.admin_report": "Nova denúncia de moderação",
   "notif.type.admin_account_deleted": "Um utilizador eliminou a sua conta",
   "notif.type.admin_account_moved": "transferiu a sua conta",

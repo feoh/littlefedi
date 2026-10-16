@@ -315,6 +315,7 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	if h.mailer != nil {
 		mail.NotifyAccountCreated(r.Context(), h.store, h.domain, account, req.InviteCode)
 	}
+	h.app.NotifyAdminsSignUp(r.Context(), account)
 
 	// If approved, auto-login by creating session
 	if account.Approved {

@@ -741,6 +741,10 @@ func main() {
 	}
 	collectionSyncer := federation.NewCollectionSyncer(store, federator)
 	workerPool.RegisterHandler(federation.CollectionSyncJobKind, collectionSyncer.ProcessJob)
+	// Closing a poll also tells its local author and voters that it ended
+	// (Mastodon's "poll" notification). The streaming publisher is attached
+	// to this service below, once it exists.
+	pollService := app.NewWithDomainsAndMediaPath(store, federator, cfg.LocalDomain, cfg.WebDomain, cfg.Media.Path)
 	workerPool.RegisterHandler("poll_close", func(ctx context.Context, payload string) error {
 		var v struct {
 			PollID string `json:"poll_id"`
@@ -748,7 +752,14 @@ func main() {
 		if err := json.Unmarshal([]byte(payload), &v); err != nil {
 			return err
 		}
-		return store.ClosePoll(ctx, v.PollID)
+		rescheduleAt, err := pollService.ClosePollAndNotify(ctx, v.PollID)
+		if err != nil {
+			return err
+		}
+		if rescheduleAt != nil {
+			return queue.Reschedule(*rescheduleAt)
+		}
+		return nil
 	})
 
 	var vapidKeys *push.VAPIDKeys
@@ -1288,6 +1299,7 @@ func main() {
 	inboxProcessor.SetStreamPublisher(streamPublisher)
 	apiHandler.SetStreamPublisher(streamPublisher)
 	webHandler.SetStreamPublisher(streamPublisher)
+	pollService.SetStreamPublisher(streamPublisher)
 	streaming.NewHandler(streamHub, store, cfg.Auth.RequireEmail, cfg.Auth.RequireAdminMFA).RegisterRoutes(r)
 	slog.Info("streaming API enabled", "endpoint", "/api/v1/streaming", "broker", cfg.Streaming.Backend)
 

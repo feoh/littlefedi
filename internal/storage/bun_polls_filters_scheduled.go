@@ -200,6 +200,18 @@ func (s *bunStorage) ClosePoll(ctx context.Context, id string) error {
 	return err
 }
 
+func (s *bunStorage) ListLocalPollVoterIDs(ctx context.Context, pollID string) ([]string, error) {
+	var ids []string
+	err := s.db.NewSelect().
+		TableExpr("poll_votes AS pv").
+		ColumnExpr("DISTINCT pv.account_id").
+		Join("JOIN accounts AS a ON a.id = pv.account_id").
+		Where("pv.poll_id = ?", pollID).
+		Where("a.domain IS NULL").
+		Scan(ctx, &ids)
+	return ids, err
+}
+
 func hydrateFilter(f *models.Filter) {
 	if err := json.Unmarshal([]byte(f.ContextJSON), &f.Context); err != nil {
 		slog.Warn("storage: filter context_json is corrupt, returning empty context", "filter_id", f.ID, "error", err)

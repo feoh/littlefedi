@@ -29,6 +29,8 @@
             {{else if eq .Type "unblock"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg>
             {{else if eq .Type "follow_accept"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg>
             {{else if eq .Type "follow_reject"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>
+            {{else if eq .Type "poll"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-list"/></svg>
+            {{else if eq .Type "admin.sign_up"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-user-plus"/></svg>
             {{else if eq .Type "admin.report"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-alert"/></svg>
             {{else if eq .Type "admin.account_deleted"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-eye-off"/></svg>
             {{else if eq .Type "admin.account_moved"}}<svg class="icon" aria-hidden="true"><use href="/static/icons.svg?v=adb0669912b5d0ff#i-boost"/></svg>
@@ -62,6 +64,8 @@
             {{else if eq .Type "blog.rebuilt"}}{{if .Status}}{{T "notif.type.blog_rebuilt_discussion"}}{{else}}{{T "notif.type.blog_rebuilt"}}{{end}}
             {{else if eq .Type "follow_import.complete"}}{{T "notif.type.follow_import_complete"}}
             {{else if eq .Type "follow_import.failed"}}{{T "notif.type.follow_import_failed"}}
+            {{else if eq .Type "poll"}}{{T "notif.type.poll"}}
+            {{else if eq .Type "admin.sign_up"}}{{T "notif.type.admin_sign_up"}}
             {{else if eq .Type "admin.report"}}{{T "notif.type.admin_report"}}
             {{else if eq .Type "admin.account_deleted"}}{{T "notif.type.admin_account_deleted"}}
             {{else if eq .Type "admin.account_moved"}}{{if .MovedToURL}}{{T "notif.type.move_to"}} {{.MovedToLabel}}{{else}}{{T "notif.type.admin_account_moved"}}{{end}}
