@@ -1,3 +1,5 @@
+# [Fork maintainer note - This fork has nothing to do with Little Computer People other than being based on their excellent, excellent source code! Please contact me, not them if you have issues, questions, or want to contribute! @feoh]
+
 # littleFedi
 
 [littleFedi](https://littlefedi.org) is a small ActivityPub server written in Go.
