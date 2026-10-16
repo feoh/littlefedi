@@ -30,6 +30,13 @@ replace the tree on `upstream` with its contents, commit and tag it, and merge
   notification ID. It also accepts the `follower` policy, keeps alerts a
   client turned off, and lets a new login on the same device take over its
   push endpoint.
+- The client API, its push and its streaming use Mastodon's notification
+  types only; littleFedi's own (follow_accept, emoji reactions, follow
+  imports and so on) reach API clients only when they ask with `types[]`,
+  and stay visible in the web UI. littleFedi also sends Mastodon's `poll`
+  (a poll you created or voted in ended) and `admin.sign_up` notifications.
+- The client API adds `GET /api/v1/accounts?id[]=`, `/api/v1/accounts/lookup`
+  and `/api/v1/accounts/familiar_followers`, which Mastodon for iOS uses.
 - The instance documents carry every media limit Mastodon's apps require
   (without them Mastodon for iOS cannot load notifications), and
   `image_matrix_limit` is a pixel count, as in Mastodon.
