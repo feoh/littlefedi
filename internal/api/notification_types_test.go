@@ -125,3 +125,16 @@ func TestPollAndSignUpNotificationsSerialize(t *testing.T) {
 		t.Errorf("admin.sign_up account = %v", signUp["account"])
 	}
 }
+
+// Tuba requests Mastodon's older v1 policy endpoint; it used to fall through
+// to the notification lookup and return 404.
+func TestNotificationPolicyV1(t *testing.T) {
+	f := newFixture(t)
+	var policy map[string]interface{}
+	if code := f.call(t, "alice", http.MethodGet, "/api/v1/notifications/policy", nil, &policy); code != http.StatusOK {
+		t.Fatalf("v1 policy = %d", code)
+	}
+	if policy["filter_not_following"] != false || policy["summary"] == nil {
+		t.Errorf("v1 policy = %v", policy)
+	}
+}

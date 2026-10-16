@@ -259,6 +259,7 @@ func (h *Handler) RegisterRoutes(r chi.Router, oauthHandler *oauth.Handler) {
 		r.Post("/api/v1/notifications/{id}/dismiss", h.NotificationDismiss)
 		r.Get("/api/v2/notifications", h.GroupedNotificationsList)
 		r.Get("/api/v2/notifications/policy", h.NotificationPolicyGet)
+		r.Get("/api/v1/notifications/policy", h.NotificationPolicyGetV1)
 
 		// Push subscriptions
 		r.Get("/api/v1/push/subscription", h.PushSubscriptionGet)

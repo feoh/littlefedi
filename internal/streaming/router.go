@@ -195,7 +195,7 @@ func (r *EventRouter) NotificationCreated(ctx context.Context, n *models.Notific
 		return
 	}
 	// Notifications only matter to their recipient - skip if they're not connected.
-	if !r.hub.HasAccountStream(n.AccountID, StreamUser) {
+	if !r.hub.HasAccountStream(n.AccountID, StreamUser) && !r.hub.HasAccountStream(n.AccountID, StreamNotification) {
 		return
 	}
 	target, err := r.store.GetAccount(ctx, n.AccountID)
@@ -210,9 +210,13 @@ func (r *EventRouter) NotificationCreated(ctx context.Context, n *models.Notific
 	if !ok {
 		return
 	}
-	env := makeEnvelope([]string{StreamUser}, "notification", string(payload))
-	env.notificationType = n.Type
-	r.hub.sendToAccount(target.ID, StreamUser, env)
+	// The user stream carries notifications alongside everything else; the
+	// user:notification stream carries nothing but notifications.
+	for _, key := range []string{StreamUser, StreamNotification} {
+		env := makeEnvelope([]string{key}, "notification", string(payload))
+		env.notificationType = n.Type
+		r.hub.sendToAccount(target.ID, key, env)
+	}
 }
 
 // publishStatus routes a created/edited status to every stream it belongs to.

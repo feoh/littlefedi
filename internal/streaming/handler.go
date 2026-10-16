@@ -96,9 +96,10 @@ func descriptorFor(stream string, r *http.Request) (streamDesc, bool) {
 	case "user":
 		return streamDesc{key: StreamUser, wire: []string{StreamUser}, requiresUser: true}, true
 	case "user:notification":
-		// Notifications are delivered on the user stream; subscribing here is
-		// equivalent.
-		return streamDesc{key: StreamUser, wire: []string{StreamUser}, requiresUser: true}, true
+		// Only notification events, as in Mastodon. Clients such as Tuba
+		// treat every event on this stream as a notification, so home
+		// timeline posts here showed up as notifications of no type.
+		return streamDesc{key: StreamNotification, wire: []string{StreamNotification}, requiresUser: true}, true
 	case "public":
 		return streamDesc{key: StreamPublic, wire: []string{StreamPublic}}, true
 	case "public:local":
@@ -485,8 +486,10 @@ type clientMessage struct {
 // list) into a streamDesc.
 func descriptorForClientMessage(msg clientMessage) (streamDesc, bool) {
 	switch msg.Stream {
-	case "user", "user:notification":
+	case "user":
 		return streamDesc{key: StreamUser, requiresUser: true}, true
+	case "user:notification":
+		return streamDesc{key: StreamNotification, requiresUser: true}, true
 	case "public":
 		return streamDesc{key: StreamPublic}, true
 	case "public:local":

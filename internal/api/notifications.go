@@ -315,6 +315,27 @@ func (h *Handler) NotificationPolicyGet(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+// NotificationPolicyGetV1 is Mastodon's older form of the policy, which Tuba
+// still requests; without it the path fell through to a notification lookup
+// and returned 404. littleFedi filters no sources, so every filter is off.
+// GET /api/v1/notifications/policy
+func (h *Handler) NotificationPolicyGetV1(w http.ResponseWriter, r *http.Request) {
+	if getAuthAccount(r.Context()) == nil {
+		writeAPIError(w, http.StatusUnauthorized, "not authenticated")
+		return
+	}
+	writeAPIJSON(w, http.StatusOK, map[string]interface{}{
+		"filter_not_following":    false,
+		"filter_not_followers":    false,
+		"filter_new_accounts":     false,
+		"filter_private_mentions": false,
+		"summary": map[string]int{
+			"pending_requests_count":      0,
+			"pending_notifications_count": 0,
+		},
+	})
+}
+
 // Conversion Helpers
 
 // notificationsToMastodon converts notifications to API objects with a
