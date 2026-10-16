@@ -29,7 +29,10 @@ replace the tree on `upstream` with its contents, commit and tag it, and merge
   `LITTLEFEDI_FEDERATION_KEY_ENCRYPTION_KEY` is set) and the numeric
   notification ID. It also accepts the `follower` policy, keeps alerts a
   client turned off, and lets a new login on the same device take over its
-  push endpoint. Grouped notification IDs are strings, as in Mastodon.
+  push endpoint.
+- The instance documents carry every media limit Mastodon's apps require
+  (without them Mastodon for iOS cannot load notifications), and
+  `image_matrix_limit` is a pixel count, as in Mastodon.
 
 Fork database migrations are numbered from 9001 up. bun names a migration by
 its number alone, so sharing a number with a later upstream migration would
