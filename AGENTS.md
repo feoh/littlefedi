@@ -17,6 +17,11 @@ This is a personal fork of littleFedi. Read `FORK.md` first: it explains the
       go test ./...
       go test -tags blog ./...
 
+- The operator also commits on GitHub, so `origin/main` can move under you.
+  `git fetch origin` and `git rebase origin/main` before pushing, then check
+  the push's own exit status: piping `git push` into anything hides a
+  rejected push.
+
 ## Deploying to fediverse.feoh.org
 
 Production is one Docker container, `little-fedi-littlefedi-1`, on the
@@ -63,7 +68,9 @@ deploy N+1. After a new upstream release, N starts again at 1.
 
 ### Steps
 
-1. Push the commit you are deploying, and check the suite passed on it.
+1. Push the commit you are deploying, and run the suite on that exact
+   commit (in the worktree from step 2) if anything was rebased since you
+   last ran it.
 
 2. Build the binary from that commit, in a clean worktree, with the
    **official** Go toolchain. The system Go is a distro build and produces a
@@ -85,7 +92,8 @@ deploy N+1. After a new upstream release, N starts again at 1.
        systemctl show little-fedi-backup.service -p Result   # Result=success
 
 4. Copy the binary to the VM's `/tmp` with `scp`, using the same options as
-   `ssh`, and check its SHA-256 there.
+   `ssh`, and check its SHA-256 there. Delete it from `/tmp` once the deploy
+   is verified, including after a step fails partway.
 
 5. Keep the current files as rollback copies, then install the new ones:
 
@@ -112,7 +120,9 @@ deploy N+1. After a new upstream release, N starts again at 1.
    The "Docker Compose is configured to build using Bake, but buildx isn't
    installed" warning is harmless.
 
-7. Restart and verify:
+7. Restart and verify. Stopping the old container can take about 30 seconds
+   while open streaming connections close (31 s on 2026-10-16, against 1 s
+   with none open), and the site is likely unavailable meanwhile:
 
        sudo systemctl restart little-fedi-compose.service
        sudo docker ps --format '{{.Image}} {{.Status}}'      # new tag, then (healthy)
