@@ -158,7 +158,10 @@ func TestSameAccountResubscribeReplacesEndpoint(t *testing.T) {
 	}
 }
 
-func TestGroupedNotificationIDsAreStrings(t *testing.T) {
+// Mastodon serializes most_recent_notification_id as a bare integer (only
+// page_min_id and page_max_id are strings), and Mastodon for iOS decodes it
+// as Int, so a string there breaks its whole notifications page.
+func TestGroupedNotificationMostRecentIDIsANumber(t *testing.T) {
 	f := newFixture(t)
 	f.call(t, "bob", http.MethodPost, "/api/v1/accounts/"+f.ids["alice"]+"/follow", map[string]interface{}{}, nil)
 	var grouped map[string]interface{}
@@ -170,8 +173,11 @@ func TestGroupedNotificationIDsAreStrings(t *testing.T) {
 		t.Fatal("no notification groups")
 	}
 	group := groups[0].(map[string]interface{})
-	if _, ok := group["most_recent_notification_id"].(string); !ok {
-		t.Errorf("most_recent_notification_id = %#v, want a string", group["most_recent_notification_id"])
+	if _, ok := group["most_recent_notification_id"].(float64); !ok {
+		t.Errorf("most_recent_notification_id = %#v, want a number", group["most_recent_notification_id"])
+	}
+	if _, ok := group["page_max_id"].(string); !ok {
+		t.Errorf("page_max_id = %#v, want a string", group["page_max_id"])
 	}
 	if group["type"] != "follow" {
 		t.Errorf("group type = %v", group["type"])
@@ -190,4 +196,24 @@ func TestInstanceAdvertisesVAPIDKey(t *testing.T) {
 
 func newTokenFor(f *fixture, user, token string) *models.OAuthToken {
 	return &models.OAuthToken{AccessToken: token, RefreshToken: "refresh-" + token, AccountID: f.ids[user], ApplicationID: "app1", Scopes: "read write follow push"}
+}
+
+// Mastodon for iOS decodes configuration.media_attachments with every limit
+// required; without the video limits it discards the whole instance document,
+// and its notifications page then fails with "Fail to authenticate".
+func TestInstanceMediaConfigurationIsComplete(t *testing.T) {
+	f := newFixture(t)
+	for _, path := range []string{"/api/v1/instance", "/api/v2/instance"} {
+		var instance map[string]interface{}
+		f.call(t, "", http.MethodGet, path, nil, &instance)
+		media := instance["configuration"].(map[string]interface{})["media_attachments"].(map[string]interface{})
+		for _, key := range []string{"supported_mime_types", "image_size_limit", "image_matrix_limit", "video_size_limit", "video_frame_rate_limit", "video_matrix_limit"} {
+			if _, ok := media[key]; !ok {
+				t.Errorf("%s: media_attachments lacks %s", path, key)
+			}
+		}
+		if pixels, _ := media["image_matrix_limit"].(float64); pixels < 1_000_000 {
+			t.Errorf("%s: image_matrix_limit = %v, want a pixel count", path, media["image_matrix_limit"])
+		}
+	}
 }

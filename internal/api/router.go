@@ -36,6 +36,7 @@ type Config struct {
 	UserAgent                   string
 	MediaPath                   string
 	MaxMediaSize                int64
+	MaxImagePixels              int64
 	MaxMedia                    int
 	RenameMedia                 bool
 	StripEXIF                   bool

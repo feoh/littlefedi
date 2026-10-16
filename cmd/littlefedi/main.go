@@ -1066,6 +1066,7 @@ func main() {
 		UserAgent:                   cfg.Federation.UserAgent,
 		MediaPath:                   cfg.Media.Path,
 		MaxMediaSize:                cfg.Media.MaxFileSize,
+		MaxImagePixels:              cfg.Media.MaxImagePixels,
 		MaxMedia:                    cfg.Media.MaxMedia,
 		RenameMedia:                 cfg.Media.RenameMedia,
 		StripEXIF:                   cfg.Media.StripEXIF,

@@ -225,13 +225,12 @@ func (h *Handler) GroupedNotificationsList(w http.ResponseWriter, r *http.Reques
 				statuses = append(statuses, n.Status)
 			}
 		}
-		// Mastodon defines the ID as a string. These IDs exceed 2^53, so as
-		// a JSON number they lose precision in JavaScript clients.
+		mostRecentID, _ := strconv.ParseInt(n.ID, 10, 64)
 		group := map[string]interface{}{
 			"group_key":                   "ungrouped-" + n.ID,
 			"notifications_count":         1,
 			"type":                        n.Type,
-			"most_recent_notification_id": n.ID,
+			"most_recent_notification_id": mostRecentID,
 			"page_min_id":                 n.ID,
 			"page_max_id":                 n.ID,
 			"latest_page_notification_at": n.CreatedAt,

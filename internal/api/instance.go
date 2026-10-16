@@ -122,6 +122,11 @@ func (h *Handler) instanceConfiguration() map[string]interface{} {
 	if mediaSizeLimit <= 0 {
 		mediaSizeLimit = 40 << 20
 	}
+	// Mastodon's image_matrix_limit is a pixel count, not a side length.
+	imagePixels := h.config.MaxImagePixels
+	if imagePixels <= 0 {
+		imagePixels = 33_177_600 // Mastodon's default
+	}
 	return map[string]interface{}{
 		"accounts": map[string]interface{}{
 			"max_featured_tags": maxFeaturedTags,
@@ -135,8 +140,13 @@ func (h *Handler) instanceConfiguration() map[string]interface{} {
 			"supported_mime_types": []string{"image/jpeg", "image/png", "image/gif", "image/webp", "video/mp4", "video/webm", "audio/mpeg", "audio/ogg", "audio/wav"},
 			"image_size_limit":     mediaSizeLimit,
 			"video_size_limit":     mediaSizeLimit,
-			"image_matrix_limit":   4096,
+			"image_matrix_limit":   imagePixels,
 			"description_limit":    models.MaxMediaDescriptionLength,
+			// Mastodon's apps refuse the whole instance document without
+			// these. littleFedi does not transcode video, so Mastodon's
+			// defaults (120 fps, 3840x2160) are advisory.
+			"video_frame_rate_limit": 120,
+			"video_matrix_limit":     8_294_400,
 		},
 		"polls": map[string]interface{}{
 			"max_options":               4,
