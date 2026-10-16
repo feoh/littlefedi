@@ -54,6 +54,12 @@ const (
 	// ThemeWhisker is the Xfce idiom: a dark panel, raised controls, notebook
 	// tabs.
 	ThemeWhisker = "whisker"
+	// The Catppuccin themes are the community palette (catppuccin.com), one
+	// per dark flavor. Each pairs its flavor with Latte, Catppuccin's light
+	// flavor, so they follow the appearance setting like every other theme.
+	ThemeCatppuccinFrappe    = "catppuccin-frappe"
+	ThemeCatppuccinMacchiato = "catppuccin-macchiato"
+	ThemeCatppuccinMocha     = "catppuccin-mocha"
 	// ThemeContrast maximises legibility. It is an accessibility option
 	// rather than a taste, so it sits last in the picker.
 	ThemeContrast = "contrast"
@@ -99,6 +105,9 @@ var themes = []Theme{
 	// Whisker's panel is dark in every mode, and the panel is what browser
 	// chrome sits next to.
 	{ID: ThemeWhisker, Stylesheet: "theme-whisker.css", ThemeColorLight: "#4b5054", ThemeColorDark: "#2b2f31"},
+	{ID: ThemeCatppuccinFrappe, Stylesheet: "theme-catppuccin-frappe.css", ThemeColorLight: "#eff1f5", ThemeColorDark: "#303446"},
+	{ID: ThemeCatppuccinMacchiato, Stylesheet: "theme-catppuccin-macchiato.css", ThemeColorLight: "#eff1f5", ThemeColorDark: "#24273a"},
+	{ID: ThemeCatppuccinMocha, Stylesheet: "theme-catppuccin-mocha.css", ThemeColorLight: "#eff1f5", ThemeColorDark: "#1e1e2e"},
 	{ID: ThemeContrast, Stylesheet: "theme-contrast.css", ThemeColorLight: "#ffffff", ThemeColorDark: "#000000"},
 }
 

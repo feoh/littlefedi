@@ -30,6 +30,8 @@ replace the tree on `upstream` with its contents, commit and tag it, and merge
   notification ID. It also accepts the `follower` policy, keeps alerts a
   client turned off, and lets a new login on the same device take over its
   push endpoint.
+- Three Catppuccin themes (Frappé, Macchiato, Mocha), each pairing its dark
+  flavor with Latte for light mode, from the official palette v1.8.0.
 - The client API, its push and its streaming use Mastodon's notification
   types only; littleFedi's own (follow_accept, emoji reactions, follow
   imports and so on) reach API clients only when they ask with `types[]`,

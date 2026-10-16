@@ -1,0 +1,134 @@
+/* Catppuccin Mocha - the Mocha flavor of Catppuccin
+   (https://catppuccin.com) in dark mode and Latte in light mode, so the theme
+   follows the reader's appearance setting like every littleFedi theme.
+   Loaded after app.css, only when the account selects it.
+
+   Colours are the official Catppuccin palette, v1.8.0
+   (https://github.com/catppuccin/palette, MIT License, copyright (c) 2021
+   Catppuccin). Mapped after Catppuccin's style guide: base for cards, crust
+   for the ground behind them, surface0-1 for raised elements and rules,
+   text and subtext for copy, mauve as the accent, red, green and blue for
+   favourites, boosts and mentions. "black" keeps true black behind the
+   flavor's darkest colours. Where a published colour falls short of
+   legible contrast it keeps its hue and moves toward text: Latte's green,
+   blue and accent-strong, and the raised surface between base and
+   surface0.
+
+   This is a palette theme: tokens, plus the few selectors that put text on
+   the accent. Those use --on-accent, white on Latte's saturated mauve and
+   the flavor's crust on its pastel one, where white would be unreadable.
+
+   Token layering repeats app.css's four states, one specificity step higher
+   so a theme's dark tokens beat the base theme's dark tokens regardless of
+   file order. Keep the copies in sync. */
+
+/* ---------- Tokens: light (Latte) ---------- */
+:root[data-theme="catppuccin-mocha"]{
+    color-scheme:light;
+    --bg:#dce0e8;
+    --bg-grad:none;
+    --surface:#eff1f5;
+    --surface-2:#e6e9ef;
+    --surface-3:#ccd0da;
+    --text:#4c4f69;
+    --text-soft:#5c5f77;
+    --muted:#5c5f77;
+    --line:#ccd0da;
+    --line-strong:#bcc0cc;
+    --accent:#8839ef;
+    --accent-strong:#793ece;
+    --accent-soft:rgba(136,57,239,.10);
+    --accent-grad:linear-gradient(135deg,#8839ef 0%,#ea76cb 100%);
+    --accent-shadow:rgba(136,57,239,.32);
+    --on-accent:#ffffff;
+    --like:#d20f39;
+    --like-soft:rgba(210,15,57,.10);
+    --boost:#44883e;
+    --boost-soft:rgba(64,160,43,.12);
+    --mention:#2563e0;
+    --mention-soft:rgba(30,102,245,.10);
+    --danger:#d20f39;
+    --shadow:0 1px 2px rgba(76,79,105,.06),0 1px 3px rgba(76,79,105,.05);
+    --shadow-md:0 4px 16px rgba(76,79,105,.08),0 2px 6px rgba(76,79,105,.05);
+    --shadow-lg:0 18px 40px rgba(76,79,105,.12),0 6px 14px rgba(76,79,105,.07);
+}
+
+/* ---------- Tokens: dark (Mocha) ---------- */
+@media(prefers-color-scheme:dark){
+    :root[data-theme="catppuccin-mocha"][data-appearance="auto"],:root[data-theme="catppuccin-mocha"]:not([data-appearance]){
+        color-scheme:dark;
+        --bg:#11111b;
+        --bg-grad:none;
+        --surface:#1e1e2e;
+        --surface-2:#28293a;
+        --surface-3:#313244;
+        --text:#cdd6f4;
+        --text-soft:#bac2de;
+        --muted:#a6adc8;
+        --line:#313244;
+        --line-strong:#45475a;
+        --accent:#cba6f7;
+        --accent-strong:#b4befe;
+        --accent-soft:rgba(203,166,247,.16);
+        --accent-grad:linear-gradient(135deg,#cba6f7 0%,#f5c2e7 100%);
+        --accent-shadow:rgba(203,166,247,.28);
+        --on-accent:#11111b;
+        --like:#f38ba8;
+        --like-soft:rgba(243,139,168,.16);
+        --boost:#a6e3a1;
+        --boost-soft:rgba(166,227,161,.16);
+        --mention:#89b4fa;
+        --mention-soft:rgba(137,180,250,.16);
+        --danger:#f38ba8;
+        --shadow:0 1px 2px rgba(0,0,0,.3);
+        --shadow-md:0 6px 20px rgba(0,0,0,.35);
+        --shadow-lg:0 22px 48px rgba(0,0,0,.5);
+    }
+}
+/* Explicit dark: the same tokens with no media query. */
+:root[data-theme="catppuccin-mocha"][data-appearance="dark"],:root[data-theme="catppuccin-mocha"][data-appearance="black"]{
+    color-scheme:dark;
+    --bg:#11111b;
+    --bg-grad:none;
+    --surface:#1e1e2e;
+    --surface-2:#28293a;
+    --surface-3:#313244;
+    --text:#cdd6f4;
+    --text-soft:#bac2de;
+    --muted:#a6adc8;
+    --line:#313244;
+    --line-strong:#45475a;
+    --accent:#cba6f7;
+    --accent-strong:#b4befe;
+    --accent-soft:rgba(203,166,247,.16);
+    --accent-grad:linear-gradient(135deg,#cba6f7 0%,#f5c2e7 100%);
+    --accent-shadow:rgba(203,166,247,.28);
+    --on-accent:#11111b;
+    --like:#f38ba8;
+    --like-soft:rgba(243,139,168,.16);
+    --boost:#a6e3a1;
+    --boost-soft:rgba(166,227,161,.16);
+    --mention:#89b4fa;
+    --mention-soft:rgba(137,180,250,.16);
+    --danger:#f38ba8;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:0 6px 20px rgba(0,0,0,.35);
+    --shadow-lg:0 22px 48px rgba(0,0,0,.5);
+}
+/* Lights out: true black behind Mocha's darkest colours, for OLED screens. */
+:root[data-theme="catppuccin-mocha"][data-appearance="black"]{
+    --bg:#000000;
+    --bg-grad:none;
+    --surface:#11111b;
+    --surface-2:#181825;
+    --surface-3:#1e1e2e;
+    --line:#313244;
+    --line-strong:#45475a;
+}
+
+/* ---------- Text on the accent ---------- */
+[data-theme="catppuccin-mocha"] .btn-primary,[data-theme="catppuccin-mocha"] .timeline-nav a.active,[data-theme="catppuccin-mocha"] .follow-btn.follow,
+[data-theme="catppuccin-mocha"] .timeline-floating-compose,[data-theme="catppuccin-mocha"] .timeline-floating-compose:hover,
+[data-theme="catppuccin-mocha"] .timeline-floating-return,[data-theme="catppuccin-mocha"] .timeline-floating-return:hover,
+[data-theme="catppuccin-mocha"] .notif-badge,[data-theme="catppuccin-mocha"] .logo-mark .icon,[data-theme="catppuccin-mocha"] .auth-mark .icon{color:var(--on-accent)}
+[data-theme="catppuccin-mocha"] ::selection{background:rgba(147,153,178,.30)}

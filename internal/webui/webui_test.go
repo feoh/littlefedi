@@ -192,3 +192,19 @@ func TestCrossSiteSignInRejected(t *testing.T) {
 		t.Errorf("cross-origin sign-in = %d, want 403", resp.StatusCode)
 	}
 }
+
+func TestCatppuccinThemesAreServed(t *testing.T) {
+	b := newBrowser(t)
+	for _, id := range []string{"catppuccin-frappe", "catppuccin-macchiato", "catppuccin-mocha"} {
+		resp, css := b.get("/static/theme-" + id + ".css")
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("theme-%s.css = %d", id, resp.StatusCode)
+			continue
+		}
+		for _, want := range []string{`:root[data-theme="` + id + `"]`, `prefers-color-scheme:dark`, `data-appearance="black"`, `--on-accent`} {
+			if !strings.Contains(css, want) {
+				t.Errorf("theme-%s.css lacks %q", id, want)
+			}
+		}
+	}
+}
