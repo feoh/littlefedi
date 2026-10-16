@@ -1,0 +1,19 @@
+version: "2"
+
+run:
+  # Release binaries are built with -tags blog. go vet covers both builds.
+  build-tags: [blog]
+
+linters:
+  exclusions:
+    # Unchecked Close, Flush, print and os.Remove/Setenv errors, mostly
+    # deferred cleanups in tests.
+    presets: [std-error-handling]
+
+issues:
+  # Upstream's own code has findings (deprecated bun and crypto/elliptic calls,
+  # unused code) that this fork does not own. Report only what the fork
+  # changed since the last upstream release on the upstream branch.
+  new-from-merge-base: upstream
+  max-issues-per-linter: 0
+  max-same-issues: 0

@@ -1,0 +1,68 @@
+# Run by prek (https://github.com/j178/prek). Install with `prek install`.
+#
+# This is a fork, so nothing here rewrites files: a formatter or whitespace
+# fixer would reformat whole upstream files the first time the fork touched
+# them, and every upstream release would then conflict. Linters that upstream's
+# own code fails report only on lines the fork changed (see .golangci.yml).
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+
+repos:
+  - repo: builtin
+    hooks:
+      - id: check-merge-conflict
+      - id: check-json
+      - id: check-added-large-files
+
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: gofmt
+        language: system
+        entry: sh -c 'out=$(gofmt -l "$@") || exit 1; [ -z "$out" ] || { echo "gofmt would change:"; echo "$out"; exit 1; }' gofmt
+        types: [go]
+
+      - id: go-vet
+        name: go vet
+        language: system
+        entry: go vet ./...
+        types: [go]
+        pass_filenames: false
+
+      - id: go-vet-blog
+        name: go vet (-tags blog)
+        language: system
+        entry: go vet -tags blog ./...
+        types: [go]
+        pass_filenames: false
+
+      - id: eslint
+        name: eslint
+        language: node
+        entry: eslint
+        files: ^internal/webui/static/.*\.js$
+        exclude: (\.min\.js|/emoji_map\.js)$
+        additional_dependencies:
+          - eslint@10.13.0
+          - "@eslint/js@10.0.1"
+          - globals@17.13.0
+
+      - id: go-test-short
+        name: go test -short
+        language: system
+        entry: go test -short ./...
+        types: [go]
+        pass_filenames: false
+        stages: [pre-push]
+
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v2.15.0
+    hooks:
+      - id: golangci-lint-full
+        # The published hook runs with --fix.
+        entry: golangci-lint run
+        # prek's default Go is older than go.mod allows; this is the
+        # toolchain release builds use.
+        language_version: "1.27.1"
+      - id: golangci-lint-config-verify
+        language_version: "1.27.1"

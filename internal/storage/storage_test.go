@@ -250,7 +250,7 @@ func TestSessions(t *testing.T) {
 func TestNewStatusIDIsTimeOrdered(t *testing.T) {
 	earlier := storage.NewStatusID(time.Now().Add(-time.Hour))
 	later := storage.NewStatusID(time.Now())
-	if !(earlier < later) {
+	if earlier >= later {
 		t.Errorf("status IDs do not sort by time: %q !< %q", earlier, later)
 	}
 }

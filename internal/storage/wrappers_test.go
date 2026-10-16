@@ -29,7 +29,7 @@ func TestCachingWrappersAreTransparent(t *testing.T) {
 	inner := testutil.NewStore(t)
 	entities := cache.New(1 << 20)
 	timelines := cache.New(1 << 20)
-	var store storage.Storage = storage.NewCachingStorage(inner, entities, time.Minute)
+	store := storage.NewCachingStorage(inner, entities, time.Minute)
 	store = storage.NewTimelineCachingStorage(store, timelines, time.Minute, 100)
 
 	alice := localAccount(t, store, "alice")
