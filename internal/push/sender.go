@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/hmac"
@@ -40,9 +41,17 @@ type Subscription struct {
 	Endpoint string
 	P256DH   string // base64-encoded client public key
 	Auth     string // base64-encoded auth secret
+	// Standard selects RFC 8291 aes128gcm. Otherwise the payload uses the
+	// legacy aesgcm draft encoding, which Mastodon sends to every client
+	// that does not ask for the standard one.
+	Standard bool
 }
 
 // NotificationPayload is the JSON payload sent in push notifications.
+//
+// The fields Mastodon's own payload carries are what Mastodon clients decode:
+// access_token tells them which account a push is for, and notification_id
+// is the API ID as a number, which they fetch next.
 type NotificationPayload struct {
 	Title                    string `json:"title"`
 	Body                     string `json:"body"`
@@ -52,7 +61,8 @@ type NotificationPayload struct {
 	Tag                      string `json:"tag,omitempty"`
 	URL                      string `json:"url,omitempty"`
 	Type                     string `json:"type,omitempty"`
-	NotificationID           string `json:"notification_id,omitempty"`
+	AccessToken              string `json:"access_token,omitempty"`
+	NotificationID           int64  `json:"notification_id"`
 	NotificationType         string `json:"notification_type,omitempty"`
 	PreferredLocale          string `json:"preferred_locale,omitempty"`
 	AccountID                string `json:"account_id,omitempty"`
@@ -250,37 +260,58 @@ func (s *Sender) Send(sub *Subscription, payload *NotificationPayload, urgency s
 		return fmt.Errorf("marshal payload: %w", err)
 	}
 
-	// Encrypt the payload according to RFC 8291 (aes128gcm)
-	encrypted, salt, serverPub, err := encryptPayload(payloadBytes, sub.P256DH, sub.Auth)
+	// The encoding and its headers follow Mastodon's push worker exactly,
+	// since that is what every Mastodon client and push relay is built
+	// against. Standard subscriptions get RFC 8291 aes128gcm with RFC 8292
+	// VAPID; the rest get the aesgcm draft, whose salt and server key travel
+	// in the Encryption and Crypto-Key headers. A Crypto-Key header on a
+	// standard push would make clients such as Mastodon for Android take it
+	// for the legacy encoding.
+	var body []byte
+	var salt, serverPub []byte
+	if sub.Standard {
+		body, _, _, err = encryptPayload(payloadBytes, sub.P256DH, sub.Auth)
+	} else {
+		body, salt, serverPub, err = encryptLegacyPayload(payloadBytes, sub.P256DH, sub.Auth)
+	}
 	if err != nil {
 		return fmt.Errorf("encrypt payload: %w", err)
 	}
 
-	// Build the request
-	req, err := http.NewRequest("POST", sub.Endpoint, bytes.NewReader(encrypted))
+	req, err := http.NewRequest("POST", sub.Endpoint, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/octet-stream")
-	req.Header.Set("Content-Encoding", "aes128gcm")
 	req.Header.Set("TTL", "86400") // 24 hours
-
 	if urgency != "" {
 		req.Header.Set("Urgency", urgency)
 	}
 
-	// Add VAPID authentication if keys are available
+	var cryptoKey []string
+	if sub.Standard {
+		req.Header.Set("Content-Encoding", "aes128gcm")
+	} else {
+		req.Header.Set("Content-Encoding", "aesgcm")
+		req.Header.Set("Encryption", "salt="+base64.RawURLEncoding.EncodeToString(salt))
+		cryptoKey = append(cryptoKey, "dh="+base64.RawURLEncoding.EncodeToString(serverPub))
+	}
 	if s.vapid != nil {
-		if err := s.setVAPIDHeaders(req, sub.Endpoint); err != nil {
-			return fmt.Errorf("set vapid headers: %w", err)
+		jwt, err := s.vapidJWT(sub.Endpoint)
+		if err != nil {
+			return fmt.Errorf("vapid: %w", err)
+		}
+		if sub.Standard {
+			req.Header.Set("Authorization", "vapid t="+jwt+", k="+s.vapid.Public)
+		} else {
+			req.Header.Set("Authorization", "WebPush "+jwt)
+			cryptoKey = append(cryptoKey, "p256ecdsa="+s.vapid.Public)
 		}
 	}
-
-	// Add encryption headers (for non-aes128gcm fallback, though modern push
-	// services prefer the payload-based approach, we also set explicit headers)
-	_ = salt
-	_ = serverPub
+	if len(cryptoKey) > 0 {
+		req.Header.Set("Crypto-Key", strings.Join(cryptoKey, ";"))
+	}
 
 	slog.Debug("push: sending notification",
 		"endpoint", truncateEndpoint(sub.Endpoint),
@@ -313,12 +344,12 @@ func (s *Sender) Send(sub *Subscription, payload *NotificationPayload, urgency s
 	return fmt.Errorf("push failed (status %d): %s", resp.StatusCode, string(respBody))
 }
 
-// setVAPIDHeaders adds VAPID JWT and key headers to the request.
-func (s *Sender) setVAPIDHeaders(req *http.Request, endpoint string) error {
+// vapidJWT signs the VAPID token (RFC 8292) for the endpoint's push service.
+func (s *Sender) vapidJWT(endpoint string) (string, error) {
 	// Decode private key
 	privRaw, err := base64.RawURLEncoding.DecodeString(s.vapid.Private)
 	if err != nil {
-		return fmt.Errorf("decode vapid private key: %w", err)
+		return "", fmt.Errorf("decode vapid private key: %w", err)
 	}
 
 	// Parse private key
@@ -337,7 +368,7 @@ func (s *Sender) setVAPIDHeaders(req *http.Request, endpoint string) error {
 
 	endpointURL, err := url.Parse(endpoint)
 	if err != nil || endpointURL.Scheme == "" || endpointURL.Host == "" {
-		return fmt.Errorf("invalid vapid audience endpoint")
+		return "", fmt.Errorf("invalid vapid audience endpoint")
 	}
 	audience := endpointURL.Scheme + "://" + endpointURL.Host
 
@@ -357,7 +388,7 @@ func (s *Sender) setVAPIDHeaders(req *http.Request, endpoint string) error {
 	hash := sha256.Sum256([]byte(signingInput))
 	r, ss, err := ecdsa.Sign(rand.Reader, priv, hash[:])
 	if err != nil {
-		return fmt.Errorf("sign vapid jwt: %w", err)
+		return "", fmt.Errorf("sign vapid jwt: %w", err)
 	}
 
 	// Encode signature as fixed-width raw R||S (64 bytes). Big.Int.Bytes drops
@@ -368,12 +399,7 @@ func (s *Sender) setVAPIDHeaders(req *http.Request, endpoint string) error {
 	ss.FillBytes(sig[32:])
 	sigB64 := base64.RawURLEncoding.EncodeToString(sig)
 
-	jwt := headerB64 + "." + payloadB64 + "." + sigB64
-
-	req.Header.Set("Authorization", "vapid t="+jwt+", k="+s.vapid.Public)
-	req.Header.Set("Crypto-Key", "p256ecdsa="+s.vapid.Public)
-
-	return nil
+	return headerB64 + "." + payloadB64 + "." + sigB64, nil
 }
 
 // encryptPayload encrypts the payload according to RFC 8291 (aes128gcm).
@@ -469,6 +495,77 @@ func encryptPayload(plaintext []byte, clientPubB64, authB64 string) (encrypted [
 	encrypted = append(header, ciphertext...)
 
 	return encrypted, salt, serverPub, nil
+}
+
+// encryptLegacyPayload encrypts the payload with the aesgcm draft encoding
+// (draft-ietf-webpush-encryption-04), the default Mastodon uses for clients
+// that have not opted in to RFC 8291. The body is the bare ciphertext; the
+// salt and server public key go out in the Encryption and Crypto-Key headers.
+func encryptLegacyPayload(plaintext []byte, clientPubB64, authB64 string) (ciphertext, salt, serverPub []byte, err error) {
+	clientPub, _, err := decodeBase64URL(clientPubB64)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("decode client public key: %w", err)
+	}
+	authSecret, _, err := decodeBase64URL(authB64)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("decode auth secret: %w", err)
+	}
+	clientKey, err := ecdh.P256().NewPublicKey(clientPub)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("invalid client public key: %w", err)
+	}
+	ephemeral, err := ecdh.P256().GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("generate ephemeral key: %w", err)
+	}
+	sharedSecret, err := ephemeral.ECDH(clientKey)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("ecdh: %w", err)
+	}
+	serverPub = ephemeral.PublicKey().Bytes()
+
+	salt = make([]byte, 16)
+	if _, err := rand.Read(salt); err != nil {
+		return nil, nil, nil, fmt.Errorf("generate salt: %w", err)
+	}
+
+	ikm, err := hkdfExpand(hkdfExtract(authSecret, sharedSecret), []byte("Content-Encoding: auth\x00"), 32)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	// context = "P-256" 0x00 len(client) client len(server) server, with
+	// 16-bit big-endian lengths.
+	context := []byte("P-256\x00")
+	context = binary.BigEndian.AppendUint16(context, uint16(len(clientPub)))
+	context = append(context, clientPub...)
+	context = binary.BigEndian.AppendUint16(context, uint16(len(serverPub)))
+	context = append(context, serverPub...)
+
+	prk := hkdfExtract(salt, ikm)
+	cek, err := hkdfExpand(prk, append([]byte("Content-Encoding: aesgcm\x00"), context...), 16)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	nonce, err := hkdfExpand(prk, append([]byte("Content-Encoding: nonce\x00"), context...), 12)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	block, err := aes.NewCipher(cek)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("create cipher: %w", err)
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("create gcm: %w", err)
+	}
+	// One record: a two-byte padding length (zero) and the payload. The
+	// draft's default record size, 4096, includes the tag.
+	if len(plaintext)+2+gcm.Overhead() > 4096 {
+		return nil, nil, nil, fmt.Errorf("push payload too large")
+	}
+	record := append([]byte{0, 0}, plaintext...)
+	return gcm.Seal(nil, nonce, record, nil), salt, serverPub, nil
 }
 
 func deriveAES128GCMKeys(sharedSecret, authSecret, salt, clientPub, serverPub []byte) (contentEncryptionKey, nonce []byte, err error) {

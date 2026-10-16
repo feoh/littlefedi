@@ -119,7 +119,7 @@ func TestSenderSendsEncryptedVAPIDRequest(t *testing.T) {
 		w.WriteHeader(http.StatusCreated)
 	})
 	p256dh, auth := clientKeys(t)
-	err := sender.Send(&Subscription{Endpoint: "https://push.example.com/send/abc", P256DH: p256dh, Auth: auth},
+	err := sender.Send(&Subscription{Endpoint: "https://push.example.com/send/abc", P256DH: p256dh, Auth: auth, Standard: true},
 		&NotificationPayload{Title: "New mention", Body: "secret text"}, "high")
 	if err != nil {
 		t.Fatalf("Send: %v", err)

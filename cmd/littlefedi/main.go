@@ -1111,6 +1111,7 @@ func main() {
 	webHandler := webui.NewHandlerWithDomains(store, federator, cfg, cfg.LocalDomain, cfg.WebDomain, cfg.SingleUser, cfg.Web.Password, cfg.Media.Path, cfg.Media.MaxFileSize, cfg.Media.StripEXIF, cfg.Media.RenameMedia, housekeeper, mediaProxy, threadResolver)
 	webHandler.SetMailer(mailer)
 	webHandler.SetVAPIDPublicKey(vapidPublic)
+	apiHandler.SetVAPIDPublicKey(vapidPublic)
 	webHandler.SetMediaStore(ownedMediaStore)
 	webHandler.SetInboxProcessor(inboxProcessor)
 	webHandler.SetPageCache(pageCache, pageTTL, componentTTL, cardTTL)

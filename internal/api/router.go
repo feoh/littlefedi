@@ -72,6 +72,10 @@ type Config struct {
 
 // Handler is the main API handler, organizing all endpoint groups.
 type Handler struct {
+	// vapidPublicKey is the Web Push application-server key, returned to
+	// clients as a subscription's server_key.
+	vapidPublicKey string
+
 	store          storage.Storage
 	federator      *federation.Federator
 	threadResolver *federation.ThreadResolver
@@ -116,6 +120,11 @@ func (h *Handler) SetViewerTouch(touch func(accountID, path string)) {
 // SetMailer wires the email sender (nil to disable email notifications).
 func (h *Handler) SetMailer(m *mail.Mailer) {
 	h.mailer = m
+}
+
+// SetVAPIDPublicKey sets the Web Push key advertised to API clients.
+func (h *Handler) SetVAPIDPublicKey(key string) {
+	h.vapidPublicKey = key
 }
 
 // NewHandler creates a new API handler.

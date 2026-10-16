@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/i18n"
+	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/keycrypt"
 	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/models"
 	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/statusfilter"
 	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/storage"
@@ -184,7 +185,7 @@ func EnqueuePushNotifications(ctx context.Context, store storage.Storage, notifs
 
 // ValidPolicy reports whether a push source policy is supported.
 func ValidPolicy(policy string) bool {
-	return policy == "all" || policy == "followed" || policy == "none"
+	return policy == "all" || policy == "followed" || policy == "follower" || policy == "none"
 }
 
 // policyAllows checks which accounts may trigger a subscription. Unknown
@@ -201,6 +202,13 @@ func policyAllows(ctx context.Context, store storage.Storage, sub *models.PushSu
 			return false, fmt.Errorf("push: check followed policy: %w", err)
 		}
 		return following, nil
+	case "follower":
+		// Mastodon's "follower" policy: only accounts that follow the recipient.
+		follower, err := store.IsFollowing(ctx, fromAccountID, sub.AccountID)
+		if err != nil {
+			return false, fmt.Errorf("push: check follower policy: %w", err)
+		}
+		return follower, nil
 	default:
 		return false, nil
 	}
@@ -271,12 +279,29 @@ func HandlePushJob(ctx context.Context, store storage.Storage, sender *Sender, d
 			return nil
 		}
 
+		// Clients fetch the notification by its API ID; one that has since
+		// been dismissed or deleted is not worth announcing.
+		notification, err := store.GetNotification(ctx, jobPayload.NotifID)
+		if err != nil || notification == nil {
+			slog.Debug("push: notification no longer exists, skipping", "id", jobPayload.NotifID)
+			return nil
+		}
+
 		notifPayload := buildNotificationPayload(ctx, store, jobPayload, domain)
+		notifPayload.NotificationID = notification.APIID
+		if sub.AccessToken != "" {
+			token, err := keycrypt.Open(sub.AccessToken)
+			if err != nil {
+				return fmt.Errorf("push: open subscription access token: %w", err)
+			}
+			notifPayload.AccessToken = token
+		}
 
 		subData := &Subscription{
 			Endpoint: sub.Endpoint,
 			P256DH:   sub.P256DH,
 			Auth:     sub.Auth,
+			Standard: sub.Standard,
 		}
 
 		if err := sender.Send(subData, notifPayload, "normal"); err != nil {
@@ -328,15 +353,20 @@ func buildNotificationPayload(ctx context.Context, store storage.Storage, job Pu
 	if recipient, err := store.GetAccount(ctx, job.TargetAccountID); err == nil && i18n.IsSupported(recipient.Locale) {
 		locale = recipient.Locale
 	}
+	// Mastodon always sends an icon, and some clients reject a payload
+	// without one.
+	icon := absoluteURL(domain, job.FromAvatar)
+	if icon == "" {
+		icon = "https://" + domain + "/avatars/original/missing.png"
+	}
 	return &NotificationPayload{
 		Title:                    notificationTitle(locale, job),
 		Body:                     body,
-		Icon:                     absoluteURL(domain, job.FromAvatar),
+		Icon:                     icon,
 		Badge:                    "",
 		Tag:                      "littlefedi:" + job.NotifID,
 		URL:                      clickURL,
 		Type:                     job.NotifType,
-		NotificationID:           job.NotifID,
 		NotificationType:         job.NotifType,
 		PreferredLocale:          locale,
 		AccountID:                job.FromAccountID,

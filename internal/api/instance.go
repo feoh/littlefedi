@@ -157,6 +157,11 @@ func (h *Handler) instanceConfigurationV2(ctx context.Context) map[string]interf
 	configuration["urls"] = map[string]interface{}{
 		"streaming": "wss://" + h.domain + "/api/v1/streaming",
 	}
+	// Web clients such as Elk and Phanpy look here for the key to subscribe
+	// a browser to push notifications.
+	configuration["vapid"] = map[string]interface{}{
+		"public_key": h.vapidPublicKey,
+	}
 	return configuration
 }
 

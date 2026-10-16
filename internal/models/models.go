@@ -1175,6 +1175,14 @@ type PushSubscription struct {
 	P256DH string `bun:"p256dh,notnull" json:"p256dh"` // client's public key (ECDH P-256)
 	Auth   string `bun:"auth,notnull" json:"auth"`     // shared auth secret
 
+	// Standard is true when the client asked for RFC 8291 aes128gcm. Mastodon
+	// clients that do not ask expect the legacy aesgcm draft encoding.
+	Standard bool `bun:"standard,notnull,default:false" json:"standard"`
+	// AccessToken is the subscribing app's bearer token, sealed by keycrypt
+	// when a key is configured. Mastodon push payloads carry it so a client
+	// can tell which of its accounts a notification belongs to.
+	AccessToken string `bun:"access_token,notnull,default:''" json:"-"`
+
 	// Notification type preferences (what types to send push for)
 	NotifyMention       bool `bun:"notify_mention,notnull,default:true" json:"notify_mention"`
 	NotifyFollow        bool `bun:"notify_follow,notnull,default:false" json:"notify_follow"`

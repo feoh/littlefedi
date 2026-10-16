@@ -40,6 +40,7 @@ func newFixture(t *testing.T) *fixture {
 		Domain: testutil.Domain, MediaPath: t.TempDir(), MaxStatusChars: 500, MaxMedia: 4,
 		InstanceName: "Test Instance",
 	})
+	handler.SetVAPIDPublicKey(testVAPIDKey)
 	r := chi.NewRouter()
 	handler.RegisterRoutes(r, oauth.NewHandler(store, testutil.Domain))
 

@@ -7748,8 +7748,28 @@ func (s *bunStorage) CreatePushSubscription(ctx context.Context, sub *models.Pus
 	if sub.UpdatedAt.IsZero() {
 		sub.UpdatedAt = time.Now()
 	}
-	_, err := s.db.NewInsert().Model(sub).Exec(ctx)
-	return err
+	// bun leaves zero-valued columns that have a default tag out of an
+	// INSERT, so an alert a client turned off would be stored with its
+	// default:true (and Value overrides are dropped the same way). An UPDATE
+	// writes false faithfully, so set the preferences in the same
+	// transaction.
+	// The INSERT's RETURNING clause also copies those defaults back into sub,
+	// so keep the requested values aside and restore them first.
+	wanted := *sub
+	return s.runInTx(ctx, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().Model(sub).Exec(ctx); err != nil {
+			return err
+		}
+		sub.NotifyMention, sub.NotifyFollow, sub.NotifyReblog = wanted.NotifyMention, wanted.NotifyFollow, wanted.NotifyReblog
+		sub.NotifyFavourite, sub.NotifyPoll, sub.NotifyFollowRequest = wanted.NotifyFavourite, wanted.NotifyPoll, wanted.NotifyFollowRequest
+		sub.NotifyStatus, sub.NotifyQuote, sub.NotifyBlogRebuild = wanted.NotifyStatus, wanted.NotifyQuote, wanted.NotifyBlogRebuild
+		sub.Standard = wanted.Standard
+		_, err := tx.NewUpdate().Model(sub).
+			Column("notify_mention", "notify_follow", "notify_reblog", "notify_favourite", "notify_poll",
+				"notify_follow_request", "notify_status", "notify_quote", "notify_blog_rebuild", "standard").
+			WherePK().Exec(ctx)
+		return err
+	})
 }
 
 func (s *bunStorage) GetPushSubscription(ctx context.Context, id string) (*models.PushSubscription, error) {
