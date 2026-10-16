@@ -67,6 +67,18 @@ One test is skipped on purpose: `TestRegisterRequiresApproval` in
 tagged `default:true`, and bun writes DEFAULT for a zero-valued field, so an
 account registered while `auth.require_approval` is on is stored approved.
 
+## Lint
+
+[prek](https://github.com/j178/prek) runs gofmt, `go vet`, eslint and
+golangci-lint before each commit and `go test -short` before each push:
+
+    prek install                 # once per clone
+    prek run --all-files
+
+golangci-lint reports only lines changed since the `upstream` branch, since
+upstream's own code has findings this fork leaves alone. None of the hooks
+reformat files, so upstream files stay as released.
+
 ## Releases
 
 Release binaries are built like upstream's, with the official Go toolchain

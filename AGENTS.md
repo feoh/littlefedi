@@ -17,6 +17,18 @@ This is a personal fork of littleFedi. Read `FORK.md` first: it explains the
       go test ./...
       go test -tags blog ./...
 
+- Hooks run through prek (`.pre-commit-config.yaml`); `prek install` sets up
+  both stages. On commit: JSON, merge-conflict and large-file checks,
+  gofmt, `go vet` with and without `-tags blog`, eslint on the web UI's
+  handwritten scripts, and golangci-lint. On push: `go test -short ./...`.
+  Run them all with `prek run --all-files`. Nothing in them rewrites files,
+  on purpose: reformatting upstream files would make every upstream release
+  conflict. Do not add formatters or whitespace fixers.
+- golangci-lint reports only lines changed since the `upstream` branch
+  (`.golangci.yml`), because upstream's own code has findings the fork does
+  not own. In a fresh clone, create that branch first:
+  `git branch upstream origin/upstream`. Editing an upstream line that
+  already has a finding makes it the fork's: fix it, or leave the line alone.
 - The operator also commits on GitHub, so `origin/main` can move under you.
   `git fetch origin` and `git rebase origin/main` before pushing, then check
   the push's own exit status: piping `git push` into anything hides a
