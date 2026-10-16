@@ -13,6 +13,9 @@ const sendBuffer = 64
 type Conn struct {
 	hub       *Hub
 	accountID string // "" for an anonymous (public-only) connection
+	// apiClient marks a connection authenticated with an OAuth token, i.e. a
+	// Mastodon API client rather than littleFedi's own web UI.
+	apiClient bool
 
 	mu   sync.Mutex
 	keys map[string]bool // subscribed stream keys

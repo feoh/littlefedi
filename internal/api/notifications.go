@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -13,6 +14,58 @@ import (
 )
 
 // Notification Endpoints
+
+// queryList reads a Mastodon list parameter in either "name[]" or "name" form.
+func queryList(r *http.Request, name string) []string {
+	if values := r.URL.Query()[name+"[]"]; len(values) > 0 {
+		return values
+	}
+	return r.URL.Query()[name]
+}
+
+// storedNotificationType maps a client API type name to the stored one.
+func storedNotificationType(apiType string) string {
+	if stored, ok := models.ExtensionNotificationTypes[apiType]; ok {
+		return stored
+	}
+	return apiType
+}
+
+// notificationExcludeTypes turns a request's types[] and exclude_types[]
+// into the stored types to leave out. littleFedi's own types (follow_accept,
+// emoji reactions and so on) have no Mastodon equivalent and Mastodon's apps
+// show them as errors, so they are only returned to a client that names them
+// in types[].
+func notificationExcludeTypes(r *http.Request) []string {
+	exclude := map[string]bool{}
+	if include := queryList(r, "types"); len(include) > 0 {
+		wanted := map[string]bool{}
+		for _, t := range include {
+			wanted[storedNotificationType(t)] = true
+		}
+		for _, t := range models.MastodonNotificationTypes() {
+			exclude[t] = !wanted[t]
+		}
+		for _, stored := range models.ExtensionNotificationTypes {
+			exclude[stored] = !wanted[stored]
+		}
+	} else {
+		for _, stored := range models.ExtensionNotificationTypes {
+			exclude[stored] = true
+		}
+	}
+	for _, t := range queryList(r, "exclude_types") {
+		exclude[storedNotificationType(t)] = true
+	}
+	out := make([]string, 0, len(exclude))
+	for t, excluded := range exclude {
+		if excluded {
+			out = append(out, t)
+		}
+	}
+	sort.Strings(out) // a stable order keeps the storage cache keys stable
+	return out
+}
 
 // NotificationsList returns the user's notifications.
 // GET /api/v1/notifications
@@ -25,10 +78,7 @@ func (h *Handler) NotificationsList(w http.ResponseWriter, r *http.Request) {
 
 	params := parsePagination(r)
 
-	excludeTypes := r.URL.Query()["exclude_types[]"]
-	if len(excludeTypes) == 0 {
-		excludeTypes = r.URL.Query()["exclude_types"]
-	}
+	excludeTypes := notificationExcludeTypes(r)
 
 	// Honor since_id/min_id: marker-based apps poll "what arrived after my
 	// last-read notification" to compute the unread badge. Ignoring the
@@ -68,10 +118,7 @@ func (h *Handler) NotificationsUnreadCount(w http.ResponseWriter, r *http.Reques
 		writeAPIError(w, http.StatusUnauthorized, "not authenticated")
 		return
 	}
-	excludeTypes := r.URL.Query()["exclude_types[]"]
-	if len(excludeTypes) == 0 {
-		excludeTypes = r.URL.Query()["exclude_types"]
-	}
+	excludeTypes := notificationExcludeTypes(r)
 	count, err := h.store.CountUnreadNotificationsFiltered(r.Context(), account.ID, excludeTypes)
 	if err != nil {
 		slog.Error("api: unread notification count", "error", err)
@@ -182,10 +229,7 @@ func (h *Handler) GroupedNotificationsList(w http.ResponseWriter, r *http.Reques
 	}
 
 	params := parsePagination(r)
-	excludeTypes := r.URL.Query()["exclude_types[]"]
-	if len(excludeTypes) == 0 {
-		excludeTypes = r.URL.Query()["exclude_types"]
-	}
+	excludeTypes := notificationExcludeTypes(r)
 	var notifs []*models.Notification
 	var err error
 	if cursor := params.SinceID; cursor != nil || params.MinID != nil {

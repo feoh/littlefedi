@@ -171,7 +171,9 @@ func (h *Handler) handleMultiplex(w http.ResponseWriter, r *http.Request) {
 // authenticate resolves the bearer token from the Authorization header or the
 // access_token query parameter (browsers cannot set WS headers), returning the
 // account or nil for an anonymous connection.
-func (h *Handler) authenticate(r *http.Request) *models.Account {
+// requestToken returns the OAuth access token a streaming request carries,
+// from the Authorization header or the access_token parameter.
+func requestToken(r *http.Request) string {
 	token := ""
 	if auth := r.Header.Get("Authorization"); auth != "" {
 		token = strings.TrimPrefix(auth, "Bearer ")
@@ -182,6 +184,11 @@ func (h *Handler) authenticate(r *http.Request) *models.Account {
 	if token == "" {
 		token = r.URL.Query().Get("access_token")
 	}
+	return token
+}
+
+func (h *Handler) authenticate(r *http.Request) *models.Account {
+	token := requestToken(r)
 	if token == "" {
 		return h.authenticateSession(r)
 	}
@@ -300,6 +307,7 @@ func (h *Handler) serveWebSocket(w http.ResponseWriter, r *http.Request, account
 	defer cancel()
 
 	conn := newConn(h.hub, accountID(account))
+	conn.apiClient = account != nil && requestToken(r) != ""
 	h.hub.register(conn)
 	defer func() {
 		conn.Close()
@@ -408,6 +416,7 @@ func (h *Handler) serveSSE(w http.ResponseWriter, r *http.Request, account *mode
 	flusher.Flush()
 
 	conn := newConn(h.hub, accountID(account))
+	conn.apiClient = account != nil && requestToken(r) != ""
 	h.hub.register(conn)
 	defer conn.Close()
 	conn.Subscribe(desc.key)

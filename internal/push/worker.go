@@ -232,6 +232,11 @@ type PushJobPayload struct {
 // shouldNotify checks whether the subscription's alert preferences allow
 // sending a push for the given notification type.
 func shouldNotify(sub *models.PushSubscription, notifType string) bool {
+	// An app subscription speaks the Mastodon API: its app has no way to show
+	// littleFedi's own notification types. The web UI's subscriptions do.
+	if sub.OAuthTokenID != nil && !models.IsMastodonNotificationType(notifType) {
+		return false
+	}
 	switch notifType {
 	case "mention":
 		return sub.NotifyMention

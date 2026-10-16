@@ -211,6 +211,7 @@ func (r *EventRouter) NotificationCreated(ctx context.Context, n *models.Notific
 		return
 	}
 	env := makeEnvelope([]string{StreamUser}, "notification", string(payload))
+	env.notificationType = n.Type
 	r.hub.sendToAccount(target.ID, StreamUser, env)
 }
 

@@ -310,3 +310,35 @@ func TestSubscriptionKeepsAlertsTurnedOff(t *testing.T) {
 		t.Errorf("alerts turned off were stored on: mention %v poll %v status %v", got.NotifyMention, got.NotifyPoll, got.NotifyStatus)
 	}
 }
+
+// An app subscription speaks the Mastodon API, so littleFedi's own types are
+// not pushed to it; the web UI's subscription still gets them.
+func TestAppSubscriptionsGetOnlyMastodonTypes(t *testing.T) {
+	ctx := context.Background()
+	store := testutil.NewStore(t)
+	alice := testutil.CreateLocalAccount(t, store, "alice")
+	bob := testutil.CreateLocalAccount(t, store, "bob")
+	tokenID, session := "token-1", "session-1"
+	for i, sub := range []*models.PushSubscription{
+		{AccountID: alice.ID, OAuthTokenID: &tokenID, Endpoint: "https://relay.example/app", NotifyFollow: true, Policy: "all"},
+		{AccountID: alice.ID, SessionID: &session, Endpoint: "https://relay.example/web", NotifyFollow: true, Policy: "all"},
+	} {
+		sub.P256DH, sub.Auth = newDevice(t).keys()
+		if err := store.CreatePushSubscription(ctx, sub); err != nil {
+			t.Fatalf("subscription %d: %v", i, err)
+		}
+	}
+	jobs := func(kind string) int {
+		got, err := NotificationJobs(ctx, store, &models.Notification{ID: "n-" + kind, Type: kind, AccountID: alice.ID, FromAccountID: bob.ID, CreatedAt: time.Now()})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return len(got)
+	}
+	if n := jobs("follow"); n != 2 {
+		t.Errorf("follow pushes = %d, want both subscriptions", n)
+	}
+	if n := jobs("follow_accept"); n != 1 {
+		t.Errorf("follow_accept pushes = %d, want only the web subscription", n)
+	}
+}

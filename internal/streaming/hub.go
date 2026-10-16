@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"strings"
 	"sync"
+
+	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/models"
 )
 
 // Stream identifiers, matching Mastodon's stream names.
@@ -42,6 +44,9 @@ type envelope struct {
 	event       string
 	payload     string
 	wsBytes     []byte // immutable, shared by every WebSocket recipient
+	// notificationType is set on notification events so that API clients,
+	// which only understand Mastodon's types, can be skipped.
+	notificationType string
 }
 
 func makeEnvelope(wireStreams []string, event, payload string) envelope {
@@ -186,6 +191,9 @@ func (h *Hub) sendToAccount(accountID, key string, env envelope) {
 	h.mu.RLock()
 	var targets []*Conn
 	for c := range h.byAccount[accountID] {
+		if c.apiClient && env.notificationType != "" && !models.IsMastodonNotificationType(env.notificationType) {
+			continue
+		}
 		c.mu.Lock()
 		ok := c.keys[key]
 		c.mu.Unlock()
