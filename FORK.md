@@ -1,9 +1,21 @@
-# About this fork
+## Crazy pants important note for folks running "Stock" LittleFedi!
+
+There have already been questions from folks wanting to run my fork "over" an
+already existing LittleFedi instance.
+
+Don't do it. My fork adds several database migrations, and I've done zero work
+testing that path, because I don't *have* a pre-existing LittleFedi to test 
+with!
+
+## About This Fork
 
 This is an unofficial personal fork of [littleFedi](https://littlefedi.org),
 the small ActivityPub server by Stefano Marinelli and the Little Computer
 People. Upstream does not publish a public git repository; it releases source
 tarballs at <https://littlefedi.org/downloads/>.
+
+If you have ANY questions or concerns about this fork, please contact me at 
+feoh@feoh.org or on social media. DO NOT contact the Little Computer People!
 
 ## Branches
 
