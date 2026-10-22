@@ -1777,9 +1777,11 @@ func multipartCleanupMiddleware(next http.Handler) http.Handler {
 }
 
 // cspCommonDirectives are the CSP directives shared by every response.
+// blob: lets the composer show attachments before they are uploaded, and
+// draw a poster frame from a video the user picked.
 const cspCommonDirectives = "style-src-attr 'unsafe-inline'; " +
-	"img-src 'self' data: https:; " +
-	"media-src 'self' https:; " +
+	"img-src 'self' data: blob: https:; " +
+	"media-src 'self' blob: https:; " +
 	"connect-src 'self' https: ws: wss:; " +
 	"frame-ancestors 'none'; " +
 	"base-uri 'self'; " +

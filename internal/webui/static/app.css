@@ -501,6 +501,18 @@
         .composer-count{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
         .composer-count.danger{color:var(--danger);font-weight:700}
         .composer-autocomplete-wrapper{position:relative}
+        .composer-attachments{display:grid;grid-template-columns:repeat(auto-fill,minmax(9.5rem,1fr));gap:.6rem;margin:.65rem 0 0;padding:0;list-style:none}
+        .composer-attachment{display:grid;gap:.35rem;min-width:0}
+        .composer-attachment-thumb{position:relative;display:grid;place-items:center;aspect-ratio:4/3;overflow:hidden;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2)}
+        .composer-attachment-thumb img,.composer-attachment-thumb video{display:block;width:100%;height:100%;object-fit:cover}
+        .composer-attachment-name{padding:.5rem 2.4rem .5rem .6rem;font-size:.78rem;color:var(--muted);overflow-wrap:anywhere}
+        .composer-attachment-remove{position:absolute;top:.35rem;right:.35rem;display:grid;place-items:center;width:1.8rem;height:1.8rem;padding:0;border:0;border-radius:999px;background:rgb(0 0 0 / .62);color:#fff;font:inherit;font-size:1.15rem;line-height:1;cursor:pointer}
+        .composer-attachment-remove::before{content:"×"}
+        .composer-attachment-remove::before{content:"×" / ""}
+        .composer-attachment-remove:hover{background:rgb(0 0 0 / .8)}
+        .composer-attachment-remove:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+        .composer-attachment input{width:100%;min-width:0;box-sizing:border-box;padding:.4rem .55rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font:inherit;font-size:.82rem}
+        .composer-attachment input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
         .composer-autocomplete{position:absolute;bottom:100%;left:0;right:0;z-index:100;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-lg);max-height:240px;overflow-y:auto;margin-bottom:6px}
         .composer-autocomplete-below{top:100%;bottom:auto;margin-top:6px;margin-bottom:0}
         .composer-autocomplete-item{display:flex;align-items:center;gap:0.55rem;width:100%;padding:0.55rem 0.8rem;border:none;background:none;cursor:pointer;text-align:left;color:var(--text);font-size:0.875rem;transition:background .12s;font-family:inherit}

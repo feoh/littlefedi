@@ -31,6 +31,12 @@ replace the tree on `upstream` with its contents, commit and tag it, and merge
 
 - The composer sends the post with Ctrl+Enter (Cmd+Enter on macOS) from any of
   its fields, and the Post button's tooltip says so.
+- Attachments you pick, paste or drop show as thumbnails right under the
+  composer's text, each with its own alt text field and a remove button, as
+  in Mastodon. Upstream only listed their file names in the media panel. The
+  CSP now allows `blob:` images and media, which these thumbnails, the
+  preview tab's attachments and the poster frame drawn from a picked video
+  all need; upstream's CSP blocked all three.
 - Streamed posts wait while you are writing in a composer (focus is in it, or
   your last click or tap was), so the editor no longer jumps away when one
   arrives. They are added once you click, tap or tab elsewhere.

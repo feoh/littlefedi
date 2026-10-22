@@ -64,6 +64,7 @@
 	                pollOptions: ['', '', '', ''],
 	                pollMultiple: false,
 	                mediaPreviews: {},
+	                mediaAlt: {},
 	                dropping: false,
 	                _dragDepth: 0,
 	                _pageDrop: null,
@@ -110,6 +111,9 @@
 					this.visibility = data.defaultVisibility || 'public';
 					this.isBlogPost = !!data.isBlogPost;
 					this.maxMedia = Number(data.maxMedia) || 4;
+					// One alt text per new attachment, shared by its field in the
+					// media panel and its tile under the editor.
+					for (let index = 0; index < this.maxMedia; index++) this.mediaAlt[index] = '';
 					this.spoilerText = this.$root.elements.spoiler_text ? this.$root.elements.spoiler_text.value : '';
 					this.sensitive = !!(this.$root.elements.sensitive && this.$root.elements.sensitive.checked);
 					this._selectionListener = () => this.saveSelection();
@@ -182,7 +186,7 @@
 					}
 					let type = file.type.split('/')[0];
 					if (!['image', 'video', 'audio'].includes(type)) type = /\.(mp4|m4v|mov|webm|ogv)$/i.test(file.name) ? 'video' : (/\.(mp3|m4a|ogg|wav|flac)$/i.test(file.name) ? 'audio' : 'image');
-					previews[index] = {index: index, type: type, url: URL.createObjectURL(file)};
+					previews[index] = {index: index, type: type, name: file.name, url: URL.createObjectURL(file)};
 					this.mediaPreviews = previews;
 					if (!file.type.startsWith('video/') && !/\.(mp4|m4v|mov|webm|ogv)$/i.test(file.name)) return;
 					this.mediaPosterJobs[index] = this.createVideoPoster(file).then(blob => {
@@ -197,6 +201,7 @@
 					if (input) input.value = '';
 					const description = this.$root.elements['media_description_' + index];
 					if (description) description.value = '';
+					this.mediaAlt[index] = '';
 					delete this.mediaThumbnails[index];
 					delete this.mediaPosterJobs[index];
 					if (this.mediaPreviews[index]) URL.revokeObjectURL(this.mediaPreviews[index].url);
@@ -227,9 +232,9 @@
 						this.selectMedia(index, {target: input});
 						room--;
 					}
+					// The new files show up as tiles under the editor, so the
+					// media panel stays as the user left it.
 					this.expanded = true;
-					const row = this.$root.querySelector('.composer-media-row');
-					if (row) row.closest('details').open = true;
 					if (files.length) this.editorError = this.$root.dataset.mediaLimit;
 				},
 
@@ -410,10 +415,7 @@
 				},
 
 				selectedMedia() { return Object.values(this.mediaPreviews).sort((a, b) => a.index - b.index); },
-				mediaDescription(index) {
-					const field = this.$root.elements['media_description_' + index];
-					return field ? field.value : '';
-				},
+				mediaDescription(index) { return this.mediaAlt[index] || ''; },
 				keptMedia(id) {
 					return Array.from(this.$root.querySelectorAll('input[name="media_ids"]')).some(input => input.value === id && input.checked);
 				},

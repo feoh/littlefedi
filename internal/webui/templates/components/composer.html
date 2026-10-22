@@ -178,6 +178,23 @@
                     </template>
                 </div>
             </div>
+            {{/* New attachments show here, under the text, as soon as they are
+                 picked, pasted or dropped, as in Mastodon. The file inputs in
+                 the media panel remain the form's fields; these tiles only
+                 mirror them, so they exist under JavaScript alone. */}}
+            <ul class="composer-attachments" aria-label="{{T "composer.attachments"}}" x-show="mode !== 'preview' && selectedMedia().length" x-cloak>
+                <template x-for="media in selectedMedia()" :key="media.index">
+                    <li class="composer-attachment">
+                        <div class="composer-attachment-thumb">
+                            <template x-if="media.type === 'image'"><img alt="" :src="media.url" :alt="media.name"></template>
+                            <template x-if="media.type === 'video'"><video muted playsinline preload="metadata" :src="media.url"></video></template>
+                            <template x-if="media.type === 'audio'"><span class="composer-attachment-name" x-text="media.name"></span></template>
+                            <button type="button" class="composer-attachment-remove" title="{{T "composer.remove_media"}}" @click="clearMedia(media.index)"><span class="sr-only">{{T "composer.remove_media"}}</span></button>
+                        </div>
+                        <input type="text" maxlength="1500" aria-label="{{T "composer.alt_text"}}" placeholder="{{T "composer.add_alt_text"}}" x-model="mediaAlt[media.index]">
+                    </li>
+                </template>
+            </ul>
             <section class="composer-preview" role="tabpanel" id="composer-panel-preview" aria-labelledby="composer-tab-preview" x-show="mode === 'preview'" x-cloak aria-live="polite" :aria-busy="previewLoading">
                 {{/* The preview only ever fills in under JavaScript, so its
                      status line arrives from the form dataset. Written into
@@ -274,7 +291,7 @@
                             </label>
                             <label>
                                 <span class="composer-media-label">{{T "composer.alt_text"}}</span>
-                                <input type="text" name="media_description_{{$index}}" maxlength="1500" placeholder="{{T "composer.describe_media_n" (add $index 1)}}">
+                                <input type="text" name="media_description_{{$index}}" maxlength="1500" placeholder="{{T "composer.describe_media_n" (add $index 1)}}" x-model="mediaAlt[{{$index}}]">
                             </label>
 							<button type="button" class="tool-btn composer-media-remove" x-show="mediaPreviews[{{$index}}]" @click="clearMedia({{$index}})">{{T "lists.remove"}}</button>
                         </div>

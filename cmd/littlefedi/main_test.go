@@ -143,6 +143,12 @@ func TestSecurityHeaders(t *testing.T) {
 	if csp := h.Get("Content-Security-Policy"); !strings.Contains(csp, "script-src 'self' 'nonce-") {
 		t.Errorf("CSP = %q", csp)
 	}
+	// The composer previews attachments from blob: URLs before uploading them.
+	for _, directive := range []string{"img-src 'self' data: blob: https:;", "media-src 'self' blob: https:;"} {
+		if csp := h.Get("Content-Security-Policy"); !strings.Contains(csp, directive) {
+			t.Errorf("CSP %q lacks %q", csp, directive)
+		}
+	}
 	if h.Get("Strict-Transport-Security") == "" {
 		t.Error("no HSTS over HTTPS")
 	}
