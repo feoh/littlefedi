@@ -58,6 +58,9 @@ replace the tree on `upstream` with its contents, commit and tag it, and merge
   imports and so on) reach API clients only when they ask with `types[]`,
   and stay visible in the web UI. littleFedi also sends Mastodon's `poll`
   (a poll you created or voted in ended) and `admin.sign_up` notifications.
+- Notification lists (both the v1 and grouped v2 APIs) include Mastodon's
+  pagination links for fetching older notifications and refreshing for newer
+  ones, preserving notification-type filters across pages.
 - The client API adds `GET /api/v1/accounts?id[]=`, `/api/v1/accounts/lookup`
   and `/api/v1/accounts/familiar_followers`, which Mastodon for iOS uses.
 - The OAuth consent page also answers at `/oauth/authorize/`, with a

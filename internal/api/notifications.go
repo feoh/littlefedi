@@ -2,11 +2,13 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -106,7 +108,38 @@ func (h *Handler) NotificationsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.setNotificationLinkHeader(w, r, params, notifs)
 	writeAPIJSON(w, http.StatusOK, result)
+}
+
+// setNotificationLinkHeader gives clients both older-page and refresh URLs.
+// Preserve type filters, but replace all incoming cursors so following a link
+// cannot accidentally retain a conflicting bound. Use raw notification rows:
+// conversion may hide statuses, and clients must still advance past them.
+func (h *Handler) setNotificationLinkHeader(w http.ResponseWriter, r *http.Request, params PaginationParams, notifs []*models.Notification) {
+	if len(notifs) == 0 {
+		return
+	}
+	q := r.URL.Query()
+	q.Del("max_id")
+	q.Del("min_id")
+	q.Del("since_id")
+	q.Set("limit", strconv.Itoa(params.Limit))
+	u := url.URL{Scheme: "https", Host: h.domain, Path: r.URL.Path}
+	links := make([]string, 0, 2)
+	for _, cursor := range []struct {
+		param, rel string
+		id         int64
+	}{
+		{"max_id", "next", notifs[len(notifs)-1].APIID},
+		{"min_id", "prev", notifs[0].APIID},
+	} {
+		q.Set(cursor.param, strconv.FormatInt(cursor.id, 10))
+		u.RawQuery = q.Encode()
+		links = append(links, fmt.Sprintf(`<%s>; rel="%s"`, u.String(), cursor.rel))
+		q.Del(cursor.param)
+	}
+	w.Header().Set("Link", strings.Join(links, ", "))
 }
 
 // NotificationsUnreadCount returns the badge count without downloading a page
@@ -286,6 +319,7 @@ func (h *Handler) GroupedNotificationsList(w http.ResponseWriter, r *http.Reques
 		groups = append(groups, group)
 	}
 
+	h.setNotificationLinkHeader(w, r, params, notifs)
 	writeAPIJSON(w, http.StatusOK, map[string]interface{}{
 		"accounts":            accounts,
 		"statuses":            statuses,
