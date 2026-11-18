@@ -1473,6 +1473,7 @@ type ProfileData struct {
 	MovedToLabel   string
 	Lists          []*models.List
 	ListAdded      bool
+	ListError      string
 	PinnedStatuses []*models.Status
 	Statuses       []*models.Status
 	StatusesCount  int

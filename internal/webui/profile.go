@@ -355,6 +355,7 @@ func (h *Handler) buildProfileData(r *http.Request, account *models.Account, vie
 		MovedToLabel:   movedToLabel,
 		Lists:          lists,
 		ListAdded:      r.URL.Query().Get("list_added") == "1",
+		ListError:      profileListErrors[r.URL.Query().Get("list_error")],
 		Handle:         handle,
 		PinnedStatuses: pinnedStatuses,
 		Statuses:       statuses,

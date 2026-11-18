@@ -17,6 +17,7 @@ import (
 	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/accounts"
 	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/federation"
 	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/media"
+	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/models"
 	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/storage"
 	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/testutil"
 	"brew.bsd.cafe/littlecomputerpeople/littlefedi/internal/webui"
@@ -206,5 +207,89 @@ func TestCatppuccinThemesAreServed(t *testing.T) {
 				t.Errorf("theme-%s.css lacks %q", id, want)
 			}
 		}
+	}
+}
+
+// listMenuFixture signs alice in, creates bob, and returns alice, bob and the
+// CSRF token from bob's profile page. follow controls whether alice follows bob.
+func listMenuFixture(t *testing.T, follow bool) (*browser, *models.Account, *models.Account, string, string) {
+	t.Helper()
+	ctx := context.Background()
+	b := newBrowser(t)
+	b.signIn("alice", password)
+	alice, err := b.store.GetAccountByUsernameDomain(ctx, "alice", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bob := testutil.CreateLocalAccount(t, b.store, "bob")
+	if follow {
+		if err := b.store.CreateFollow(ctx, &models.Follow{AccountID: alice.ID, TargetAccountID: bob.ID, URI: alice.ActorURI + "#follows/bob", State: models.FollowAccepted}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	_, profile := b.get("/@bob")
+	match := csrfPattern.FindStringSubmatch(profile)
+	if match == nil {
+		t.Fatal("no CSRF token on bob's profile")
+	}
+	return b, alice, bob, match[1], profile
+}
+
+func TestProfileListMenuOffersNewList(t *testing.T) {
+	_, _, _, _, profile := listMenuFixture(t, true)
+	for _, want := range []string{`class="profile-list-new"`, `action="/lists"`, `id="profile-new-list-title"`, "Create list and add"} {
+		if !strings.Contains(profile, want) {
+			t.Errorf("profile list menu lacks %q", want)
+		}
+	}
+}
+
+func TestProfileCreateListAddsAccount(t *testing.T) {
+	ctx := context.Background()
+	b, alice, bob, csrf, _ := listMenuFixture(t, true)
+	resp, _ := b.post("/lists", url.Values{"csrf_token": {csrf}, "title": {"Pals"}, "acct": {"bob"}, "from_profile": {"1"}})
+	if resp.StatusCode != http.StatusFound || resp.Header.Get("Location") != "/@bob?list_added=1" {
+		t.Fatalf("create from profile = %d to %q", resp.StatusCode, resp.Header.Get("Location"))
+	}
+	lists, err := b.store.ListLists(ctx, alice.ID)
+	if err != nil || len(lists) != 1 || lists[0].Title != "Pals" {
+		t.Fatalf("lists = %v, %v", lists, err)
+	}
+	members, err := b.store.ListAccountsForList(ctx, lists[0].ID, nil, nil, 0)
+	if err != nil || len(members) != 1 || members[0].ID != bob.ID {
+		t.Fatalf("members = %v, %v", members, err)
+	}
+	if _, profile := b.get("/@bob?list_added=1"); !strings.Contains(profile, "Added to list") || !strings.Contains(profile, ">Pals</button>") {
+		t.Error("profile does not confirm the add or list the new list")
+	}
+}
+
+func TestProfileCreateListRefusals(t *testing.T) {
+	ctx := context.Background()
+	for _, tc := range []struct {
+		name, title, wantLocation, wantMessage string
+		follow                                 bool
+	}{
+		{"not followed", "Pals", "/@bob?list_error=follow", "Follow this account before adding it to a list.", false},
+		{"blank title", "   ", "/@bob?list_error=title", "Give the new list a name.", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			b, alice, _, csrf, _ := listMenuFixture(t, tc.follow)
+			resp, _ := b.post("/lists", url.Values{"csrf_token": {csrf}, "title": {tc.title}, "acct": {"bob"}, "from_profile": {"1"}})
+			if resp.StatusCode != http.StatusFound || resp.Header.Get("Location") != tc.wantLocation {
+				t.Fatalf("create = %d to %q", resp.StatusCode, resp.Header.Get("Location"))
+			}
+			if lists, _ := b.store.ListLists(ctx, alice.ID); len(lists) != 0 {
+				t.Errorf("a refused create left %d lists", len(lists))
+			}
+			if _, profile := b.get(tc.wantLocation); !strings.Contains(html.UnescapeString(profile), tc.wantMessage) {
+				t.Errorf("profile does not show %q", tc.wantMessage)
+			}
+		})
+	}
+	// Only known keys reach the page.
+	b, _, _, _, _ := listMenuFixture(t, true)
+	if _, profile := b.get("/@bob?list_error=" + url.QueryEscape("<b>x</b>")); strings.Contains(profile, `class="info-message" role="alert"`) {
+		t.Error("an unknown list_error value produced a message")
 	}
 }

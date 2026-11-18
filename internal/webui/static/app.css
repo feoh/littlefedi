@@ -561,6 +561,9 @@
         .profile-list-menu>summary{min-height:44px;list-style:none}
         .profile-list-menu>summary::-webkit-details-marker{display:none}
         .profile-list-menu :focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px}
+        .profile-list-new{display:flex;flex-direction:column;gap:.35rem}
+        .profile-list-new label{padding:.3rem .75rem 0;font-size:.8rem;font-weight:600;color:var(--muted)}
+        .profile-list-new input[type="text"]{width:100%;min-height:44px;padding:.55rem .75rem;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font:inherit;font-size:.9rem}
         .profile-meta{margin-top:.2rem;font-size:.875rem;color:var(--muted)}
         .profile-handle{font-size:0.9375rem;color:var(--muted)}
         .profile-created{white-space:nowrap}

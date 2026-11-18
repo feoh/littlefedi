@@ -69,7 +69,17 @@ func (h *Handler) ListsPage(w http.ResponseWriter, r *http.Request) {
 	h.renderPage(w, r, h.pageTitle(r, "lists.heading"), data, "lists.html")
 }
 
-// ListCreateWeb creates a list from the index form.
+// profileListErrors maps the profile page's list_error query value to the
+// i18n key of the message it shows (ProfileData.ListError). Only these keys are accepted, so the query string cannot
+// put arbitrary text on the page.
+var profileListErrors = map[string]string{
+	"title":  "profile.list_title_required",
+	"follow": "profile.list_follow_required",
+}
+
+// ListCreateWeb creates a list from the index form, or from a profile's
+// "Add to list" menu (from_profile=1), which also adds that profile's
+// account to the new list and returns to the profile.
 func (h *Handler) ListCreateWeb(w http.ResponseWriter, r *http.Request) {
 	account := getAuthAccount(r.Context())
 	if account == nil {
@@ -80,14 +90,49 @@ func (h *Handler) ListCreateWeb(w http.ResponseWriter, r *http.Request) {
 	repliesPolicy := r.FormValue("replies_policy")
 	exclusive := r.FormValue("exclusive") != ""
 
+	// Check the member before creating anything, so a refused add does not
+	// leave an empty list behind.
+	var target *models.Account
+	if r.FormValue("from_profile") == "1" {
+		acct := strings.TrimSpace(r.FormValue("acct"))
+		if target = h.resolveLocalOrKnownAccount(r, acct); target == nil {
+			h.renderError(w, r, "Account not found")
+			return
+		}
+		following, err := h.store.IsFollowing(r.Context(), account.ID, target.ID)
+		if err != nil {
+			slog.Error("webui: list create follow check error", "error", err)
+			h.renderError(w, r, "Error creating list")
+			return
+		}
+		if !following {
+			http.Redirect(w, r, accountPath(target)+"?list_error=follow", http.StatusFound)
+			return
+		}
+	}
+
 	list, err := h.app.CreateList(r.Context(), account, title, repliesPolicy, exclusive)
 	if err != nil {
+		if errors.Is(err, app.ErrListInvalid) && target != nil {
+			http.Redirect(w, r, accountPath(target)+"?list_error=title", http.StatusFound)
+			return
+		}
 		if errors.Is(err, app.ErrListInvalid) {
 			http.Redirect(w, r, "/lists?error="+url.QueryEscape(err.Error()), http.StatusFound)
 			return
 		}
 		slog.Error("webui: list create error", "error", err)
 		h.renderError(w, r, "Error creating list")
+		return
+	}
+	if target != nil {
+		if err := h.app.AddListMembers(r.Context(), account, list.ID, []string{target.ID}); err != nil {
+			slog.Error("webui: list create add member error", "error", err)
+			msg := "The list was created, but @" + target.Username + " could not be added to it."
+			http.Redirect(w, r, "/lists/"+list.ID+"?error="+url.QueryEscape(msg), http.StatusFound)
+			return
+		}
+		http.Redirect(w, r, accountPath(target)+"?list_added=1", http.StatusFound)
 		return
 	}
 	http.Redirect(w, r, "/lists/"+list.ID, http.StatusFound)

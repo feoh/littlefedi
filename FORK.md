@@ -37,6 +37,11 @@ replace the tree on `upstream` with its contents, commit and tag it, and merge
   CSP now allows `blob:` images and media, which these thumbnails, the
   preview tab's attachments and the poster frame drawn from a picked video
   all need; upstream's CSP blocked all three.
+- A profile's "Add to list" menu can also create a new list: type a name
+  under the existing lists and "Create list and add" makes the list and adds
+  the account to it, returning to the profile. Upstream only linked to the
+  lists page, and only when you had no lists. It uses the lists page's
+  defaults (replies to list members, not exclusive).
 - Streamed posts wait while you are writing in a composer (focus is in it, or
   your last click or tap was), so the editor no longer jumps away when one
   arrives. They are added once you click, tap or tab elsewhere.
